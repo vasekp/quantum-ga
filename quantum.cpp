@@ -30,8 +30,8 @@ using GenCandidate = gen::Candidate<Candidate>;
 using CF = CandidateFactory<Candidate>;
 
 
-template<>
-std::atomic_ulong CBase<Candidate>::count{0};
+template<class C, class G>
+std::atomic_ulong CBase<C, G>::count{0};
 
 template<>
 std::vector<unsigned> CF::weights{};

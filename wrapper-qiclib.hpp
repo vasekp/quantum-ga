@@ -49,9 +49,35 @@ arma::cx_vec out{};
 } // namespace internal
 
 
-class Candidate : public ::CBase<Candidate> {
+class Gene : public ::GeneBase {
 
-  using Base = ::CBase<Candidate>;
+  arma::uvec ixs;
+
+public:
+
+  NOINLINE Gene(unsigned op_, unsigned target_, unsigned control_):
+      GeneBase(op_, target_, control_) {
+    std::vector<arma::uword> ixv;
+    ixv.reserve(Config::nBit);
+    unsigned ctrl = controlDec();
+    for(unsigned i = 0; i < Config::nBit; i++) {
+      if(ctrl & 1)
+        ixv.push_back(i + 1);
+      ctrl >>= 1;
+    }
+    ixs = ixv;
+  }
+
+  const arma::uvec ix_vector() const {
+    return ixs;
+  }
+
+}; // class Gene
+
+
+class Candidate : public ::CBase<Candidate, Gene> {
+
+  using Base = ::CBase<Candidate, Gene>;
 
 public:
 
@@ -72,16 +98,11 @@ private:
   arma::cx_vec sim() const {
     arma::cx_vec psi = qic::mket({0}, {arma::uword(1) << Config::nBit});
     for(const Gene& g : gt) {
-      /* convert std::vector<unsigned> to arma::uvec, adding 1 */
-      auto& ixv = g.ix_vector();
-      arma::uvec ixs(ixv.size());
-      for(size_t i = 0; i < ixv.size(); i++)
-        ixs.at(i) = ixv[i] + 1;
       /* control-gate (QIClib) */
       psi = qic::apply_ctrl(
           psi,                          // state
           internal::gates[g.gate()].op, // operator
-          ixs,                          // arma::uvec of control systems
+          g.ix_vector(),                // arma::uvec of control systems
           {1 + g.target()});            // arma::uvec of target systems
     }
     return psi;

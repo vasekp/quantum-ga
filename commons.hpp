@@ -21,18 +21,18 @@ namespace Wrapper {
 /* End forward declarations */
 
 
-class Gene {
+class GeneBase {
 
   unsigned op;      // which gate to use (see Glogals::gates)
   unsigned tgt;     // target qubit
-  std::vector<unsigned> ixs;   // list of control bits
   unsigned ctrlEnc; // 0 through UINT_MAX
+  unsigned ctrlDec; // binary control string with 0 at target
   uint32_t hw;      // Hamming weight of ctrl
 
 public:
 
-  NOINLINE Gene(unsigned op_, unsigned target_, unsigned control_):
-      op(op_), tgt(target_), ixs{}, ctrlEnc(control_), hw(0) {
+  NOINLINE GeneBase(unsigned op_, unsigned target_, unsigned control_):
+      op(op_), tgt(target_), ctrlEnc(control_), hw(0) {
     size_t ctrl = 0;
     double c = (double)control_ / std::numeric_limits<unsigned>::max();
     /* Convert an unsigned between 0 and UINT_MAX to a bit string where the
@@ -51,16 +51,10 @@ public:
     }
     /* At this point ctrl has nBit-1 bits. We use this to guarantee that
      * 1<<tgt is left unoccupied. */
-    ctrl =
+    ctrlDec =
       ((ctrl >> tgt) << (tgt+1))  // shift bits left of tgt to the left
         |
       (ctrl & ((1 << tgt) - 1));  // keep bits right of tgt
-    ixs.reserve(Config::nBit);
-    for(unsigned i = 0; i < Config::nBit; i++) {
-      if(ctrl & 1)
-        ixs.push_back(i);
-      ctrl >>= 1;
-    }
   }
 
   unsigned gate() const {
@@ -75,8 +69,8 @@ public:
     return ctrlEnc;
   }
 
-  const std::vector<unsigned>& ix_vector() const {
-    return ixs;
+  unsigned controlDec() const {
+    return ctrlDec;
   }
 
   unsigned weight() const {
@@ -107,7 +101,7 @@ struct Fitness {
 }; // struct Fitness
 
 
-template<class Derived>
+template<class Derived, class Gene>
 class CBase {
 
 protected:
@@ -126,6 +120,8 @@ private:
   }
 
 public:
+
+  using GeneType = Gene;
 
   CBase(std::vector<Gene>&) = delete;
 
@@ -174,13 +170,13 @@ public:
     return count;
   }
 
-  template<class, class>
+  template<class, class, class>
   friend class CandidateFactory;
 
 }; // class Candidate
 
 
-template<class Candidate, class Population = gen::NSGAPopulation<Candidate>>
+template<class Candidate, class Gene = typename Candidate::GeneType, class Population = gen::NSGAPopulation<Candidate>>
 class CandidateFactory {
 
   using GenOp = Candidate (CandidateFactory::*)();
