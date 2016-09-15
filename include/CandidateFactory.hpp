@@ -1,6 +1,9 @@
 namespace QGA {
 
-template<class Candidate, class Gene = typename Candidate::GeneType, class Population = gen::NSGAPopulation<Candidate>>
+template<
+  class Candidate,
+  class Gene = typename Candidate::GeneType,
+  class Population = gen::NSGAPopulation<Candidate>>
 class CandidateFactory {
 
   using GenOp = Candidate (CandidateFactory::*)();
@@ -27,11 +30,19 @@ public:
   }
 
   static NOINLINE Candidate genInit() {
-    const static double probTerm = 1/Config::expLengthIni;  // probability of termination; expLength = expected number of genes
+    // probability of termination; expLengthIni = expected number of genes
+    const static double probTerm = 1/Config::expLengthIni;
     static thread_local std::uniform_real_distribution<> dUni{0, 1};
-    static thread_local std::uniform_int_distribution<unsigned> dOp{0, Wrapper::gate_cnt - 1};
-    static thread_local std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
-    static thread_local std::uniform_int_distribution<unsigned> dCtrl{};
+    // distribution of possible gates
+    static thread_local std::uniform_int_distribution<unsigned>
+      dOp{0, Wrapper::gate_cnt - 1};
+    // distribution of targets
+    static thread_local std::uniform_int_distribution<unsigned>
+      dTgt{0, Config::nBit - 1};
+    // distribution of controls
+    static thread_local std::uniform_int_distribution<unsigned>
+      dCtrl{};
+
     std::vector<Gene> gt;
     gt.reserve(Config::expLengthIni);
     do {
@@ -54,7 +65,12 @@ public:
 
   static void normalizeWeights() {
     unsigned total = std::accumulate(weights.begin(), weights.end(), 0);
-    float factor = 1/Config::heurFactor * (float)func.size()*Config::popSize / total;
+    float factor = 1/Config::heurFactor
+      * (float)func.size()*Config::popSize
+      / total;
+    /* New average per genetic operation will be Config.popSize * inverse
+     * heurFactor (larger factor ⇒ smaller total at the start of generator ⇒
+     * more influence of each hit) */
     for(auto& w : weights)
       w *= factor;
   }
@@ -76,7 +92,8 @@ public:
     auto _flags = os.flags(std::ios_base::left | std::ios_base::fixed);
     auto _precision = os.precision(4);
     for(int i = 0; i < sz; i++)
-      os << std::setw(maxw+3) << func[i].second + ':' << weights[i] / total << '\n';
+      os << std::setw(maxw+3) << func[i].second + ':'
+         << weights[i] / total << '\n';
     os.flags(_flags);
     os.precision(_precision);
   }
@@ -120,7 +137,7 @@ private:
     auto gm = gt;
     unsigned pos = gen::rng() % sz;
     gm[pos] = Gene(gm[pos].gate(), gm[pos].target(),
-        gm[pos].control() ^ dCtrl(gen::rng));
+        gm[pos].control() ^ dCtrl(gen::rng)); // small change to previous
     return Candidate{std::move(gm)};
   }
 
@@ -132,7 +149,8 @@ private:
       return p;
     auto gm = gt;
     unsigned pos = gen::rng() % sz;
-    gm[pos] = Gene(dOp(gen::rng), dTgt(gen::rng), gm[pos].control() ^ dCtrl(gen::rng));
+    gm[pos] = Gene(dOp(gen::rng), dTgt(gen::rng), gm[pos].control()
+        ^ dCtrl(gen::rng)); // small change to the previous value
     return Candidate{std::move(gm)};
   }
 
@@ -174,7 +192,9 @@ private:
     gm.insert(gm.end(), gt.begin(), gt.begin() + pos1);
     gm.insert(gm.end(), ins.begin(), ins.end());
     gm.insert(gm.end(), gt.begin() + pos1, gt.begin() + pos2);
-    gm.insert(gm.end(), std::make_move_iterator(ins.rbegin()), std::make_move_iterator(ins.rend()));
+    gm.insert(gm.end(),
+        std::make_move_iterator(ins.rbegin()),
+        std::make_move_iterator(ins.rend()));
     gm.insert(gm.end(), gt.begin() + pos2, gt.end());
     return Candidate{std::move(gm)};
   }
