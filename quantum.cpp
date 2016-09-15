@@ -30,8 +30,7 @@ using GenCandidate = gen::Candidate<Candidate>;
 using CF = CandidateFactory<Candidate>;
 
 
-template<class C, class G>
-std::atomic_ulong CBase<C, G>::count{0};
+std::atomic_ulong CandidateCounter::count{0};
 
 template<>
 std::vector<unsigned> CF::weights{};
@@ -109,7 +108,7 @@ int main() {
   post = std::chrono::steady_clock::now();
   std::chrono::duration<double> dur = post - pre;
   std::cout << std::endl << "Run took " << dur.count() << " s (" << dur.count()/Config::nGen << " s/gen avg), " <<
-    Candidate::totalCount() << " candidates tested, best of run:" << std::endl;
+    CandidateCounter::total() << " candidates tested, best of run:" << std::endl;
 
   /* Dump the heuristic distribution */
   std::cout << "\nGenetic operator distribution:\n";

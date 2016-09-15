@@ -101,6 +101,24 @@ struct Fitness {
 }; // struct Fitness
 
 
+class CandidateCounter {
+
+  /* Total fitness() evaluation counter */
+  static std::atomic_ulong count;
+
+public:
+
+  static void hit() {
+    count++;
+  }
+
+  static unsigned long total() {
+    return count;
+  }
+
+}; // class CandidateCounter
+
+
 template<class Derived, class Gene>
 class CBase {
 
@@ -111,9 +129,6 @@ protected:
 private:
 
   int origin = -1;
-
-  /* Total fitness() evaluation counter */
-  static std::atomic_ulong count;
 
   const Derived& derived() const {
     return static_cast<const Derived&>(*this);
@@ -134,7 +149,7 @@ public:
       unsigned h = g.weight();
       cplx += h*h;
     }
-    count++;
+    CandidateCounter::hit();
     return {derived().error(), gt.size(), cplx};
   }
 
@@ -164,10 +179,6 @@ public:
 
   int getOrigin() const {
     return origin;
-  }
-
-  static unsigned long totalCount() {
-    return count;
   }
 
   template<class, class, class>
