@@ -93,7 +93,7 @@ public:
 
   std::string dump() const {
     std::ostringstream os{};
-    sim().t().raw_print(os);
+    sim().st().raw_print(os);
     return os.str();
   }
 

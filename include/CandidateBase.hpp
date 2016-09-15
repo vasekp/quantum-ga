@@ -38,12 +38,15 @@ public:
     auto first = c.gt.begin(), last = c.gt.end();
     for(auto it = first; it != last; it++) {
       if(it != first) os << ' ';
-      os << Wrapper::gate_name(it->gate()) << it->target()+1;
-      auto& ixv = it->ix_vector();
-      if(ixv.size()) {
+      os << Wrapper::gate_name(it->gate()) << it->target() + 1;
+      unsigned ctrl = it->controlDec();
+      if(ctrl) {
         os << '[';
-        for(auto ix : ixv)
-          os << ix;
+        for(unsigned i = 0; i < Config::nBit; i++) {
+          if(ctrl & 1)
+            os << i + 1;
+          ctrl >>= 1;
+        }
         os << ']';
       }
     }
