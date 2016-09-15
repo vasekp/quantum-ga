@@ -1,3 +1,13 @@
+#include <atomic>
+#include <string>
+
+/* Forward declarations */
+namespace Wrapper {
+  std::string gate_name(unsigned);
+}
+/* End forward declarations */
+
+
 namespace Config {
 
   const float selectBias = 1.0;
@@ -102,3 +112,75 @@ struct Fitness {
   }
 
 }; // struct Fitness
+
+
+template<class Derived>
+class CBase {
+
+protected:
+
+  std::vector<Gene> gt{};
+
+private:
+
+  int origin = -1;
+
+  /* Total fitness() evaluation counter */
+  static std::atomic_ulong count;
+
+  const Derived& derived() const {
+    return static_cast<const Derived&>(*this);
+  }
+
+public:
+
+  CBase(std::vector<Gene>&) = delete;
+
+  CBase(std::vector<Gene>&& gt_): gt(std::move(gt_)) { }
+
+  NOINLINE Fitness fitness() const {
+    /* Complexity = square sum of numbers of control bits per gate */
+    size_t cplx = 0;
+    for(const Gene& g : gt) {
+      unsigned h = g.weight();
+      cplx += h*h;
+    }
+    count++;
+    return {derived().error(), gt.size(), cplx};
+  }
+
+  friend std::ostream& operator<< (std::ostream& os, const CBase& c) {
+    auto first = c.gt.begin(), last = c.gt.end();
+    for(auto it = first; it != last; it++) {
+      if(it != first) os << ' ';
+      os << Wrapper::gate_name(it->gate()) << it->target()+1;
+      auto& ixv = it->ix_vector();
+      if(ixv.size()) {
+        os << '[';
+        for(auto ix : ixv)
+          os << ix;
+        os << ']';
+      }
+    }
+    return os;
+  }
+
+  const std::vector<Gene>& genotype() const {
+    return gt;
+  }
+
+  void setOrigin(int _origin) {
+    origin = _origin;
+  }
+
+  int getOrigin() const {
+    return origin;
+  }
+
+  static unsigned long totalCount() {
+    return count;
+  }
+
+  friend class CandidateFactory;
+
+}; // class Candidate

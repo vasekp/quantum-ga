@@ -1,56 +1,18 @@
 #include <iostream>
-#include <sstream>
-#include <cmath>
-#include <atomic>
 
 #include "genetic.hpp"
 #include "commons.hpp"
 #include "wrapper-qiclib.hpp"
 
 
-class Candidate : public Wrapper::CBase {
-
-  int origin = -1;
-  static std::atomic_ulong count;
-
-public:
-
-  using Wrapper::CBase::CBase;
-
-  NOINLINE Fitness fitness() const {
-    size_t cplx = 0;
-    for(const Gene& g : gt()) {
-      unsigned h = g.weight();
-      cplx += h*h;
-    }
-    count++;
-    return {Wrapper::CBase::error(), gt().size(), cplx};
-  }
-
-  void setOrigin(int _origin) {
-    origin = _origin;
-  }
-
-  int getOrigin() const {
-    return origin;
-  }
-
-  static unsigned long totalCount() {
-    return count;
-  }
-
-  friend class CandidateFactory;
-
-}; // class Candidate
-
-
-typedef gen::NSGAPopulation<Candidate> Population;
-typedef gen::Candidate<Candidate> GenCandidate;
+using Candidate = Wrapper::Candidate;
+using Population = gen::NSGAPopulation<Candidate>;
+using GenCandidate = gen::Candidate<Candidate>;
 
 
 class CandidateFactory {
 
-  typedef Candidate (CandidateFactory::*GenOp)();
+  using GenOp = Candidate (CandidateFactory::*)();
 
   std::uniform_real_distribution<> dUni{0, 1};
   std::uniform_int_distribution<unsigned> dOp{0, Wrapper::gate_cnt - 1};
@@ -114,7 +76,7 @@ public:
     float total = std::accumulate(weights.begin(), weights.end(), 0);
     int sz = func.size();
     /* Find the longest GenOp name */
-    typedef decltype(func)::value_type cmp;
+    using cmp = decltype(func)::value_type;
     auto max = std::max_element(func.begin(), func.end(),
         [](const cmp& v1, const cmp& v2) {
           return v1.second.length() < v2.second.length();
@@ -135,7 +97,7 @@ public:
 
   Candidate mAlterGate() {
     auto &p = get();
-    auto &gt = p.gt();
+    auto &gt = p.genotype();
     auto sz = gt.size();
     if(!sz)
       return p;
@@ -147,7 +109,7 @@ public:
 
   Candidate mAlterTarget() {
     auto &p = get();
-    auto &gt = p.gt();
+    auto &gt = p.genotype();
     auto sz = gt.size();
     if(!sz)
       return p;
@@ -159,7 +121,7 @@ public:
 
   Candidate mAlterControl() {
     auto &p = get();
-    auto &gt = p.gt();
+    auto &gt = p.genotype();
     auto sz = gt.size();
     if(!sz)
       return p;
@@ -172,7 +134,7 @@ public:
 
   Candidate mAlterSingle() {
     auto &p = get();
-    auto &gt = p.gt();
+    auto &gt = p.genotype();
     auto sz = gt.size();
     if(!sz)
       return p;
@@ -184,7 +146,7 @@ public:
 
   Candidate mAddSlice() {
     auto &p = get();
-    auto &gt = p.gt();
+    auto &gt = p.genotype();
     auto sz = gt.size();
     unsigned pos = gen::rng() % (sz + 1);
     std::vector<Gene> ins;
@@ -203,7 +165,7 @@ public:
 
   Candidate mAddPairs() {
     auto &p = get();
-    auto &gt = p.gt();
+    auto &gt = p.genotype();
     auto sz = gt.size();
     unsigned pos1 = gen::rng() % (sz + 1),
              pos2 = gen::rng() % (sz + 1);
@@ -227,7 +189,7 @@ public:
 
   Candidate mDeleteSlice() {
     auto &p = get();
-    auto &gt = p.gt();
+    auto &gt = p.genotype();
     auto sz = gt.size();
     if(!sz)
       return p;
@@ -244,7 +206,7 @@ public:
 
   Candidate mDeleteSliceShort() {
     auto &p = get();
-    auto &gt = p.gt();
+    auto &gt = p.genotype();
     auto sz = gt.size();
     if(!sz)
       return p;
@@ -261,7 +223,7 @@ public:
 
   Candidate mDeleteUniform() {
     auto &p = get();
-    auto gt = p.gt();
+    auto gt = p.genotype();
     std::vector<Gene> gm;
     gm.reserve(gt.size());
     for(auto& g : gt)
@@ -272,7 +234,7 @@ public:
 
   Candidate mSplitSwap2() {
     auto &p = get();
-    auto &gt = p.gt();
+    auto &gt = p.genotype();
     auto sz = gt.size();
     if(!sz)
       return p;
@@ -286,7 +248,7 @@ public:
 
   Candidate mSplitSwap4() {
     auto &p = get();
-    auto &gt = p.gt();
+    auto &gt = p.genotype();
     auto sz = gt.size();
     if(!sz)
       return p;
@@ -307,7 +269,7 @@ public:
 
   Candidate mSplitSwap5() {
     auto &p = get();
-    auto &gt = p.gt();
+    auto &gt = p.genotype();
     auto sz = gt.size();
     if(!sz)
       return p;
@@ -327,7 +289,7 @@ public:
 
   Candidate mReverseSlice() {
     auto &p = get();
-    auto &gt = p.gt();
+    auto &gt = p.genotype();
     auto sz = gt.size();
     if(!sz)
       return p;
@@ -346,8 +308,8 @@ public:
   Candidate crossover1() {
     auto &p1 = get(),
          &p2 = get();
-    auto &gt1 = p1.gt(),
-         &gt2 = p2.gt();
+    auto &gt1 = p1.genotype(),
+         &gt2 = p2.genotype();
     unsigned pos1 = gen::rng() % (gt1.size() + 1),
              pos2 = gen::rng() % (gt2.size() + 1);
     std::vector<Gene> gm;
@@ -360,8 +322,8 @@ public:
   Candidate crossover2() {
     auto &p1 = get(),
          &p2 = get();
-    auto &gt1 = p1.gt(),
-         &gt2 = p2.gt();
+    auto &gt1 = p1.genotype(),
+         &gt2 = p2.genotype();
     unsigned pos1l = gen::rng() % (gt1.size() + 1),
              pos1r = gen::rng() % (gt1.size() + 1),
              pos2l = gen::rng() % (gt2.size() + 1),
@@ -379,7 +341,8 @@ public:
 }; // class CandidateFactory
 
 
-std::atomic_ulong Candidate::count { 0 };
+template<class Candidate>
+std::atomic_ulong CBase<Candidate>::count{0};
 
 std::vector<unsigned> CandidateFactory::weights;
 

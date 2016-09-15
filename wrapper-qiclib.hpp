@@ -2,6 +2,9 @@
 #define ARMA_DONT_USE_WRAPPER
 
 #include "QIClib"
+#include <string>
+#include <cmath>
+#include <sstream>
 
 namespace Wrapper {
 
@@ -30,15 +33,15 @@ arma::cx_mat22 T {
 
 struct Gate {
   arma::cx_mat22 op;
-  char name;
+  std::string name;
 };
 
 std::vector<Gate> gates {
-  { H, 'H' },
-  { X, 'X' },
-  { Y, 'Y' },
-  { Z, 'Z' },
-  { T, 'T' }
+  { H, "H" },
+  { X, "X" },
+  { Y, "Y" },
+  { Z, "Z" },
+  { T, "T" }
 };
 
 arma::cx_vec out{};
@@ -46,34 +49,16 @@ arma::cx_vec out{};
 } // namespace internal
 
 
-class CBase {
+class Candidate : public ::CBase<Candidate> {
 
-  std::vector<Gene> _gt{};
+  using Base = ::CBase<Candidate>;
 
 public:
 
-  CBase(std::vector<Gene>&) = delete;
-
-  CBase(std::vector<Gene>&& gt): _gt(std::move(gt)) { }
+  using Base::Base;
 
   double error() const {
     return 1 - std::abs(arma::cdot(internal::out, sim()));
-  }
-
-  friend std::ostream& operator<< (std::ostream& os, const CBase& c) {
-    auto first = c.gt().begin(), last = c.gt().end();
-    for(auto it = first; it != last; it++) {
-      if(it != first) os << ' ';
-      os << internal::gates[it->gate()].name << it->target()+1;
-      auto& ixv = it->ix_vector();
-      if(ixv.size()) {
-        os << '[';
-        for(auto ix : ixv)
-          os << ix;
-        os << ']';
-      }
-    }
-    return os;
   }
 
   std::string dump() const {
@@ -82,15 +67,11 @@ public:
     return os.str();
   }
 
-  const std::vector<Gene>& gt() const {
-    return _gt;
-  }
-
 private:
 
   arma::cx_vec sim() const {
     arma::cx_vec psi = qic::mket({0}, {1 << Config::nBit});
-    for(const Gene& g : _gt) {
+    for(const Gene& g : gt) {
       /* convert std::vector<unsigned> to arma::uvec, adding 1 */
       auto& ixv = g.ix_vector();
       arma::uvec ixs(ixv.size());
@@ -110,6 +91,11 @@ private:
 
 
 const unsigned gate_cnt = internal::gates.size();
+
+
+std::string gate_name(unsigned ix) {
+  return internal::gates[ix].name;
+}
 
 
 void init() {
