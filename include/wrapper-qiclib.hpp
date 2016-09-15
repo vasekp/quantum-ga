@@ -1,3 +1,7 @@
+// allow only one wrapper
+#ifndef QGA_WRAPPER_HPP
+#define QGA_WRAPPER_HPP
+
 #define QICLIB_DONT_USE_NLOPT
 #define ARMA_DONT_USE_WRAPPER
 
@@ -124,3 +128,5 @@ void init() {
 }
 
 } // namespace Wrapper
+
+#endif // !defined QGA_WRAPPER_HPP

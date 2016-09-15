@@ -1,3 +1,6 @@
+#ifndef QGA_COMMONS_HPP
+#define QGA_COMMONS_HPP
+
 #include <atomic>
 #include <string>
 #include <iomanip>
@@ -25,3 +28,5 @@ namespace Wrapper {
 #include "CandidateCounter.hpp"
 #include "CandidateBase.hpp"
 #include "CandidateFactory.hpp"
+
+#endif // !defined QGA_COMMONS_HPP
