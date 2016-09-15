@@ -1,3 +1,5 @@
+namespace QGA {
+
 class CandidateCounter {
 
   /* Total fitness() evaluation counter */
@@ -14,3 +16,5 @@ public:
   }
 
 }; // class CandidateCounter
+
+} // namespace QGA

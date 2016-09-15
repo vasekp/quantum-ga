@@ -53,7 +53,7 @@ arma::cx_vec out{};
 } // namespace internal
 
 
-class Gene : public ::GeneBase {
+class Gene : public QGA::GeneBase {
 
   arma::uvec ixs;
 
@@ -79,9 +79,9 @@ public:
 }; // class Gene
 
 
-class Candidate : public ::CandidateBase<Candidate, Gene> {
+class Candidate : public QGA::CandidateBase<Candidate, Gene> {
 
-  using Base = ::CandidateBase<Candidate, Gene>;
+  using Base = QGA::CandidateBase<Candidate, Gene>;
 
 public:
 

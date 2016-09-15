@@ -1,3 +1,5 @@
+namespace QGA {
+
 template<class Candidate, class Gene = typename Candidate::GeneType, class Population = gen::NSGAPopulation<Candidate>>
 class CandidateFactory {
 
@@ -79,7 +81,8 @@ public:
     os.precision(_precision);
   }
 
-  private:
+private:
+
   const Candidate& get() {
     return pop.NSGASelect(Config::selectBias);
   }
@@ -328,3 +331,5 @@ public:
   }
 
 }; // class CandidateFactory
+
+} // namespace QGA

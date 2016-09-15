@@ -1,3 +1,5 @@
+namespace QGA {
+
 class GeneBase {
 
   unsigned op;      // which gate to use (see Glogals::gates)
@@ -55,3 +57,5 @@ public:
   }
 
 }; // class GeneBase
+
+} // namespace QGA

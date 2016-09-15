@@ -1,3 +1,5 @@
+namespace QGA {
+
 template<class Derived, class Gene>
 class CandidateBase {
 
@@ -64,3 +66,5 @@ public:
   friend class CandidateFactory;
 
 }; // class CandidateBase
+
+} // namespace QGA

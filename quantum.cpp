@@ -28,31 +28,31 @@ namespace Config {
 using Candidate = Wrapper::Candidate;
 using Population = gen::NSGAPopulation<Candidate>;
 using GenCandidate = gen::Candidate<Candidate>;
-using CF = CandidateFactory<Candidate>;
+using CandidateFactory = QGA::CandidateFactory<Candidate>;
 
 
-std::atomic_ulong CandidateCounter::count{0};
-
-template<>
-std::vector<unsigned> CF::weights{};
+std::atomic_ulong QGA::CandidateCounter::count{0};
 
 template<>
-const std::vector<std::pair<CF::GenOp, std::string>> CF::func {
-    { &CF::mAlterGate,         "MGate" },
-    { &CF::mAlterTarget,       "MTarget" },
-    { &CF::mAlterControl,      "MControl" },
-    //{ &CF::mAlterSingle,       "MSingle" },
-    { &CF::mAddSlice,          "AddSlice" },
-    { &CF::mAddPairs,          "AddPairs" },
-    { &CF::mDeleteSlice,       "DelSlice" },
-    { &CF::mDeleteSliceShort,  "DelShort" },
-    //{ &CF::mDeleteUniform,     "DelUnif" },
-    //{ &CF::mSplitSwap2,        "SpltSwp2"  },
-    { &CF::mSplitSwap4,        "SpltSwp4"  },
-    { &CF::mSplitSwap5,        "SpltSwp5"  },
-    //{ &CF::mReverseSlice,      "InvSlice" },
-    { &CF::crossover1,         "C/Over1" },
-    { &CF::crossover2,         "C/Over2" },
+std::vector<unsigned> CandidateFactory::weights{};
+
+template<>
+const std::vector<std::pair<CandidateFactory::GenOp, std::string>> CandidateFactory::func {
+    { &CandidateFactory::mAlterGate,         "MGate" },
+    { &CandidateFactory::mAlterTarget,       "MTarget" },
+    { &CandidateFactory::mAlterControl,      "MControl" },
+    //{ &CandidateFactory::mAlterSingle,       "MSingle" },
+    { &CandidateFactory::mAddSlice,          "AddSlice" },
+    { &CandidateFactory::mAddPairs,          "AddPairs" },
+    { &CandidateFactory::mDeleteSlice,       "DelSlice" },
+    { &CandidateFactory::mDeleteSliceShort,  "DelShort" },
+    //{ &CandidateFactory::mDeleteUniform,     "DelUnif" },
+    //{ &CandidateFactory::mSplitSwap2,        "SpltSwp2"  },
+    { &CandidateFactory::mSplitSwap4,        "SpltSwp4"  },
+    { &CandidateFactory::mSplitSwap5,        "SpltSwp5"  },
+    //{ &CandidateFactory::mReverseSlice,      "InvSlice" },
+    { &CandidateFactory::crossover1,         "C/Over1" },
+    { &CandidateFactory::crossover2,         "C/Over2" },
   };
 
 
@@ -67,7 +67,7 @@ int main() {
   std::chrono::time_point<std::chrono::steady_clock> pre, post;
   pre = std::chrono::steady_clock::now();
 
-  Population pop{Config::popSize, [&] { return CF::genInit(); }};
+  Population pop{Config::popSize, [&] { return CandidateFactory::genInit(); }};
 
   for(int gen = 0; gen < Config::nGen; gen++) {
 
@@ -79,7 +79,7 @@ int main() {
     /* Top up to popSize2 candidates, precomputing fitnesses */
     Population pop2{Config::popSize2};
     pop.precompute();
-    CF cf{pop};
+    CandidateFactory cf{pop};
     pop2.add(Config::popSize2 - nd, [&]() -> const Candidate { return cf.getNew(); }, true);
 
     /* Merge the nondominated subset of the previous population */
@@ -87,7 +87,7 @@ int main() {
     pop = std::move(pop2);
 
     for(auto& c : pop.front().randomSelect(Config::popSize))
-      CF::hit(c.getOrigin());
+      CandidateFactory::hit(c.getOrigin());
     pop.prune([](const GenCandidate& a, const GenCandidate& b) -> bool {
       return a.fitness() == b.fitness();
       });
@@ -102,18 +102,18 @@ int main() {
     std::cout << std::endl;
 
     /* Make older generations matter less in the choice of gen. op. */
-    CF::normalizeWeights();
+    CandidateFactory::normalizeWeights();
 
   }
 
   post = std::chrono::steady_clock::now();
   std::chrono::duration<double> dur = post - pre;
   std::cout << std::endl << "Run took " << dur.count() << " s (" << dur.count()/Config::nGen << " s/gen avg), " <<
-    CandidateCounter::total() << " candidates tested, best of run:" << std::endl;
+    QGA::CandidateCounter::total() << " candidates tested, best of run:" << std::endl;
 
   /* Dump the heuristic distribution */
   std::cout << "\nGenetic operator distribution:\n";
-  CF::dumpWeights(std::cout);
+  CandidateFactory::dumpWeights(std::cout);
 
   /* List results */
   auto nondom = pop.front();

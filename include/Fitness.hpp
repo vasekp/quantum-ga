@@ -1,3 +1,5 @@
+namespace QGA {
+
 struct Fitness {
 
   double error;
@@ -17,3 +19,5 @@ struct Fitness {
   }
 
 }; // struct Fitness
+
+} // namespace QGA
