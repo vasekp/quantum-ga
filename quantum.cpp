@@ -3,8 +3,14 @@
 #include "genetic.hpp"
 
 #include "include/commons.hpp"
-//#include "include/wrapper-qpp.hpp"
+
+#ifdef USE_QPP
+#include "include/wrapper-qpp.hpp"
+#elif defined USE_QICLIB
 #include "include/wrapper-qiclib.hpp"
+#else
+#error Either USE_QPP or USE_QICLIB needed.
+#endif
 
 namespace Config {
 
@@ -21,7 +27,7 @@ namespace Config {
   const size_t popSize2 = 500;
 
   // Number of generations (constant)
-  const int nGen = 50;
+  const int nGen = 100;
 
   // Expected curcuit depth in 0th generation
   const float expLengthIni = 30;
