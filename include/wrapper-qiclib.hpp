@@ -32,7 +32,7 @@ arma::cx_mat22 Z {
 };
 
 arma::cx_mat22 T {
-  1, 0, 0, {0,1}
+  1, 0, 0, {1/std::sqrt(2), 1/std::sqrt(2)}
 };
 
 struct Gate {
