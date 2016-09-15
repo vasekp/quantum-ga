@@ -4,6 +4,24 @@
 #include "commons.hpp"
 #include "wrapper-qiclib.hpp"
 
+namespace Config {
+
+  const float selectBias = 1.0;
+  const size_t popSize = 10;
+  const size_t popSize2 = 100;
+  const int nGen = 50;
+
+  const float expLengthIni = 30;      // expected length of circuits in 0th generation
+  const float expLengthAdd = 1.5;     // expected length of gates inserted in mutation
+  const float pDeleteUniform = 0.10;  // probability of single gate deletion
+
+  const float heurFactor = 0.15;      // how much prior success of genetic ops should influence future choices
+
+  const float pControl = 0.25;        // how much each bit is likely to be a control bit at gate creation
+
+  const unsigned nBit = 3;
+
+} // namespace Config
 
 using Candidate = Wrapper::Candidate;
 using Population = gen::NSGAPopulation<Candidate>;

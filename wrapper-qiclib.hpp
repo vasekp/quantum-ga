@@ -70,7 +70,7 @@ public:
 private:
 
   arma::cx_vec sim() const {
-    arma::cx_vec psi = qic::mket({0}, {1 << Config::nBit});
+    arma::cx_vec psi = qic::mket({0}, {arma::uword(1) << Config::nBit});
     for(const Gene& g : gt) {
       /* convert std::vector<unsigned> to arma::uvec, adding 1 */
       auto& ixv = g.ix_vector();
@@ -99,7 +99,7 @@ std::string gate_name(unsigned ix) {
 
 
 void init() {
-  internal::out = qic::mket({3}, {1 << Config::nBit});
+  internal::out = qic::mket({3}, {arma::uword(1) << Config::nBit});
 }
 
 } // namespace Wrapper

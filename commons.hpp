@@ -2,30 +2,15 @@
 #include <string>
 
 /* Forward declarations */
+namespace Config {
+  extern const unsigned nBit;
+  extern const float pControl;
+}
+
 namespace Wrapper {
   std::string gate_name(unsigned);
 }
 /* End forward declarations */
-
-
-namespace Config {
-
-  const float selectBias = 1.0;
-  const size_t popSize = 10;
-  const size_t popSize2 = 100;
-  const int nGen = 50;
-
-  const float expLengthIni = 30;      // expected length of circuits in 0th generation
-  const float expLengthAdd = 1.5;     // expected length of gates inserted in mutation
-  const float pDeleteUniform = 0.10;  // probability of single gate deletion
-
-  const float heurFactor = 0.15;      // how much prior success of genetic ops should influence future choices
-
-  const float pControl = 0.25;        // how much each bit is likely to be a control bit at gate creation
-
-  const int nBit = 3;
-
-} // namespace Config
 
 
 class Gene {
@@ -46,7 +31,7 @@ public:
      * probability of 1 in each position is given by Config::pControl. A value
      * less than 0.5 means that plain NOTs and C-NOTs will be generated more
      * often than CC-NOTs and higher. */
-    for(int i = 0; i < Config::nBit - 1; i++) {
+    for(unsigned i = 0; i < Config::nBit - 1; i++) {
       ctrl <<= 1;
       if(c < Config::pControl) {
         ctrl |= 1;
@@ -63,7 +48,7 @@ public:
         |
       (ctrl & ((1 << tgt) - 1));  // keep bits right of tgt
     ixs.reserve(Config::nBit);
-    for(int i = 0; i < Config::nBit; i++) {
+    for(unsigned i = 0; i < Config::nBit; i++) {
       if(ctrl & 1)
         ixs.push_back(i);
       ctrl >>= 1;
