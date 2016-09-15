@@ -1,5 +1,5 @@
 PROGS = quantum
-HEADERS = commons.hpp wrapper-qiclib.hpp
+HEADERS = include/*.hpp
 
 all: CXXFLAGS += -O3
 debug: CXXFLAGS += -O1 -g

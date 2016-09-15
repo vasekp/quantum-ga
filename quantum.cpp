@@ -1,8 +1,9 @@
 #include <iostream>
 
 #include "genetic.hpp"
-#include "commons.hpp"
-#include "wrapper-qiclib.hpp"
+
+#include "include/commons.hpp"
+#include "include/wrapper-qiclib.hpp"
 
 namespace Config {
 

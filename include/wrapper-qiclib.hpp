@@ -75,9 +75,9 @@ public:
 }; // class Gene
 
 
-class Candidate : public ::CBase<Candidate, Gene> {
+class Candidate : public ::CandidateBase<Candidate, Gene> {
 
-  using Base = ::CBase<Candidate, Gene>;
+  using Base = ::CandidateBase<Candidate, Gene>;
 
 public:
 
@@ -108,7 +108,7 @@ private:
     return psi;
   }
 
-}; // class CBase
+}; // class Candidate
 
 
 const unsigned gate_cnt = internal::gates.size();
