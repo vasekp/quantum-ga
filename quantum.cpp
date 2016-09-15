@@ -3,6 +3,7 @@
 #include "genetic.hpp"
 
 #include "include/commons.hpp"
+//#include "include/wrapper-qpp.hpp"
 #include "include/wrapper-qiclib.hpp"
 
 namespace Config {
@@ -17,7 +18,7 @@ namespace Config {
   const size_t popSize = 10;
 
   // Internal population size
-  const size_t popSize2 = 100;
+  const size_t popSize2 = 500;
 
   // Number of generations (constant)
   const int nGen = 50;
