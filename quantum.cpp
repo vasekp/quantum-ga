@@ -130,7 +130,9 @@ int main() {
 
     /* Summarize */
     nondom = pop.front();
-    std::cout << "Gen " << gen << ": " << nondom.size() << " nondominated";
+    std::cout << "Gen " << gen << ": "
+      << pop.size() << " unique fitnesses, "
+      << nondom.size() << " nondominated";
     if(nondom.size() > 0) {
       auto& e = nondom.randomSelect();
       std::cout << ", e.g. " << e.fitness() << ' ' << e;
@@ -155,12 +157,19 @@ int main() {
 
   /* List results */
   auto nondom = pop.front();
-  std::cout << '\n' << nondom.size() << " nondominated candidates, ";
-  nondom.prune([](const GenCandidate& a, const GenCandidate& b) -> bool {
-      return a.fitness() == b.fitness();
-    });
-  std::cout << nondom.size() << " unique fitnesses:\n";
-  for(auto& c : nondom) {
+  std::vector<GenCandidate> vec{};
+
+  /* Sort by error, from high to low */
+  vec.reserve(nondom.size());
+  for(auto& c : nondom)
+    vec.push_back(c);
+  std::sort(vec.begin(), vec.end(),
+      [](const GenCandidate& a, const GenCandidate&b ) -> bool {
+        return a.fitness().error > b.fitness().error;
+      }
+  );
+  std::cout << '\n' << vec.size() << " nondominated candidates:\n";
+  for(auto& c : vec) {
     std::cout << c.fitness() << ' ' << c << ": " << c.dump();
   }
 }
