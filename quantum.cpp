@@ -100,6 +100,8 @@ int main() {
 
   Population pop{Config::popSize, [&] { return CandidateFactory::genInit(); }};
 
+  std::cout << std::fixed << std::setprecision(4);
+
   for(int gen = 0; gen < Config::nGen; gen++) {
 
     /* Find the nondominated subset and trim down do popSize */
@@ -170,6 +172,6 @@ int main() {
   );
   std::cout << '\n' << vec.size() << " nondominated candidates:\n";
   for(auto& c : vec) {
-    std::cout << c.fitness() << ' ' << c << ": " << c.dump();
+    std::cout << c.fitness() << ' ' << c << ": " << c.dump(std::cout);
   }
 }
