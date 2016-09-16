@@ -91,8 +91,10 @@ public:
     return 1 - std::abs(arma::cdot(internal::out, sim()));
   }
 
-  std::string dump() const {
+  std::string dump(const std::ostream& ex) const {
     std::ostringstream os{};
+    os.flags(ex.flags());
+    os.precision(ex.precision());
     sim().st().raw_print(os);
     return os.str();
   }

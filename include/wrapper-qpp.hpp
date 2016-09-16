@@ -68,10 +68,12 @@ public:
     return 1 - std::abs(sim().dot(internal::out));
   }
 
-  std::string dump() const {
+  std::string dump(const std::ostream& ex) const {
     std::ostringstream os{};
+    os.flags(ex.flags());
+    os.precision(ex.precision());
     Eigen::IOFormat fmt(Eigen::StreamPrecision, Eigen::DontAlignCols,
-        ", ", ", "); // row, col separators
+        " ", " "); // row, col separators
     os << sim().format(fmt) << '\n';
     return os.str();
   }
