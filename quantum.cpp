@@ -69,10 +69,7 @@ const std::vector<
   std::pair<CandidateFactory::GenOp,
   std::string>>
 CandidateFactory::func {
-    { &CandidateFactory::mAlterGate,         "MGate" },
-    { &CandidateFactory::mAlterTarget,       "MTarget" },
-    { &CandidateFactory::mAlterControl,      "MControl" },
-  //{ &CandidateFactory::mAlterSingle,       "MSingle" },
+    { &CandidateFactory::mAlterSingle,       "MSingle" },
     { &CandidateFactory::mAddSlice,          "AddSlice" },
     { &CandidateFactory::mAddPairs,          "AddPairs" },
     { &CandidateFactory::mDeleteSlice,       "DelSlice" },

@@ -35,21 +35,8 @@ public:
   }
 
   friend std::ostream& operator<< (std::ostream& os, const CandidateBase& c) {
-    auto first = c.gt.begin(), last = c.gt.end();
-    for(auto it = first; it != last; it++) {
-      if(it != first) os << ' ';
-      os << Wrapper::gate_name(it->gate()) << it->target() + 1;
-      unsigned ctrl = it->controlDec();
-      if(ctrl) {
-        os << '[';
-        for(unsigned i = 0; i < Config::nBit; i++) {
-          if(ctrl & 1)
-            os << i + 1;
-          ctrl >>= 1;
-        }
-        os << ']';
-      }
-    }
+    for(const GeneType& g : c.gt)
+      os << g << ' ';
     return os;
   }
 
@@ -65,7 +52,7 @@ public:
     return origin;
   }
 
-  template<class, class, class>
+  template<class, class>
   friend class CandidateFactory;
 
 }; // class CandidateBase

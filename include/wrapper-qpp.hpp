@@ -32,11 +32,16 @@ qpp::ket out{};
 } // namespace internal
 
 
+class GeneFactory;
+
+
 class Gene : public QGA::GeneBase {
 
   std::vector<qpp::idx> ixv{};
 
 public:
+
+  using Factory = GeneFactory;
 
   NOINLINE Gene(unsigned op_, unsigned target_, unsigned control_):
       GeneBase(op_, target_, control_) {
@@ -53,7 +58,39 @@ public:
     return ixv;
   }
 
+  friend std::ostream& operator<< (std::ostream& os, const Gene& g) {
+    os << internal::gates[g.gate()].name << g.target() + 1;
+    if(g.ixv.size()) {
+      os << '[';
+      for(auto ctrl : g.ixv)
+        os << ctrl + 1;
+      os << ']';
+    }
+    return os;
+  }
+
 }; // class Gene
+
+
+class GeneFactory {
+
+  // distribution of possible gates
+  std::uniform_int_distribution<unsigned> dOp{0,
+    (unsigned)internal::gates.size() - 1};
+  // distribution of targets
+  std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
+  // distribution of controls
+  std::uniform_int_distribution<unsigned> dCtrl{};
+
+public:
+
+  GeneFactory() { }
+
+  Gene getNew() {
+    return {dOp(gen::rng), dTgt(gen::rng), dCtrl(gen::rng)};
+  }
+
+}; // class GeneFactory
 
 
 class Candidate : public QGA::CandidateBase<Candidate, Gene> {
