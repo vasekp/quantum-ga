@@ -35,27 +35,44 @@ qpp::ket out{};
 class GeneFactory;
 
 
-class Gene : public QGA::GeneBase {
+class Gene {
 
+  unsigned op;
+  unsigned tgt;
+  unsigned hw;
   std::vector<qpp::idx> ixv{};
 
 public:
 
   using Factory = GeneFactory;
 
-  NOINLINE Gene(unsigned op_, unsigned target_, unsigned control_):
-      GeneBase(op_, target_, control_) {
+  NOINLINE Gene(unsigned op_, unsigned tgt_, unsigned control_enc):
+      op(op_), tgt(tgt_), hw(0) {
     ixv.reserve(Config::nBit);
-    unsigned ctrl = controlDec();
+    unsigned ctrl = QGA::GeneTools::ctrlBitString(control_enc, tgt);
     for(unsigned i = 0; i < Config::nBit; i++) {
-      if(ctrl & 1)
+      if(ctrl & 1) {
         ixv.push_back(i);
+        hw++;
+      }
       ctrl >>= 1;
     }
   }
 
-  const std::vector<qpp::idx> ix_vector() const {
+  const std::vector<qpp::idx>& ix_vector() const {
     return ixv;
+  }
+
+  unsigned target() const {
+    return tgt;
+  }
+
+  unsigned gate() const {
+    return op;
+  }
+
+  unsigned weight() const {
+    return hw;
   }
 
   friend std::ostream& operator<< (std::ostream& os, const Gene& g) {

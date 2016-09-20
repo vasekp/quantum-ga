@@ -23,7 +23,7 @@ namespace Wrapper {
 }
 /* End forward declarations */
 
-#include "GeneBase.hpp"
+#include "GeneTools.hpp"
 #include "Fitness.hpp"
 #include "CandidateCounter.hpp"
 #include "CandidateBase.hpp"

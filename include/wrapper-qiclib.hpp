@@ -56,33 +56,50 @@ arma::cx_vec out{};
 class GeneFactory;
 
 
-class Gene : public QGA::GeneBase {
+class Gene {
 
+  unsigned op;
+  unsigned tgt;
+  unsigned hw;
   arma::uvec ixs;
 
 public:
 
   using Factory = GeneFactory;
 
-  NOINLINE Gene(unsigned op_, unsigned target_, unsigned control_):
-      GeneBase(op_, target_, control_) {
+  NOINLINE Gene(unsigned op_, unsigned tgt_, unsigned control_enc):
+      op(op_), tgt(tgt_), hw(0) {
     std::vector<arma::uword> ixv;
     ixv.reserve(Config::nBit);
-    unsigned ctrl = controlDec();
+    unsigned ctrl = QGA::GeneTools::ctrlBitString(control_enc, tgt - 1);
     for(unsigned i = 0; i < Config::nBit; i++) {
-      if(ctrl & 1)
+      if(ctrl & 1) {
         ixv.push_back(i + 1);
+        hw++;
+      }
       ctrl >>= 1;
     }
     ixs = ixv;
   }
 
-  const arma::uvec ix_vector() const {
+  const arma::uvec& ix_vector() const {
     return ixs;
   }
 
+  unsigned target() const {
+    return tgt;
+  }
+
+  unsigned gate() const {
+    return op;
+  }
+
+  unsigned weight() const {
+    return hw;
+  }
+
   friend std::ostream& operator<< (std::ostream& os, const Gene& g) {
-    os << internal::gates[g.gate()].name << g.target() + 1;
+    os << internal::gates[g.gate()].name << g.target();
     if(g.ixs.size()) {
       os << '[';
       for(auto ctrl : g.ixs)
@@ -101,7 +118,7 @@ class GeneFactory {
   std::uniform_int_distribution<unsigned> dOp{0,
     (unsigned)internal::gates.size() - 1};
   // distribution of targets
-  std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
+  std::uniform_int_distribution<unsigned> dTgt{1, Config::nBit};
   // distribution of controls
   std::uniform_int_distribution<unsigned> dCtrl{};
 
@@ -146,7 +163,7 @@ private:
           psi,                          // state
           internal::gates[g.gate()].op, // operator
           g.ix_vector(),                // arma::uvec of control systems
-          {1 + g.target()});            // arma::uvec of target systems
+          {g.target()});                // arma::uvec of target systems
     }
     return psi;
   }
