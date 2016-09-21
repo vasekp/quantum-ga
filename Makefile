@@ -16,7 +16,7 @@ TARGETS += $(addsuffix .d,$(TARGETS))
 
 default: qic
 
-qpp qic qpp.d qic.d debug: $(PROGS) $(HEADERS)
+qpp qic qpp.d qic.d: $(PROGS) $(HEADERS)
 
 CXXFLAGS += -std=c++11 -march=native
 CXXFLAGS += -pedantic -Wall -Wextra #-Weffc++
