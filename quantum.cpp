@@ -69,18 +69,15 @@ const std::vector<
   std::pair<CandidateFactory::GenOp,
   std::string>>
 CandidateFactory::func {
-    { &CandidateFactory::mAlterSingle,       "MSingle" },
-    { &CandidateFactory::mAddSlice,          "AddSlice" },
-    { &CandidateFactory::mAddPairs,          "AddPairs" },
-    { &CandidateFactory::mDeleteSlice,       "DelSlice" },
-    { &CandidateFactory::mDeleteSliceShort,  "DelShort" },
-  //{ &CandidateFactory::mDeleteUniform,     "DelUnif" },
-  //{ &CandidateFactory::mSplitSwap2,        "SpltSwp2"  },
-    { &CandidateFactory::mSplitSwap4,        "SpltSwp4"  },
-    { &CandidateFactory::mSplitSwap5,        "SpltSwp5"  },
-  //{ &CandidateFactory::mReverseSlice,      "InvSlice" },
-    { &CandidateFactory::crossover1,         "C/Over1" },
-    { &CandidateFactory::crossover2,         "C/Over2" },
+    { &CandidateFactory::mAlterSingle,    "MSingle" },
+    { &CandidateFactory::mAddSlice,       "AddSlice" },
+    { &CandidateFactory::mAddPairs,       "AddPairs" },
+    { &CandidateFactory::mDeleteSlice,    "DelSlice" },
+  //{ &CandidateFactory::mDeleteUniform,  "DelUnif" },
+    { &CandidateFactory::mSplitSwap,      "SpltSwp" },
+  //{ &CandidateFactory::mReverseSlice,   "InvSlice" },
+    { &CandidateFactory::crossover1,      "C/Over1" },
+    { &CandidateFactory::crossover2,      "C/Over2" },
   };
 
 

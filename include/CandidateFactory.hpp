@@ -161,23 +161,6 @@ private:
     auto sz = gt.size();
     if(!sz)
       return p;
-    unsigned pos1 = gen::rng() % (sz + 1),
-             pos2 = gen::rng() % (sz + 1);
-    if(pos2 < pos1)
-      std::swap(pos1, pos2);
-    std::vector<Gene> gm;
-    gm.reserve(sz - (pos2 - pos1));
-    gm.insert(gm.end(), gt.begin(), gt.begin() + pos1);
-    gm.insert(gm.end(), gt.begin() + pos2, gt.end());
-    return Candidate{std::move(gm)};
-  }
-
-  Candidate mDeleteSliceShort() {
-    auto &p = get();
-    auto &gt = p.genotype();
-    auto sz = gt.size();
-    if(!sz)
-      return p;
     unsigned pos1 = gen::rng() % (sz + 1);
     /* Integer with the same distribution in mAddSlice */
     int len = 1 + floor(log(dUni(gen::rng)) / log(1 - 1/Config::expLengthAdd));
@@ -200,42 +183,7 @@ private:
     return Candidate{std::move(gm)};
   }
 
-  Candidate mSplitSwap2() {
-    auto &p = get();
-    auto &gt = p.genotype();
-    auto sz = gt.size();
-    if(!sz)
-      return p;
-    unsigned pos = gen::rng() % (sz + 1);
-    std::vector<Gene> gm;
-    gm.reserve(sz);
-    gm.insert(gm.end(), gt.begin() + pos, gt.end());
-    gm.insert(gm.end(), gt.begin(), gt.begin() + pos);
-    return Candidate{std::move(gm)};
-  }
-
-  Candidate mSplitSwap4() {
-    auto &p = get();
-    auto &gt = p.genotype();
-    auto sz = gt.size();
-    if(!sz)
-      return p;
-    unsigned pos1 = gen::rng() % (sz + 1),
-             pos2 = gen::rng() % (sz + 1),
-             pos3 = gen::rng() % (sz + 1);
-    if(pos2 < pos1) std::swap(pos1, pos2);
-    if(pos3 < pos1) std::swap(pos1, pos3);
-    if(pos3 < pos2) std::swap(pos2, pos3);
-    std::vector<Gene> gm;
-    gm.reserve(sz);
-    gm.insert(gm.end(), gt.begin(), gt.begin() + pos1);
-    gm.insert(gm.end(), gt.begin() + pos2, gt.begin() + pos3);
-    gm.insert(gm.end(), gt.begin() + pos1, gt.begin() + pos2);
-    gm.insert(gm.end(), gt.begin() + pos3, gt.end());
-    return Candidate{std::move(gm)};
-  }
-
-  Candidate mSplitSwap5() {
+  Candidate mSplitSwap() {
     auto &p = get();
     auto &gt = p.genotype();
     auto sz = gt.size();
