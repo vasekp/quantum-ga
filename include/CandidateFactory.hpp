@@ -145,6 +145,9 @@ private:
     gm.insert(gm.end(), gt.begin(), gt.begin() + pos1);
     gm.insert(gm.end(), ins.begin(), ins.end());
     gm.insert(gm.end(), gt.begin() + pos1, gt.begin() + pos2);
+    for(auto& g : ins)
+      // don't really move, just mark with a && for disposal
+      factory.invert(std::move(g));
     gm.insert(gm.end(),
         std::make_move_iterator(ins.rbegin()),
         std::make_move_iterator(ins.rend()));
@@ -265,6 +268,11 @@ private:
     std::vector<Gene> gm;
     gm.reserve(sz);
     gm.insert(gm.end(), gt.begin(), gt.begin() + pos1);
+    {
+      auto end = gt.begin() + pos2;
+      for(auto it = gt.begin() + pos1; it != end; it++)
+        factory.invert(std::move(*it));
+    }
     gm.insert(gm.end(), gt.rbegin() + sz - pos2, gt.rbegin() + sz - pos1);
     gm.insert(gm.end(), gt.begin() + pos2, gt.end());
     return Candidate{std::move(gm)};

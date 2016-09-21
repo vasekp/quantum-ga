@@ -35,17 +35,23 @@ arma::cx_mat22 T {
   1, 0, 0, {1/std::sqrt(2), 1/std::sqrt(2)}
 };
 
+arma::cx_mat22 Ti {
+  1, 0, 0, {1/std::sqrt(2), -1/std::sqrt(2)}
+};
+
 struct Gate {
   arma::cx_mat22 op;
   std::string name;
+  int inv;
 };
 
 std::vector<Gate> gates {
-  { H, "H" },
-/*{ X, "X" },
-  { Y, "Y" },
-  { Z, "Z" },*/
-  { T, "T" }
+  { H, "H", 0 },
+/*{ X, "X", 0 },
+  { Y, "Y", 0 },
+  { Z, "Z", 0 },*/
+  { T, "T", +1 },
+  { Ti, "Ti", -1 }
 };
 
 arma::cx_vec out{};
@@ -62,6 +68,8 @@ class Gene {
   unsigned tgt;
   unsigned hw;
   arma::uvec ixs;
+
+  friend class GeneFactory;
 
 public:
 
@@ -90,8 +98,8 @@ public:
     return tgt;
   }
 
-  unsigned gate() const {
-    return op;
+  const internal::Gate& gate() const {
+    return internal::gates[op];
   }
 
   unsigned weight() const {
@@ -99,7 +107,7 @@ public:
   }
 
   friend std::ostream& operator<< (std::ostream& os, const Gene& g) {
-    os << internal::gates[g.gate()].name << g.target();
+    os << g.gate().name << g.target();
     if(g.ixs.size()) {
       os << '[';
       for(auto ctrl : g.ixs)
@@ -128,6 +136,17 @@ public:
 
   Gene getNew() {
     return {dOp(gen::rng), dTgt(gen::rng), dCtrl(gen::rng)};
+  }
+
+  Gene invert(const Gene& g) {
+    Gene ret = g;
+    ret.op += g.gate().inv;
+    return ret;
+  }
+
+  Gene&& invert(Gene&& g) {
+    g.op += g.gate().inv;
+    return std::move(g);
   }
 
 }; // class GeneFactory
@@ -160,10 +179,10 @@ private:
     for(const Gene& g : gt) {
       /* control-gate (QIClib) */
       psi = qic::apply_ctrl(
-          psi,                          // state
-          internal::gates[g.gate()].op, // operator
-          g.ix_vector(),                // arma::uvec of control systems
-          {g.target()});                // arma::uvec of target systems
+          psi,            // state
+          g.gate().op,    // operator
+          g.ix_vector(),  // arma::uvec of control systems
+          {g.target()});  // arma::uvec of target systems
     }
     return psi;
   }

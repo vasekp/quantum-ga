@@ -17,14 +17,16 @@ namespace internal {
 struct Gate {
   qpp::cmat op;
   std::string name;
+  int inv;
 };
 
 std::vector<Gate> gates {
-  { qpp::gt.H, "H" },
-/*{ qpp::gt.X, "X" },
-  { qpp::gt.Y, "Y" },
-  { qpp::gt.Z, "Z" },*/
-  { qpp::gt.T, "T" }
+  { qpp::gt.H, "H", 0 },
+/*{ qpp::gt.X, "X", 0 },
+  { qpp::gt.Y, "Y", 0 },
+  { qpp::gt.Z, "Z", 0 },*/
+  { qpp::gt.T, "T", +1 },
+  { qpp::gt.T.conjugate(), "Ti", -1 }
 };
 
 qpp::ket out{};
@@ -41,6 +43,8 @@ class Gene {
   unsigned tgt;
   unsigned hw;
   std::vector<qpp::idx> ixv{};
+
+  friend class GeneFactory;
 
 public:
 
@@ -67,8 +71,8 @@ public:
     return tgt;
   }
 
-  unsigned gate() const {
-    return op;
+  const internal::Gate& gate() const {
+    return internal::gates[op];
   }
 
   unsigned weight() const {
@@ -76,7 +80,7 @@ public:
   }
 
   friend std::ostream& operator<< (std::ostream& os, const Gene& g) {
-    os << internal::gates[g.gate()].name << g.target() + 1;
+    os << g.gate().name << g.target() + 1;
     if(g.ixv.size()) {
       os << '[';
       for(auto ctrl : g.ixv)
@@ -105,6 +109,17 @@ public:
 
   Gene getNew() {
     return {dOp(gen::rng), dTgt(gen::rng), dCtrl(gen::rng)};
+  }
+
+  Gene invert(const Gene& g) {
+    Gene ret = g;
+    ret.op += g.gate().inv;
+    return ret;
+  }
+
+  Gene&& invert(Gene&& g) {
+    g.op += g.gate().inv;
+    return std::move(g);
   }
 
 }; // class GeneFactory
@@ -140,10 +155,10 @@ private:
     for(const Gene& g : gt) {
       /* control-gate (QIClib) */
       psi = qpp::applyCTRL(
-          psi,                          // state
-          internal::gates[g.gate()].op, // operator
-          g.ix_vector(),                // vector<qpp::idx> of control systems
-          {g.target()});                // vector<qpp:idx> of target systems
+          psi,            // state
+          g.gate().op,    // operator
+          g.ix_vector(),  // vector<qpp::idx> of control systems
+          {g.target()});  // vector<qpp:idx> of target systems
     }
     return psi;
   }
