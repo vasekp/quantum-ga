@@ -2,26 +2,25 @@ namespace QGA {
 
 template<
   class Candidate,
-  class Gene = typename Candidate::GeneType,
   class Population = gen::NSGAPopulation<Candidate>>
 class CandidateFactory {
 
   using GenOp = Candidate (CandidateFactory::*)();
+  using Gene = typename Candidate::GeneType;
+  using GeneFactory = typename Gene::Factory;
 
   std::uniform_real_distribution<> dUni{0, 1};
-  std::uniform_int_distribution<unsigned> dOp{0, Wrapper::gate_cnt - 1};
-  std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
-  std::uniform_int_distribution<unsigned> dCtrl{};
 
   static const std::vector<std::pair<GenOp, std::string>> func;
   static std::vector<unsigned> weights;
   std::discrete_distribution<> dFun{};
 
   Population& pop;
+  GeneFactory factory{};
 
 public:
 
-  CandidateFactory(Population& _pop): pop(_pop) {
+  CandidateFactory(Population& _pop): pop(_pop), factory{} {
     if(weights.size() == 0) {
       weights = std::vector<unsigned>(func.size(), 1);
       normalizeWeights();
@@ -33,21 +32,13 @@ public:
     // probability of termination; expLengthIni = expected number of genes
     const static double probTerm = 1/Config::expLengthIni;
     static thread_local std::uniform_real_distribution<> dUni{0, 1};
-    // distribution of possible gates
-    static thread_local std::uniform_int_distribution<unsigned>
-      dOp{0, Wrapper::gate_cnt - 1};
-    // distribution of targets
-    static thread_local std::uniform_int_distribution<unsigned>
-      dTgt{0, Config::nBit - 1};
-    // distribution of controls
-    static thread_local std::uniform_int_distribution<unsigned>
-      dCtrl{};
+    static GeneFactory staticFactory{};
 
     std::vector<Gene> gt;
     gt.reserve(Config::expLengthIni);
-    do {
-      gt.emplace_back(dOp(gen::rng), dTgt(gen::rng), dCtrl(gen::rng));
-    } while(dUni(gen::rng) > probTerm);
+    do
+      gt.push_back(staticFactory.getNew());
+    while(dUni(gen::rng) > probTerm);
     return Candidate{std::move(gt)};
   }
 
@@ -66,9 +57,9 @@ public:
   static void normalizeWeights() {
     unsigned total = std::accumulate(weights.begin(), weights.end(), 0);
     float factor = 1/Config::heurFactor
-      * (float)func.size()*Config::popSize
+      * (float)func.size()*Config::arSize
       / total;
-    /* New average per genetic operation will be Config.popSize * inverse
+    /* New average per genetic operation will be Config.arSize * inverse
      * heurFactor (larger factor ⇒ smaller total at the start of generator ⇒
      * more influence of each hit) */
     for(auto& w : weights)
@@ -104,43 +95,6 @@ private:
     return pop.NSGASelect(Config::selectBias);
   }
 
-  Candidate mAlterGate() {
-    auto &p = get();
-    auto &gt = p.genotype();
-    auto sz = gt.size();
-    if(!sz)
-      return p;
-    auto gm = gt;
-    unsigned pos = gen::rng() % sz;
-    gm[pos] = Gene(dOp(gen::rng), gm[pos].target(), gm[pos].control());
-    return Candidate{std::move(gm)};
-  }
-
-  Candidate mAlterTarget() {
-    auto &p = get();
-    auto &gt = p.genotype();
-    auto sz = gt.size();
-    if(!sz)
-      return p;
-    auto gm = gt;
-    unsigned pos = gen::rng() % sz;
-    gm[pos] = Gene(gm[pos].gate(), dTgt(gen::rng), gm[pos].control());
-    return Candidate{std::move(gm)};
-  }
-
-  Candidate mAlterControl() {
-    auto &p = get();
-    auto &gt = p.genotype();
-    auto sz = gt.size();
-    if(!sz)
-      return p;
-    auto gm = gt;
-    unsigned pos = gen::rng() % sz;
-    gm[pos] = Gene(gm[pos].gate(), gm[pos].target(),
-        gm[pos].control() ^ dCtrl(gen::rng)); // small change to previous
-    return Candidate{std::move(gm)};
-  }
-
   Candidate mAlterSingle() {
     auto &p = get();
     auto &gt = p.genotype();
@@ -149,8 +103,7 @@ private:
       return p;
     auto gm = gt;
     unsigned pos = gen::rng() % sz;
-    gm[pos] = Gene(dOp(gen::rng), dTgt(gen::rng), gm[pos].control()
-        ^ dCtrl(gen::rng)); // small change to the previous value
+    gm[pos] = factory.getNew();
     return Candidate{std::move(gm)};
   }
 
@@ -162,9 +115,9 @@ private:
     std::vector<Gene> ins;
     ins.reserve(Config::expLengthAdd);
     double probTerm = 1/Config::expLengthAdd;
-    do {
-      ins.emplace_back(dOp(gen::rng), dTgt(gen::rng), dCtrl(gen::rng));
-    } while(dUni(gen::rng) > probTerm);
+    do
+      ins.push_back(factory.getNew());
+    while(dUni(gen::rng) > probTerm);
     std::vector<Gene> gm;
     gm.reserve(sz + ins.size());
     gm.insert(gm.end(), gt.begin(), gt.begin() + pos);
@@ -184,14 +137,17 @@ private:
     std::vector<Gene> ins;
     ins.reserve(2*Config::expLengthAdd);
     double probTerm = 1/Config::expLengthAdd;
-    do {
-      ins.emplace_back(dOp(gen::rng), dTgt(gen::rng), dCtrl(gen::rng));
-    } while(dUni(gen::rng) > probTerm);
+    do
+      ins.push_back(factory.getNew());
+    while(dUni(gen::rng) > probTerm);
     std::vector<Gene> gm;
     gm.reserve(sz + 2*ins.size());
     gm.insert(gm.end(), gt.begin(), gt.begin() + pos1);
     gm.insert(gm.end(), ins.begin(), ins.end());
     gm.insert(gm.end(), gt.begin() + pos1, gt.begin() + pos2);
+    for(auto& g : ins)
+      // don't really move, just mark with a && for disposal
+      factory.invert(std::move(g));
     gm.insert(gm.end(),
         std::make_move_iterator(ins.rbegin()),
         std::make_move_iterator(ins.rend()));
@@ -200,23 +156,6 @@ private:
   }
 
   Candidate mDeleteSlice() {
-    auto &p = get();
-    auto &gt = p.genotype();
-    auto sz = gt.size();
-    if(!sz)
-      return p;
-    unsigned pos1 = gen::rng() % (sz + 1),
-             pos2 = gen::rng() % (sz + 1);
-    if(pos2 < pos1)
-      std::swap(pos1, pos2);
-    std::vector<Gene> gm;
-    gm.reserve(sz - (pos2 - pos1));
-    gm.insert(gm.end(), gt.begin(), gt.begin() + pos1);
-    gm.insert(gm.end(), gt.begin() + pos2, gt.end());
-    return Candidate{std::move(gm)};
-  }
-
-  Candidate mDeleteSliceShort() {
     auto &p = get();
     auto &gt = p.genotype();
     auto sz = gt.size();
@@ -244,42 +183,7 @@ private:
     return Candidate{std::move(gm)};
   }
 
-  Candidate mSplitSwap2() {
-    auto &p = get();
-    auto &gt = p.genotype();
-    auto sz = gt.size();
-    if(!sz)
-      return p;
-    unsigned pos = gen::rng() % (sz + 1);
-    std::vector<Gene> gm;
-    gm.reserve(sz);
-    gm.insert(gm.end(), gt.begin() + pos, gt.end());
-    gm.insert(gm.end(), gt.begin(), gt.begin() + pos);
-    return Candidate{std::move(gm)};
-  }
-
-  Candidate mSplitSwap4() {
-    auto &p = get();
-    auto &gt = p.genotype();
-    auto sz = gt.size();
-    if(!sz)
-      return p;
-    unsigned pos1 = gen::rng() % (sz + 1),
-             pos2 = gen::rng() % (sz + 1),
-             pos3 = gen::rng() % (sz + 1);
-    if(pos2 < pos1) std::swap(pos1, pos2);
-    if(pos3 < pos1) std::swap(pos1, pos3);
-    if(pos3 < pos2) std::swap(pos2, pos3);
-    std::vector<Gene> gm;
-    gm.reserve(sz);
-    gm.insert(gm.end(), gt.begin(), gt.begin() + pos1);
-    gm.insert(gm.end(), gt.begin() + pos2, gt.begin() + pos3);
-    gm.insert(gm.end(), gt.begin() + pos1, gt.begin() + pos2);
-    gm.insert(gm.end(), gt.begin() + pos3, gt.end());
-    return Candidate{std::move(gm)};
-  }
-
-  Candidate mSplitSwap5() {
+  Candidate mSplitSwap() {
     auto &p = get();
     auto &gt = p.genotype();
     auto sz = gt.size();
@@ -312,6 +216,11 @@ private:
     std::vector<Gene> gm;
     gm.reserve(sz);
     gm.insert(gm.end(), gt.begin(), gt.begin() + pos1);
+    {
+      auto end = gt.begin() + pos2;
+      for(auto it = gt.begin() + pos1; it != end; it++)
+        factory.invert(std::move(*it));
+    }
     gm.insert(gm.end(), gt.rbegin() + sz - pos2, gt.rbegin() + sz - pos1);
     gm.insert(gm.end(), gt.begin() + pos2, gt.end());
     return Candidate{std::move(gm)};

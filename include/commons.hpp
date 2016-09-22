@@ -8,6 +8,7 @@
 /* Forward declarations */
 namespace Config {
   extern const unsigned nBit;
+  extern const size_t arSize;
   extern const size_t popSize;
   extern const float selectBias;
   extern const float heurFactor;
@@ -23,7 +24,7 @@ namespace Wrapper {
 }
 /* End forward declarations */
 
-#include "GeneBase.hpp"
+#include "GeneTools.hpp"
 #include "Fitness.hpp"
 #include "CandidateCounter.hpp"
 #include "CandidateBase.hpp"

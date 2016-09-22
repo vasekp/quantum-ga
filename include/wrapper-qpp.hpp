@@ -17,14 +17,16 @@ namespace internal {
 struct Gate {
   qpp::cmat op;
   std::string name;
+  int inv;
 };
 
 std::vector<Gate> gates {
-  { qpp::gt.H, "H" },
-/*{ qpp::gt.X, "X" },
-  { qpp::gt.Y, "Y" },
-  { qpp::gt.Z, "Z" },*/
-  { qpp::gt.T, "T" }
+  { qpp::gt.H, "H", 0 },
+/*{ qpp::gt.X, "X", 0 },
+  { qpp::gt.Y, "Y", 0 },
+  { qpp::gt.Z, "Z", 0 },*/
+  { qpp::gt.T, "T", +1 },
+  { qpp::gt.T.conjugate(), "Ti", -1 }
 };
 
 qpp::ket out{};
@@ -32,28 +34,95 @@ qpp::ket out{};
 } // namespace internal
 
 
-class Gene : public QGA::GeneBase {
+class GeneFactory;
 
+
+class Gene {
+
+  unsigned op;
+  unsigned tgt;
+  unsigned hw;
   std::vector<qpp::idx> ixv{};
+
+  friend class GeneFactory;
 
 public:
 
-  NOINLINE Gene(unsigned op_, unsigned target_, unsigned control_):
-      GeneBase(op_, target_, control_) {
+  using Factory = GeneFactory;
+
+  NOINLINE Gene(unsigned op_, unsigned tgt_, unsigned control_enc):
+      op(op_), tgt(tgt_), hw(0) {
     ixv.reserve(Config::nBit);
-    unsigned ctrl = controlDec();
+    unsigned ctrl = QGA::GeneTools::ctrlBitString(control_enc, tgt);
     for(unsigned i = 0; i < Config::nBit; i++) {
-      if(ctrl & 1)
+      if(ctrl & 1) {
         ixv.push_back(i);
+        hw++;
+      }
       ctrl >>= 1;
     }
   }
 
-  const std::vector<qpp::idx> ix_vector() const {
+  const std::vector<qpp::idx>& ix_vector() const {
     return ixv;
   }
 
+  unsigned target() const {
+    return tgt;
+  }
+
+  const internal::Gate& gate() const {
+    return internal::gates[op];
+  }
+
+  unsigned weight() const {
+    return hw;
+  }
+
+  friend std::ostream& operator<< (std::ostream& os, const Gene& g) {
+    os << g.gate().name << g.target() + 1;
+    if(g.ixv.size()) {
+      os << '[';
+      for(auto ctrl : g.ixv)
+        os << ctrl + 1;
+      os << ']';
+    }
+    return os;
+  }
+
 }; // class Gene
+
+
+class GeneFactory {
+
+  // distribution of possible gates
+  std::uniform_int_distribution<unsigned> dOp{0,
+    (unsigned)internal::gates.size() - 1};
+  // distribution of targets
+  std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
+  // distribution of controls
+  std::uniform_int_distribution<unsigned> dCtrl{};
+
+public:
+
+  GeneFactory() { }
+
+  Gene getNew() {
+    return {dOp(gen::rng), dTgt(gen::rng), dCtrl(gen::rng)};
+  }
+
+  Gene invert(const Gene& g) {
+    Gene ret = g;
+    ret.op += g.gate().inv;
+    return ret;
+  }
+
+  Gene&& invert(Gene&& g) {
+    g.op += g.gate().inv;
+    return std::move(g);
+  }
+
+}; // class GeneFactory
 
 
 class Candidate : public QGA::CandidateBase<Candidate, Gene> {
@@ -86,10 +155,10 @@ private:
     for(const Gene& g : gt) {
       /* control-gate (QIClib) */
       psi = qpp::applyCTRL(
-          psi,                          // state
-          internal::gates[g.gate()].op, // operator
-          g.ix_vector(),                // vector<qpp::idx> of control systems
-          {g.target()});                // vector<qpp:idx> of target systems
+          psi,            // state
+          g.gate().op,    // operator
+          g.ix_vector(),  // vector<qpp::idx> of control systems
+          {g.target()});  // vector<qpp:idx> of target systems
     }
     return psi;
   }
