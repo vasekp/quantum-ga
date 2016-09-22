@@ -34,9 +34,6 @@ qpp::ket out{};
 } // namespace internal
 
 
-class GeneFactory;
-
-
 class Gene {
 
   unsigned op;
@@ -44,23 +41,18 @@ class Gene {
   unsigned hw;
   std::vector<qpp::idx> ixv{};
 
-  friend class GeneFactory;
-
 public:
 
-  using Factory = GeneFactory;
-
-  NOINLINE Gene(unsigned op_, unsigned tgt_, unsigned control_enc):
-      op(op_), tgt(tgt_), hw(0) {
-    ixv.reserve(Config::nBit);
-    unsigned ctrl = QGA::GeneTools::ctrlBitString(control_enc, tgt);
-    for(unsigned i = 0; i < Config::nBit; i++) {
-      if(ctrl & 1) {
-        ixv.push_back(i);
-        hw++;
-      }
-      ctrl >>= 1;
-    }
+  static Gene getNew() {
+    /* Distributions: cheap and safer in MT environment this way */
+    // distribution of possible gates
+    std::uniform_int_distribution<unsigned> dOp{0,
+      (unsigned)internal::gates.size() - 1};
+    // distribution of targets
+    std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
+    // distribution of controls
+    std::uniform_int_distribution<unsigned> dCtrl{};
+    return {dOp(gen::rng), dTgt(gen::rng), dCtrl(gen::rng)};
   }
 
   const std::vector<qpp::idx>& ix_vector() const {
@@ -79,6 +71,10 @@ public:
     return hw;
   }
 
+  void invert() {
+    op += gate().inv;
+  }
+
   friend std::ostream& operator<< (std::ostream& os, const Gene& g) {
     os << g.gate().name << g.target() + 1;
     if(g.ixv.size()) {
@@ -90,39 +86,22 @@ public:
     return os;
   }
 
+private:
+
+  NOINLINE Gene(unsigned op_, unsigned tgt_, unsigned control_enc):
+      op(op_), tgt(tgt_), hw(0) {
+    ixv.reserve(Config::nBit);
+    unsigned ctrl = QGA::GeneTools::ctrlBitString(control_enc, tgt);
+    for(unsigned i = 0; i < Config::nBit; i++) {
+      if(ctrl & 1) {
+        ixv.push_back(i);
+        hw++;
+      }
+      ctrl >>= 1;
+    }
+  }
+
 }; // class Gene
-
-
-class GeneFactory {
-
-  // distribution of possible gates
-  std::uniform_int_distribution<unsigned> dOp{0,
-    (unsigned)internal::gates.size() - 1};
-  // distribution of targets
-  std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
-  // distribution of controls
-  std::uniform_int_distribution<unsigned> dCtrl{};
-
-public:
-
-  GeneFactory() { }
-
-  Gene getNew() {
-    return {dOp(gen::rng), dTgt(gen::rng), dCtrl(gen::rng)};
-  }
-
-  Gene invert(const Gene& g) {
-    Gene ret = g;
-    ret.op += g.gate().inv;
-    return ret;
-  }
-
-  Gene&& invert(Gene&& g) {
-    g.op += g.gate().inv;
-    return std::move(g);
-  }
-
-}; // class GeneFactory
 
 
 class Candidate : public QGA::CandidateBase<Candidate, Gene> {

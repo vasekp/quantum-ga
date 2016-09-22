@@ -30,7 +30,7 @@ public:
       unsigned h = g.weight();
       cplx += h*h;
     }
-    CandidateCounter::hit();
+    counter.hit();
     return {derived().error(), gt.size(), cplx};
   }
 
@@ -44,8 +44,8 @@ public:
     return gt;
   }
 
-  void setOrigin(int _origin) {
-    origin = _origin;
+  void setOrigin(int origin_) {
+    origin = origin_;
   }
 
   int getOrigin() const {

@@ -3,18 +3,23 @@ namespace QGA {
 class CandidateCounter {
 
   /* Total fitness() evaluation counter */
-  static std::atomic_ulong count;
+  std::atomic_ulong count;
 
 public:
 
-  static void hit() {
+  CandidateCounter(): count{0} { };
+
+  void hit() {
     count++;
   }
 
-  static unsigned long total() {
+  unsigned long total() {
     return count;
   }
 
 }; // class CandidateCounter
+
+
+extern CandidateCounter counter;
 
 } // namespace QGA

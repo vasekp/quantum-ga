@@ -1,92 +1,54 @@
 namespace QGA {
 
+
+template<class Candidate, class Population>
+class CFSelector;
+
+
 template<
   class Candidate,
   class Population = gen::NSGAPopulation<Candidate>>
 class CandidateFactory {
 
-  using GenOp = Candidate (CandidateFactory::*)();
   using Gene = typename Candidate::GeneType;
-  using GeneFactory = typename Gene::Factory;
-
-  std::uniform_real_distribution<> dUni{0, 1};
-
-  static const std::vector<std::pair<GenOp, std::string>> func;
-  static std::vector<unsigned> weights;
-  std::discrete_distribution<> dFun{};
-
-  Population& pop;
-  GeneFactory factory{};
 
 public:
 
-  CandidateFactory(Population& _pop): pop(_pop), factory{} {
-    if(weights.size() == 0) {
-      weights = std::vector<unsigned>(func.size(), 1);
-      normalizeWeights();
-    }
-    applyWeights();
+  friend class CFSelector<Candidate, Population>;
+  using Selector = CFSelector<Candidate, Population>;
+
+private:
+
+  Population& pop;
+  Selector& sel;
+
+public:
+
+  CandidateFactory(Population& pop_, Selector& sel_): pop(pop_), sel(sel_) {
+    sel.update();
+  }
+
+  static Selector getInitSelector() {
+    return Selector{};
   }
 
   static NOINLINE Candidate genInit() {
     // probability of termination; expLengthIni = expected number of genes
-    const static double probTerm = 1/Config::expLengthIni;
-    static thread_local std::uniform_real_distribution<> dUni{0, 1};
-    static GeneFactory staticFactory{};
-
+    const double probTerm = 1/Config::expLengthIni;
+    std::uniform_real_distribution<> dUni{0, 1};
     std::vector<Gene> gt;
     gt.reserve(Config::expLengthIni);
     do
-      gt.push_back(staticFactory.getNew());
+      gt.push_back(Gene::getNew());
     while(dUni(gen::rng) > probTerm);
     return Candidate{std::move(gt)};
   }
 
   NOINLINE Candidate getNew() {
-    int index = dFun(gen::rng);
-    Candidate c = (this->*func[index].first)();
-    c.setOrigin(index);
+    auto op = sel.select();
+    Candidate c = (this->*op.first)();
+    c.setOrigin(op.second);
     return c;
-  }
-
-  static void hit(int ix) {
-    if(ix >= 0)
-      weights[ix]++;
-  }
-
-  static void normalizeWeights() {
-    unsigned total = std::accumulate(weights.begin(), weights.end(), 0);
-    float factor = 1/Config::heurFactor
-      * (float)func.size()*Config::arSize
-      / total;
-    /* New average per genetic operation will be Config.arSize * inverse
-     * heurFactor (larger factor ⇒ smaller total at the start of generator ⇒
-     * more influence of each hit) */
-    for(auto& w : weights)
-      w *= factor;
-  }
-
-  void applyWeights() {
-    dFun = std::discrete_distribution<>(weights.begin(), weights.end());
-  }
-
-  static void dumpWeights(std::ostream& os) {
-    float total = std::accumulate(weights.begin(), weights.end(), 0);
-    int sz = func.size();
-    /* Find the longest GenOp name */
-    using cmp = typename decltype(func)::value_type;
-    auto max = std::max_element(func.begin(), func.end(),
-        [](const cmp& v1, const cmp& v2) {
-          return v1.second.length() < v2.second.length();
-        });
-    auto maxw = max->second.length();
-    auto _flags = os.flags(std::ios_base::left | std::ios_base::fixed);
-    auto _precision = os.precision(4);
-    for(int i = 0; i < sz; i++)
-      os << std::setw(maxw+3) << func[i].second + ':'
-         << weights[i] / total << '\n';
-    os.flags(_flags);
-    os.precision(_precision);
   }
 
 private:
@@ -103,7 +65,7 @@ private:
       return p;
     auto gm = gt;
     unsigned pos = gen::rng() % sz;
-    gm[pos] = factory.getNew();
+    gm[pos] = Gene::getNew();
     return Candidate{std::move(gm)};
   }
 
@@ -111,12 +73,13 @@ private:
     auto &p = get();
     auto &gt = p.genotype();
     auto sz = gt.size();
+    std::uniform_real_distribution<> dUni{0, 1};
     unsigned pos = gen::rng() % (sz + 1);
     std::vector<Gene> ins;
     ins.reserve(Config::expLengthAdd);
     double probTerm = 1/Config::expLengthAdd;
     do
-      ins.push_back(factory.getNew());
+      ins.push_back(Gene::getNew());
     while(dUni(gen::rng) > probTerm);
     std::vector<Gene> gm;
     gm.reserve(sz + ins.size());
@@ -130,6 +93,7 @@ private:
     auto &p = get();
     auto &gt = p.genotype();
     auto sz = gt.size();
+    std::uniform_real_distribution<> dUni{0, 1};
     unsigned pos1 = gen::rng() % (sz + 1),
              pos2 = gen::rng() % (sz + 1);
     if(pos2 < pos1)
@@ -138,7 +102,7 @@ private:
     ins.reserve(2*Config::expLengthAdd);
     double probTerm = 1/Config::expLengthAdd;
     do
-      ins.push_back(factory.getNew());
+      ins.push_back(Gene::getNew());
     while(dUni(gen::rng) > probTerm);
     std::vector<Gene> gm;
     gm.reserve(sz + 2*ins.size());
@@ -146,8 +110,7 @@ private:
     gm.insert(gm.end(), ins.begin(), ins.end());
     gm.insert(gm.end(), gt.begin() + pos1, gt.begin() + pos2);
     for(auto& g : ins)
-      // don't really move, just mark with a && for disposal
-      factory.invert(std::move(g));
+      g.invert();
     gm.insert(gm.end(),
         std::make_move_iterator(ins.rbegin()),
         std::make_move_iterator(ins.rend()));
@@ -159,6 +122,7 @@ private:
     auto &p = get();
     auto &gt = p.genotype();
     auto sz = gt.size();
+    std::uniform_real_distribution<> dUni{0, 1};
     if(!sz)
       return p;
     unsigned pos1 = gen::rng() % (sz + 1);
@@ -175,6 +139,7 @@ private:
   Candidate mDeleteUniform() {
     auto &p = get();
     auto gt = p.genotype();
+    std::uniform_real_distribution<> dUni{0, 1};
     std::vector<Gene> gm;
     gm.reserve(gt.size());
     for(auto& g : gt)
@@ -217,11 +182,12 @@ private:
     gm.reserve(sz);
     gm.insert(gm.end(), gt.begin(), gt.begin() + pos1);
     {
-      auto end = gt.begin() + pos2;
-      for(auto it = gt.begin() + pos1; it != end; it++)
-        factory.invert(std::move(*it));
+      auto prev_end = gm.end();
+      gm.insert(gm.end(), gt.rbegin() + sz - pos2, gt.rbegin() + sz - pos1);
+      auto end = gm.end();
+      for(auto it = prev_end; it != end; it++)
+        it->invert();
     }
-    gm.insert(gm.end(), gt.rbegin() + sz - pos2, gt.rbegin() + sz - pos1);
     gm.insert(gm.end(), gt.begin() + pos2, gt.end());
     return Candidate{std::move(gm)};
   }
@@ -260,5 +226,94 @@ private:
   }
 
 }; // class CandidateFactory
+
+
+template<class Candidate, class Population>
+class CFSelector {
+
+  using CF = CandidateFactory<Candidate, Population>;
+  using FunPtr = Candidate (CF::*)();
+
+  struct GenOp {
+
+    FunPtr fun;
+    std::string name;
+    double prob;
+    unsigned hits;
+
+    GenOp(FunPtr fun_, std::string name_):
+      fun(fun_), name(name_), prob(1), hits(0) { }
+
+  };
+
+  std::vector<GenOp> ops;
+  size_t count;
+
+  std::discrete_distribution<> dFun{};
+
+public:
+
+  CFSelector() {
+    ops.push_back({ &CF::mAlterSingle,    "MSingle"  });
+    ops.push_back({ &CF::mAddSlice,       "AddSlice" });
+    ops.push_back({ &CF::mAddPairs,       "AddPairs" });
+    ops.push_back({ &CF::mDeleteSlice,    "DelShort" });
+    ops.push_back({ &CF::mDeleteUniform,  "DelUnif"  });
+    ops.push_back({ &CF::mSplitSwap,      "SpltSwp"  });
+    ops.push_back({ &CF::mReverseSlice,   "InvSlice" });
+    ops.push_back({ &CF::crossover1,      "C/Over1"  });
+    ops.push_back({ &CF::crossover2,      "C/Over2"  });
+    count = ops.size();
+    double pUniform = 1.0 / count;
+    for(auto& op : ops)
+      op.prob = pUniform;
+    update();
+  }
+
+  void hit(size_t ix) {
+    if(ix >= 0 && ix < count)
+      ops[ix].hits++;
+  }
+
+  void update() {
+    /* Calculate the probability distribution of GenOps based on prior success
+     * rate */
+    double denom = 0;
+    for(auto& op : ops)
+      denom += std::sqrt(op.hits);
+    /* If we're not counting hits the probabilities will stay constant */
+    if(denom != 0)
+      for(auto& op : ops)
+        op.prob = (1 - Config::heurFactor) * op.prob
+          + Config::heurFactor * std::sqrt(op.hits) / denom;
+    std::vector<double> weights(count);
+    for(size_t i = 0; i < count; i++)
+      weights[i] = ops[i].prob;
+    dFun = std::discrete_distribution<>(weights.begin(), weights.end());
+  }
+
+  void dump(std::ostream& os) {
+    /* Find the longest GenOp name */
+    auto max = std::max_element(ops.begin(), ops.end(),
+        [](const GenOp& a, const GenOp& b) {
+          return a.name.length() < b.name.length();
+        });
+    auto maxw = max->name.length();
+    /* Preserve settings of os */
+    auto flags_ = os.flags(std::ios_base::left | std::ios_base::fixed);
+    auto precision_ = os.precision(4);
+    /* List all op names and probabilities */
+    for(auto& op : ops)
+      os << std::setw(maxw+3) << op.name + ':' << op.prob << '\n';
+    os.flags(flags_);
+    os.precision(precision_);
+  }
+
+  std::pair<FunPtr, size_t> select() {
+    size_t index = dFun(gen::rng);
+    return {ops[index].fun, index};
+  }
+
+}; // class CFSelector<CandidateFactory>
 
 } // namespace QGA
