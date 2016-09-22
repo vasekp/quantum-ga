@@ -57,9 +57,9 @@ public:
   static void normalizeWeights() {
     unsigned total = std::accumulate(weights.begin(), weights.end(), 0);
     float factor = 1/Config::heurFactor
-      * (float)func.size()*Config::popSize
+      * (float)func.size()*Config::arSize
       / total;
-    /* New average per genetic operation will be Config.popSize * inverse
+    /* New average per genetic operation will be Config.arSize * inverse
      * heurFactor (larger factor ⇒ smaller total at the start of generator ⇒
      * more influence of each hit) */
     for(auto& w : weights)

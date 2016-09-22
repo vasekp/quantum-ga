@@ -21,10 +21,10 @@ namespace Config {
   const float selectBias = 1.0;
 
   // Archive (external population) size
-  const size_t popSize = 10;
+  const size_t arSize = 20;
 
   // Internal population size
-  const size_t popSize2 = 500;
+  const size_t popSize = 500;
 
   // Number of generations (constant)
   const int nGen = 100;
@@ -98,17 +98,17 @@ int main() {
 
   for(int gen = 0; gen < Config::nGen; gen++) {
 
-    /* Find the nondominated subset and trim down do popSize */
+    /* Find the nondominated subset and trim down do arSize */
     auto nondom = pop.front();
     // trimming not necessary: this is usually about 10
-    //nondom.randomTrim(Config::popSize);
+    //nondom.randomTrim(Config::arSize);
     size_t nd = nondom.size();
 
-    /* Top up to popSize2 candidates in parallel */
-    Population pop2{Config::popSize2};
+    /* Top up to popSize candidates in parallel */
+    Population pop2{Config::popSize};
     pop.precompute();
     CandidateFactory cf{pop};
-    pop2.add(Config::popSize2 - nd,
+    pop2.add(Config::popSize - nd,
             [&]() -> const Candidate { return cf.getNew(); });
 
     /* Merge the nondominated subset of the previous population */
@@ -116,7 +116,7 @@ int main() {
     pop = std::move(pop2);
 
     /* Take a record which GenOps were successful in making good candidates */
-    for(auto& c : pop.front().randomSelect(Config::popSize))
+    for(auto& c : pop.front().randomSelect(Config::arSize))
       CandidateFactory::hit(c.getOrigin());
 
     /* Leave only one representative of each fitness */

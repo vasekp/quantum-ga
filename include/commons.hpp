@@ -8,6 +8,7 @@
 /* Forward declarations */
 namespace Config {
   extern const unsigned nBit;
+  extern const size_t arSize;
   extern const size_t popSize;
   extern const float selectBias;
   extern const float heurFactor;
