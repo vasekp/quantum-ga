@@ -73,9 +73,9 @@ CandidateFactory::func {
     { &CandidateFactory::mAddSlice,       "AddSlice" },
     { &CandidateFactory::mAddPairs,       "AddPairs" },
     { &CandidateFactory::mDeleteSlice,    "DelSlice" },
-  //{ &CandidateFactory::mDeleteUniform,  "DelUnif" },
+    { &CandidateFactory::mDeleteUniform,  "DelUnif" },
     { &CandidateFactory::mSplitSwap,      "SpltSwp" },
-  //{ &CandidateFactory::mReverseSlice,   "InvSlice" },
+    { &CandidateFactory::mReverseSlice,   "InvSlice" },
     { &CandidateFactory::crossover1,      "C/Over1" },
     { &CandidateFactory::crossover2,      "C/Over2" },
   };
