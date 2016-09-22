@@ -18,12 +18,6 @@ namespace Config {
   extern const float pControl;
 }
 
-namespace Wrapper {
-  std::string gate_name(unsigned);
-  extern const unsigned gate_cnt;
-}
-/* End forward declarations */
-
 #include "GeneTools.hpp"
 #include "Fitness.hpp"
 #include "CandidateCounter.hpp"
