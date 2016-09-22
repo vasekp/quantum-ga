@@ -55,7 +55,7 @@ using CandidateFactory = QGA::CandidateFactory<Candidate>;
 
 // Initialize the candidate counter
 // Needs to appear in the .cpp
-std::atomic_ulong QGA::CandidateCounter::count{0};
+QGA::CandidateCounter QGA::counter{};
 
 
 int main() {
@@ -120,7 +120,7 @@ int main() {
   std::chrono::duration<double> dur = post - pre;
   std::cout << std::endl << "Run took " << dur.count() << " s"
     << " (" << dur.count()/Config::nGen << " s/gen avg), "
-    << QGA::CandidateCounter::total() << " candidates tested, "
+    << QGA::counter.total() << " candidates tested, "
     << "best of run:" << std::endl;
 
   /* Dump the heuristic distribution */

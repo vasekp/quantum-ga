@@ -30,7 +30,7 @@ public:
       unsigned h = g.weight();
       cplx += h*h;
     }
-    CandidateCounter::hit();
+    counter.hit();
     return {derived().error(), gt.size(), cplx};
   }
 
