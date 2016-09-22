@@ -24,7 +24,7 @@ private:
 
 public:
 
-  CandidateFactory(Population& _pop, Selector& _sel): pop(_pop), sel(_sel) {
+  CandidateFactory(Population& pop_, Selector& sel_): pop(pop_), sel(sel_) {
     sel.update();
   }
 
@@ -300,13 +300,13 @@ public:
         });
     auto maxw = max->name.length();
     /* Preserve settings of os */
-    auto _flags = os.flags(std::ios_base::left | std::ios_base::fixed);
-    auto _precision = os.precision(4);
+    auto flags_ = os.flags(std::ios_base::left | std::ios_base::fixed);
+    auto precision_ = os.precision(4);
     /* List all op names and probabilities */
     for(auto& op : ops)
       os << std::setw(maxw+3) << op.name + ':' << op.prob << '\n';
-    os.flags(_flags);
-    os.precision(_precision);
+    os.flags(flags_);
+    os.precision(precision_);
   }
 
   std::pair<FunPtr, size_t> select() {
