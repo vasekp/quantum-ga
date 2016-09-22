@@ -53,32 +53,9 @@ using GenCandidate = gen::Candidate<Candidate>;
 using CandidateFactory = QGA::CandidateFactory<Candidate>;
 
 
-// The following initializations are needed in the .cpp due to language
-// restrictions (ODR)
-
 // Initialize the candidate counter
+// Needs to appear in the .cpp
 std::atomic_ulong QGA::CandidateCounter::count{0};
-
-// Define the weights field
-template<>
-std::vector<unsigned> CandidateFactory::weights{};
-
-// Choose the genetic operators
-template<>
-const std::vector<
-  std::pair<CandidateFactory::GenOp,
-  std::string>>
-CandidateFactory::func {
-    { &CandidateFactory::mAlterSingle,    "MSingle" },
-    { &CandidateFactory::mAddSlice,       "AddSlice" },
-    { &CandidateFactory::mAddPairs,       "AddPairs" },
-    { &CandidateFactory::mDeleteSlice,    "DelSlice" },
-    { &CandidateFactory::mDeleteUniform,  "DelUnif" },
-    { &CandidateFactory::mSplitSwap,      "SpltSwp" },
-    { &CandidateFactory::mReverseSlice,   "InvSlice" },
-    { &CandidateFactory::crossover1,      "C/Over1" },
-    { &CandidateFactory::crossover2,      "C/Over2" },
-  };
 
 
 int main() {
@@ -96,6 +73,8 @@ int main() {
 
   std::cout << std::fixed << std::setprecision(4);
 
+  CandidateFactory::Counter ctr = CandidateFactory::getInitCounter();
+
   for(int gen = 0; gen < Config::nGen; gen++) {
 
     /* Find the nondominated subset and trim down do arSize */
@@ -107,7 +86,7 @@ int main() {
     /* Top up to popSize candidates in parallel */
     Population pop2{Config::popSize};
     pop.precompute();
-    CandidateFactory cf{pop};
+    CandidateFactory cf{pop, ctr};
     pop2.add(Config::popSize - nd,
             [&]() -> const Candidate { return cf.getNew(); });
 
@@ -117,7 +96,7 @@ int main() {
 
     /* Take a record which GenOps were successful in making good candidates */
     for(auto& c : pop.front().randomSelect(Config::arSize))
-      CandidateFactory::hit(c.getOrigin());
+      cf.hit(c.getOrigin());
 
     /* Leave only one representative of each fitness */
     pop.prune([](const GenCandidate& a, const GenCandidate& b) -> bool {
@@ -135,9 +114,6 @@ int main() {
     }
     std::cout << std::endl;
 
-    /* Make older generations matter less in the choice of gen. op. */
-    CandidateFactory::normalizeWeights();
-
   }
 
   post = std::chrono::steady_clock::now();
@@ -149,7 +125,7 @@ int main() {
 
   /* Dump the heuristic distribution */
   std::cout << "\nGenetic operator distribution:\n";
-  CandidateFactory::dumpWeights(std::cout);
+  //CandidateFactory::dumpWeights(std::cout);
 
   /* List results */
   auto nondom = pop.front();

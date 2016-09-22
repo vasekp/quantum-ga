@@ -5,28 +5,55 @@ template<
   class Population = gen::NSGAPopulation<Candidate>>
 class CandidateFactory {
 
-  using GenOp = Candidate (CandidateFactory::*)();
   using Gene = typename Candidate::GeneType;
   using GeneFactory = typename Gene::Factory;
 
   std::uniform_real_distribution<> dUni{0, 1};
 
-  static const std::vector<std::pair<GenOp, std::string>> func;
-  static std::vector<unsigned> weights;
+  struct GenOp {
+
+    Candidate (CandidateFactory::*func)();
+    std::string name;
+    double prob = 1;
+    unsigned hits = 0;
+
+    GenOp(Candidate (CandidateFactory::*func_)(), std::string name_):
+      func(func_), name(name_) { }
+
+  };
+
+public:
+
+  using Counter = std::vector<GenOp>;
+
+private:
+
   std::discrete_distribution<> dFun{};
 
   Population& pop;
+  Counter& ctr;
   GeneFactory factory{};
 
 public:
 
-  CandidateFactory(Population& _pop): pop(_pop), factory{} {
-    if(weights.size() == 0) {
-      weights = std::vector<unsigned>(func.size(), 1);
-      normalizeWeights();
-    }
-    applyWeights();
+  CandidateFactory(Population& _pop, Counter& _ctr): pop(_pop), ctr(_ctr), factory{} {
+    /* Calculate the probability distribution of GenOps based on prior success
+     * rate */
+    double denom = 0;
+    for(auto& op : ctr)
+      denom += std::sqrt(op.hits);
+    /* If we're not counting hits the probabilities will stay constant */
+    if(denom != 0)
+      for(auto& op : ctr)
+        op.prob = (1 - Config::heurFactor) * op.prob
+          + Config::heurFactor * std::sqrt(op.hits / denom);
+    std::vector<double> weights(ctr.size());
+    for(size_t i = 0; i < ctr.size(); i++)
+      weights[i] = ctr[i].prob;
+    dFun = std::discrete_distribution<>(weights.begin(), weights.end());
   }
+
+  static Counter getInitCounter();
 
   static NOINLINE Candidate genInit() {
     // probability of termination; expLengthIni = expected number of genes
@@ -44,47 +71,28 @@ public:
 
   NOINLINE Candidate getNew() {
     int index = dFun(gen::rng);
-    Candidate c = (this->*func[index].first)();
+    Candidate c = (this->*ctr[index].func)();
     c.setOrigin(index);
     return c;
   }
 
-  static void hit(int ix) {
+  void hit(int ix) {
     if(ix >= 0)
-      weights[ix]++;
+      ctr[ix].hits++;
   }
 
-  static void normalizeWeights() {
-    unsigned total = std::accumulate(weights.begin(), weights.end(), 0);
-    float factor = 1/Config::heurFactor
-      * (float)func.size()*Config::arSize
-      / total;
-    /* New average per genetic operation will be Config.arSize * inverse
-     * heurFactor (larger factor ⇒ smaller total at the start of generator ⇒
-     * more influence of each hit) */
-    for(auto& w : weights)
-      w *= factor;
-  }
-
-  void applyWeights() {
-    dFun = std::discrete_distribution<>(weights.begin(), weights.end());
-  }
-
-  static void dumpWeights(std::ostream& os) {
-    float total = std::accumulate(weights.begin(), weights.end(), 0);
-    int sz = func.size();
+  void dumpWeights(std::ostream& os) {
     /* Find the longest GenOp name */
-    using cmp = typename decltype(func)::value_type;
-    auto max = std::max_element(func.begin(), func.end(),
+    using cmp = typename decltype(ctr)::value_type;
+    auto max = std::max_element(ctr.begin(), ctr.end(),
         [](const cmp& v1, const cmp& v2) {
-          return v1.second.length() < v2.second.length();
+          return v1.name.length() < v2.name.length();
         });
     auto maxw = max->second.length();
     auto _flags = os.flags(std::ios_base::left | std::ios_base::fixed);
     auto _precision = os.precision(4);
-    for(int i = 0; i < sz; i++)
-      os << std::setw(maxw+3) << func[i].second + ':'
-         << weights[i] / total << '\n';
+    for(auto& op : ctr)
+      os << std::setw(maxw+3) << op.name + ':' << op.prob << '\n';
     os.flags(_flags);
     os.precision(_precision);
   }
@@ -260,5 +268,25 @@ private:
   }
 
 }; // class CandidateFactory
+
+
+template<class Candidate, class Population>
+typename CandidateFactory<Candidate, Population>::Counter
+CandidateFactory<Candidate, Population>::getInitCounter() {
+  typename CandidateFactory<Candidate, Population>::Counter ret{};
+  ret.emplace_back(&CandidateFactory::mAlterSingle,    "MSingle" );
+  ret.emplace_back(&CandidateFactory::mAddSlice,       "AddSlice");
+  ret.emplace_back(&CandidateFactory::mAddPairs,       "AddPairs");
+  ret.emplace_back(&CandidateFactory::mDeleteSlice,    "DelSlice");
+  ret.emplace_back(&CandidateFactory::mDeleteUniform,  "DelUnif" );
+  ret.emplace_back(&CandidateFactory::mSplitSwap,      "SpltSwp" );
+  ret.emplace_back(&CandidateFactory::mReverseSlice,   "InvSlice");
+  ret.emplace_back(&CandidateFactory::crossover1,      "C/Over1" );
+  ret.emplace_back(&CandidateFactory::crossover2,      "C/Over2" );
+  double pUniform = 1.0 / ret.size();
+  for(auto& op : ret)
+    op.prob = pUniform;
+  return ret;
+}
 
 } // namespace QGA
