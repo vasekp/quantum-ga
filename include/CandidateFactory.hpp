@@ -11,7 +11,6 @@ template<
 class CandidateFactory {
 
   using Gene = typename Candidate::GeneType;
-  using GeneFactory = typename Gene::Factory;
 
 public:
 
@@ -40,7 +39,7 @@ public:
     std::vector<Gene> gt;
     gt.reserve(Config::expLengthIni);
     do
-      gt.push_back(GeneFactory::getNew());
+      gt.push_back(Gene::getNew());
     while(dUni(gen::rng) > probTerm);
     return Candidate{std::move(gt)};
   }
@@ -66,7 +65,7 @@ private:
       return p;
     auto gm = gt;
     unsigned pos = gen::rng() % sz;
-    gm[pos] = GeneFactory::getNew();
+    gm[pos] = Gene::getNew();
     return Candidate{std::move(gm)};
   }
 
@@ -80,7 +79,7 @@ private:
     ins.reserve(Config::expLengthAdd);
     double probTerm = 1/Config::expLengthAdd;
     do
-      ins.push_back(GeneFactory::getNew());
+      ins.push_back(Gene::getNew());
     while(dUni(gen::rng) > probTerm);
     std::vector<Gene> gm;
     gm.reserve(sz + ins.size());
@@ -103,7 +102,7 @@ private:
     ins.reserve(2*Config::expLengthAdd);
     double probTerm = 1/Config::expLengthAdd;
     do
-      ins.push_back(GeneFactory::getNew());
+      ins.push_back(Gene::getNew());
     while(dUni(gen::rng) > probTerm);
     std::vector<Gene> gm;
     gm.reserve(sz + 2*ins.size());
@@ -111,8 +110,7 @@ private:
     gm.insert(gm.end(), ins.begin(), ins.end());
     gm.insert(gm.end(), gt.begin() + pos1, gt.begin() + pos2);
     for(auto& g : ins)
-      // don't really move, just mark with a && for disposal
-      GeneFactory::invert(std::move(g));
+      g.invert();
     gm.insert(gm.end(),
         std::make_move_iterator(ins.rbegin()),
         std::make_move_iterator(ins.rend()));
@@ -184,11 +182,12 @@ private:
     gm.reserve(sz);
     gm.insert(gm.end(), gt.begin(), gt.begin() + pos1);
     {
-      auto end = gt.begin() + pos2;
-      for(auto it = gt.begin() + pos1; it != end; it++)
-        GeneFactory::invert(std::move(*it));
+      auto prev_end = gm.end();
+      gm.insert(gm.end(), gt.rbegin() + sz - pos2, gt.rbegin() + sz - pos1);
+      auto end = gm.end();
+      for(auto it = prev_end; it != end; it++)
+        it->invert();
     }
-    gm.insert(gm.end(), gt.rbegin() + sz - pos2, gt.rbegin() + sz - pos1);
     gm.insert(gm.end(), gt.begin() + pos2, gt.end());
     return Candidate{std::move(gm)};
   }
