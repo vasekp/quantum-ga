@@ -39,7 +39,7 @@ namespace Config {
   const float pDeleteUniform = 0.10;
 
   // How much prior success of genetic ops should influence future choices
-  const float heurFactor = 0.15;
+  const float heurFactor = 0.10;
 
   // How much each bit is likely to be a control bit at gate creation
   const float pControl = 0.25;
@@ -73,7 +73,7 @@ int main() {
 
   std::cout << std::fixed << std::setprecision(4);
 
-  CandidateFactory::Counter ctr = CandidateFactory::getInitCounter();
+  CandidateFactory::Selector sel = CandidateFactory::getInitSelector();
 
   for(int gen = 0; gen < Config::nGen; gen++) {
 
@@ -86,7 +86,7 @@ int main() {
     /* Top up to popSize candidates in parallel */
     Population pop2{Config::popSize};
     pop.precompute();
-    CandidateFactory cf{pop, ctr};
+    CandidateFactory cf{pop, sel};
     pop2.add(Config::popSize - nd,
             [&]() -> const Candidate { return cf.getNew(); });
 
@@ -95,8 +95,8 @@ int main() {
     pop = std::move(pop2);
 
     /* Take a record which GenOps were successful in making good candidates */
-    for(auto& c : pop.front().randomSelect(Config::arSize))
-      cf.hit(c.getOrigin());
+    for(auto& c : pop.front())
+      sel.hit(c.getOrigin());
 
     /* Leave only one representative of each fitness */
     pop.prune([](const GenCandidate& a, const GenCandidate& b) -> bool {
@@ -125,7 +125,7 @@ int main() {
 
   /* Dump the heuristic distribution */
   std::cout << "\nGenetic operator distribution:\n";
-  //CandidateFactory::dumpWeights(std::cout);
+  sel.dump(std::cout);
 
   /* List results */
   auto nondom = pop.front();
