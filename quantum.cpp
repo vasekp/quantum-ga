@@ -64,6 +64,7 @@ int main() {
   omp_set_num_threads(1);
 #endif
 
+  Colours::use = isatty(1);
   Wrapper::init();
 
   std::chrono::time_point<std::chrono::steady_clock> pre, post;
@@ -105,9 +106,11 @@ int main() {
 
     /* Summarize */
     nondom = pop.front();
-    std::cout << "Gen " << gen << ": "
-      << pop.size() << " unique fitnesses, "
-      << nondom.size() << " nondominated";
+    std::cout << Colours::bold() << "Gen " << gen << ": " << Colours::reset()
+      << Colours::yellow() << pop.size() << Colours::reset()
+      << " unique fitnesses, "
+      << Colours::yellow() << nondom.size() << Colours::reset()
+      << " nondominated";
     if(nondom.size() > 0) {
       auto& e = nondom.randomSelect();
       std::cout << ", e.g. " << e.fitness() << ' ' << e;
@@ -118,10 +121,11 @@ int main() {
 
   post = std::chrono::steady_clock::now();
   std::chrono::duration<double> dur = post - pre;
-  std::cout << std::endl << "Run took " << dur.count() << " s"
-    << " (" << dur.count()/Config::nGen << " s/gen avg), "
-    << QGA::counter.total() << " candidates tested, "
-    << "best of run:" << std::endl;
+  std::cout << std::endl << "Run took " << dur.count() << " s ("
+    << Colours::blue() << dur.count()/Config::nGen
+    << " s/gen " << Colours::reset() << "avg), "
+    << Colours::blue() << QGA::counter.total() << Colours::reset()
+    << " candidates tested" << std::endl;
 
   /* Dump the heuristic distribution */
   std::cout << "\nGenetic operator distribution:\n";
@@ -140,8 +144,10 @@ int main() {
         return a.fitness().error > b.fitness().error;
       }
   );
-  std::cout << '\n' << vec.size() << " nondominated candidates:\n";
-  for(auto& c : vec) {
-    std::cout << c.fitness() << ' ' << c << ": " << c.dump(std::cout);
-  }
+  std::cout << '\n'
+    << Colours::yellow() << vec.size() << Colours::reset()
+    << " nondominated candidates:\n";
+  for(auto& c : vec)
+    std::cout << Colours::green() << c.fitness() << Colours::reset()
+      << ' ' << c << ": " << c.dump(std::cout);
 }

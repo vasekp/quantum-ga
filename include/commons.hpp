@@ -24,4 +24,6 @@ namespace Config {
 #include "CandidateBase.hpp"
 #include "CandidateFactory.hpp"
 
+#include "colours.hpp"
+
 #endif // !defined QGA_COMMONS_HPP
