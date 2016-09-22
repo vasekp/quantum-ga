@@ -122,29 +122,29 @@ public:
 
 class GeneFactory {
 
-  // distribution of possible gates
-  std::uniform_int_distribution<unsigned> dOp{0,
-    (unsigned)internal::gates.size() - 1};
-  // distribution of targets
-  std::uniform_int_distribution<unsigned> dTgt{1, Config::nBit};
-  // distribution of controls
-  std::uniform_int_distribution<unsigned> dCtrl{};
-
 public:
 
-  GeneFactory() { }
+  GeneFactory() = delete;
 
-  Gene getNew() {
+  static Gene getNew() {
+    /* Distributions: cheap and safer in MT environment this way */
+    // distribution of possible gates
+    std::uniform_int_distribution<unsigned> dOp{0,
+      (unsigned)internal::gates.size() - 1};
+    // distribution of targets
+    std::uniform_int_distribution<unsigned> dTgt{1, Config::nBit};
+    // distribution of controls
+    std::uniform_int_distribution<unsigned> dCtrl{};
     return {dOp(gen::rng), dTgt(gen::rng), dCtrl(gen::rng)};
   }
 
-  Gene invert(const Gene& g) {
+  static Gene invert(const Gene& g) {
     Gene ret = g;
     ret.op += g.gate().inv;
     return ret;
   }
 
-  Gene&& invert(Gene&& g) {
+  static Gene&& invert(Gene&& g) {
     g.op += g.gate().inv;
     return std::move(g);
   }

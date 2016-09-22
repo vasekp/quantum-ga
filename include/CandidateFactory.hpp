@@ -13,8 +13,6 @@ class CandidateFactory {
   using Gene = typename Candidate::GeneType;
   using GeneFactory = typename Gene::Factory;
 
-  std::uniform_real_distribution<> dUni{0, 1};
-
 public:
 
   friend class CFSelector<Candidate, Population>;
@@ -24,11 +22,10 @@ private:
 
   Population& pop;
   Selector& sel;
-  GeneFactory factory{};
 
 public:
 
-  CandidateFactory(Population& _pop, Selector& _sel): pop(_pop), sel(_sel), factory{} {
+  CandidateFactory(Population& _pop, Selector& _sel): pop(_pop), sel(_sel) {
     sel.update();
   }
 
@@ -38,14 +35,12 @@ public:
 
   static NOINLINE Candidate genInit() {
     // probability of termination; expLengthIni = expected number of genes
-    const static double probTerm = 1/Config::expLengthIni;
-    static thread_local std::uniform_real_distribution<> dUni{0, 1};
-    static GeneFactory staticFactory{};
-
+    const double probTerm = 1/Config::expLengthIni;
+    std::uniform_real_distribution<> dUni{0, 1};
     std::vector<Gene> gt;
     gt.reserve(Config::expLengthIni);
     do
-      gt.push_back(staticFactory.getNew());
+      gt.push_back(GeneFactory::getNew());
     while(dUni(gen::rng) > probTerm);
     return Candidate{std::move(gt)};
   }
@@ -71,7 +66,7 @@ private:
       return p;
     auto gm = gt;
     unsigned pos = gen::rng() % sz;
-    gm[pos] = factory.getNew();
+    gm[pos] = GeneFactory::getNew();
     return Candidate{std::move(gm)};
   }
 
@@ -79,12 +74,13 @@ private:
     auto &p = get();
     auto &gt = p.genotype();
     auto sz = gt.size();
+    std::uniform_real_distribution<> dUni{0, 1};
     unsigned pos = gen::rng() % (sz + 1);
     std::vector<Gene> ins;
     ins.reserve(Config::expLengthAdd);
     double probTerm = 1/Config::expLengthAdd;
     do
-      ins.push_back(factory.getNew());
+      ins.push_back(GeneFactory::getNew());
     while(dUni(gen::rng) > probTerm);
     std::vector<Gene> gm;
     gm.reserve(sz + ins.size());
@@ -98,6 +94,7 @@ private:
     auto &p = get();
     auto &gt = p.genotype();
     auto sz = gt.size();
+    std::uniform_real_distribution<> dUni{0, 1};
     unsigned pos1 = gen::rng() % (sz + 1),
              pos2 = gen::rng() % (sz + 1);
     if(pos2 < pos1)
@@ -106,7 +103,7 @@ private:
     ins.reserve(2*Config::expLengthAdd);
     double probTerm = 1/Config::expLengthAdd;
     do
-      ins.push_back(factory.getNew());
+      ins.push_back(GeneFactory::getNew());
     while(dUni(gen::rng) > probTerm);
     std::vector<Gene> gm;
     gm.reserve(sz + 2*ins.size());
@@ -115,7 +112,7 @@ private:
     gm.insert(gm.end(), gt.begin() + pos1, gt.begin() + pos2);
     for(auto& g : ins)
       // don't really move, just mark with a && for disposal
-      factory.invert(std::move(g));
+      GeneFactory::invert(std::move(g));
     gm.insert(gm.end(),
         std::make_move_iterator(ins.rbegin()),
         std::make_move_iterator(ins.rend()));
@@ -127,6 +124,7 @@ private:
     auto &p = get();
     auto &gt = p.genotype();
     auto sz = gt.size();
+    std::uniform_real_distribution<> dUni{0, 1};
     if(!sz)
       return p;
     unsigned pos1 = gen::rng() % (sz + 1);
@@ -143,6 +141,7 @@ private:
   Candidate mDeleteUniform() {
     auto &p = get();
     auto gt = p.genotype();
+    std::uniform_real_distribution<> dUni{0, 1};
     std::vector<Gene> gm;
     gm.reserve(gt.size());
     for(auto& g : gt)
@@ -187,7 +186,7 @@ private:
     {
       auto end = gt.begin() + pos2;
       for(auto it = gt.begin() + pos1; it != end; it++)
-        factory.invert(std::move(*it));
+        GeneFactory::invert(std::move(*it));
     }
     gm.insert(gm.end(), gt.rbegin() + sz - pos2, gt.rbegin() + sz - pos1);
     gm.insert(gm.end(), gt.begin() + pos2, gt.end());
