@@ -10,6 +10,7 @@ protected:
 private:
 
   int origin = -1;
+  int gen = -1;
 
   const Derived& derived() const {
     return static_cast<const Derived&>(*this);
@@ -44,12 +45,24 @@ public:
     return gt;
   }
 
-  void setOrigin(int origin_) {
-    origin = origin_;
+  Derived& setOrigin(int origin_) {
+    if(origin == -1)
+      origin = origin_;
+    return static_cast<Derived&>(*this);
   }
 
   int getOrigin() const {
     return origin;
+  }
+
+  Derived& setGen(int gen_) {
+    if(gen == -1)
+      gen = gen_;
+    return static_cast<Derived&>(*this);
+  }
+
+  int getGen() const {
+    return gen;
   }
 
   template<class, class>

@@ -46,9 +46,7 @@ public:
 
   NOINLINE Candidate getNew() {
     auto op = sel.select();
-    Candidate c = (this->*op.first)();
-    c.setOrigin(op.second);
-    return c;
+    return (this->*op.first)().setOrigin(op.second);
   }
 
 private:
@@ -65,10 +63,13 @@ private:
       return p;
     auto gm = gt;
     std::uniform_real_distribution<> dUni{0, 1};
+    size_t cnt = 0;
     for(auto& g : gm)
-      if(dUni(gen::rng) < Config::pChoiceUniform)
+      if(dUni(gen::rng) < Config::pChoiceUniform) {
         g = Gene::getNew();
-    return Candidate{std::move(gm)};
+        cnt++;
+      }
+    return cnt ? Candidate{std::move(gm)} : p;
   }
 
   Candidate mAlterContinuous() {
@@ -79,10 +80,12 @@ private:
       return p;
     auto gm = gt;
     std::uniform_real_distribution<> dUni{0, 1};
+    size_t cnt = 0;
     for(auto& g : gm)
       if(dUni(gen::rng) < Config::pChoiceUniform)
-        g.mutate();
-    return Candidate{std::move(gm)};
+        if(g.mutate())
+          cnt++;
+    return cnt ? Candidate{std::move(gm)} : p;
   }
 
   Candidate mAddSlice() {
@@ -158,10 +161,13 @@ private:
     std::uniform_real_distribution<> dUni{0, 1};
     std::vector<Gene> gm;
     gm.reserve(gt.size());
+    size_t cnt = 0;
     for(auto& g : gt)
       if(dUni(gen::rng) >= Config::pChoiceUniform)
         gm.push_back(g);
-    return Candidate{std::move(gm)};
+      else
+        cnt++;
+    return cnt ? Candidate{std::move(gm)} : p;
   }
 
   Candidate mSplitSwap() {
@@ -276,15 +282,19 @@ private:
     auto it = gt.begin(), end = gt.end();
     gm.push_back(*it);
     auto last = gm.begin();
+    size_t cnt = 0;
     for(it++; it != end; it++)
-      /* merge == true = success, go to next it directly */
       if(!last->merge(*it)) {
         gm.push_back(*it);
         last++;
+      } else {
+        // merge == true: success, skip this it
+        cnt++;
       }
     for(auto& g : gm)
-      g.simplify();
-    return Candidate{std::move(gm)};
+      if(g.simplify())
+        cnt++;
+    return cnt ? Candidate{std::move(gm)} : p;
   }
 
 }; // class CandidateFactory

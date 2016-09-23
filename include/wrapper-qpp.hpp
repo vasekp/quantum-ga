@@ -75,8 +75,10 @@ public:
     return hw;
   }
 
-  void invert() {
-    op += gate().inv;
+  bool invert() {
+    int dIx = gate().inv;
+    op += dIx;
+    return dIx ? true : false;
   }
 
   bool merge(const Gene& g) {
@@ -94,12 +96,14 @@ public:
     } else return false;
   }
 
-  void mutate() {
+  bool mutate() {
     /* no-op */
+    return false;
   }
 
-  void simplify() {
+  bool simplify() {
     /* no-op */
+    return false;
   }
 
   friend std::ostream& operator<< (std::ostream& os, const Gene& g) {
