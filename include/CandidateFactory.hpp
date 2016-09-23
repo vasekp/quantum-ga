@@ -57,15 +57,31 @@ private:
     return pop.NSGASelect(Config::selectBias);
   }
 
-  Candidate mAlterSingle() {
+  Candidate mAlterDiscrete() {
     auto &p = get();
     auto &gt = p.genotype();
     auto sz = gt.size();
     if(!sz)
       return p;
     auto gm = gt;
-    unsigned pos = gen::rng() % sz;
-    gm[pos] = Gene::getNew();
+    std::uniform_real_distribution<> dUni{0, 1};
+    for(auto& g : gm)
+      if(dUni(gen::rng) < Config::pChoiceUniform)
+        g = Gene::getNew();
+    return Candidate{std::move(gm)};
+  }
+
+  Candidate mAlterContinuous() {
+    auto &p = get();
+    auto &gt = p.genotype();
+    auto sz = gt.size();
+    if(!sz)
+      return p;
+    auto gm = gt;
+    std::uniform_real_distribution<> dUni{0, 1};
+    for(auto& g : gm)
+      if(dUni(gen::rng) < Config::pChoiceUniform)
+        g.mutate();
     return Candidate{std::move(gm)};
   }
 
@@ -143,7 +159,7 @@ private:
     std::vector<Gene> gm;
     gm.reserve(gt.size());
     for(auto& g : gt)
-      if(dUni(gen::rng) >= Config::pDeleteUniform)
+      if(dUni(gen::rng) >= Config::pChoiceUniform)
         gm.push_back(g);
     return Candidate{std::move(gm)};
   }
@@ -225,6 +241,49 @@ private:
     return Candidate{std::move(gm)};
   }
 
+  Candidate concat3() {
+    auto &p1 = get(),
+         &p2 = get(),
+         &p3 = get();
+    auto &gt1 = p1.genotype(),
+         &gt2 = p2.genotype(),
+         &gt3 = p3.genotype();
+    std::vector<Gene> gm;
+    gm.reserve(gt1.size() + gt2.size() + gt3.size());
+    gm.insert(gm.end(), gt1.begin(), gt1.end());
+    {
+      auto start = gm.end();
+      gm.insert(gm.end(), gt2.rbegin(), gt2.rend());
+      auto end = gm.end();
+      for(auto it = start; it != end; it++)
+        it->invert();
+    }
+    gm.insert(gm.end(), gt3.begin(), gt3.end());
+    return Candidate{std::move(gm)};
+  }
+
+  Candidate simplify() {
+    auto &p = get();
+    auto &gt = p.genotype();
+    size_t sz = gt.size();
+    if(!sz)
+      return p;
+    std::vector<Gene> gm;
+    gm.reserve(sz);
+    auto it = gt.begin(), end = gt.end();
+    gm.push_back(*it);
+    auto last = gm.begin();
+    for(it++; it != end; it++)
+      /* merge == true = success, go to next it directly */
+      if(!last->merge(*it)) {
+        gm.push_back(*it);
+        last++;
+      }
+    for(auto& g : gm)
+      g.simplify();
+    return Candidate{std::move(gm)};
+  }
+
 }; // class CandidateFactory
 
 
@@ -252,23 +311,6 @@ class CFSelector {
   std::discrete_distribution<> dFun{};
 
 public:
-
-  CFSelector() {
-    ops.push_back({ &CF::mAlterSingle,    "MSingle"  });
-    ops.push_back({ &CF::mAddSlice,       "AddSlice" });
-    ops.push_back({ &CF::mAddPairs,       "AddPairs" });
-    ops.push_back({ &CF::mDeleteSlice,    "DelShort" });
-    ops.push_back({ &CF::mDeleteUniform,  "DelUnif"  });
-    ops.push_back({ &CF::mSplitSwap,      "SpltSwp"  });
-    ops.push_back({ &CF::mReverseSlice,   "InvSlice" });
-    ops.push_back({ &CF::crossover1,      "C/Over1"  });
-    ops.push_back({ &CF::crossover2,      "C/Over2"  });
-    count = ops.size();
-    double pUniform = 1.0 / count;
-    for(auto& op : ops)
-      op.prob = pUniform;
-    update();
-  }
 
   void hit(size_t ix) {
     if(ix >= 0 && ix < count)
@@ -312,6 +354,26 @@ public:
   std::pair<FunPtr, size_t> select() {
     size_t index = dFun(gen::rng);
     return {ops[index].fun, index};
+  }
+
+  CFSelector() {
+    ops.push_back({ &CF::mAlterDiscrete,   "MDiscrete" });
+    ops.push_back({ &CF::mAlterContinuous, "MContns" });
+    ops.push_back({ &CF::mAddSlice,        "AddSlice" });
+    ops.push_back({ &CF::mAddPairs,        "AddPairs" });
+    ops.push_back({ &CF::mDeleteSlice,     "DelShort" });
+    ops.push_back({ &CF::mDeleteUniform,   "DelUnif"  });
+    ops.push_back({ &CF::mSplitSwap,       "SpltSwp"  });
+    ops.push_back({ &CF::mReverseSlice,    "InvSlice" });
+    ops.push_back({ &CF::crossover1,       "C/Over1"  });
+    ops.push_back({ &CF::crossover2,       "C/Over2"  });
+    ops.push_back({ &CF::concat3,          "Concat3"  });
+    ops.push_back({ &CF::simplify,         "Simplify" });
+    count = ops.size();
+    double pUniform = 1.0 / count;
+    for(auto& op : ops)
+      op.prob = pUniform;
+    update();
   }
 
 }; // class CFSelector<CandidateFactory>

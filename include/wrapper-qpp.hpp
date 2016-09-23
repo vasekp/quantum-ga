@@ -18,15 +18,19 @@ struct Gate {
   qpp::cmat op;
   std::string name;
   int inv;
+  int sq;
 };
 
 std::vector<Gate> gates {
-  { qpp::gt.H, "H", 0 },
-/*{ qpp::gt.X, "X", 0 },
-  { qpp::gt.Y, "Y", 0 },
-  { qpp::gt.Z, "Z", 0 },*/
-  { qpp::gt.T, "T", +1 },
-  { qpp::gt.T.conjugate(), "Ti", -1 }
+  { qpp::gt.Id2, "I", 0, 0 },
+  { qpp::gt.H, "H", 0, -1 },
+/*{ qpp::gt.X, "X", 0, -2 },
+  { qpp::gt.Y, "Y", 0, -3 },
+  { qpp::gt.Z, "Z", 0, -4 },*/
+  { qpp::gt.T, "T", +1, 0/*+2*/ },
+  { qpp::gt.T.conjugate(), "Ti", -1, 0/*+2*/ },
+/*{ qpp::gt.S, "S", +1, -3 },
+  { qpp::gt.S.conjugate(), "Si", -1, -4 }*/
 };
 
 qpp::ket out{};
@@ -46,7 +50,7 @@ public:
   static Gene getNew() {
     /* Distributions: cheap and safer in MT environment this way */
     // distribution of possible gates
-    std::uniform_int_distribution<unsigned> dOp{0,
+    std::uniform_int_distribution<unsigned> dOp{1,
       (unsigned)internal::gates.size() - 1};
     // distribution of targets
     std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
@@ -73,6 +77,29 @@ public:
 
   void invert() {
     op += gate().inv;
+  }
+
+  bool merge(const Gene& g) {
+    if(op == 0) {
+      // Identity * G = G
+      *this = g;
+      return true;
+    } else if(g.op == op
+        && g.tgt == tgt
+        && g.ixv == ixv
+        && internal::gates[op].sq != 0) {
+      // G * G = square(G) if also among our operations
+      op += internal::gates[op].sq;
+      return true;
+    } else return false;
+  }
+
+  void mutate() {
+    /* no-op */
+  }
+
+  void simplify() {
+    /* no-op */
   }
 
   friend std::ostream& operator<< (std::ostream& os, const Gene& g) {

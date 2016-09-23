@@ -35,8 +35,8 @@ namespace Config {
   // Expected number of gates inserted in mutation
   const float expLengthAdd = 1.5;
 
-  // Probability of single gate deletion
-  const float pDeleteUniform = 0.10;
+  // Probability of altering / deleting a single gate in uniform operators
+  const float pChoiceUniform = 0.03;
 
   // How much prior success of genetic ops should influence future choices
   const float heurFactor = 0.10;

@@ -14,6 +14,10 @@ namespace Wrapper {
 
 namespace internal {
 
+arma::cx_mat22 I {
+  1, 0, 0, 1
+};
+
 arma::cx_mat22 H {
   1/std::sqrt(2),  1/std::sqrt(2),
   1/std::sqrt(2), -1/std::sqrt(2)
@@ -39,19 +43,31 @@ arma::cx_mat22 Ti {
   1, 0, 0, {1/std::sqrt(2), -1/std::sqrt(2)}
 };
 
+arma::cx_mat22 S {
+  1, 0, 0, {0, 1}
+};
+
+arma::cx_mat22 Si {
+  1, 0, 0, {0, -1}
+};
+
 struct Gate {
   arma::cx_mat22 op;
   std::string name;
   int inv;
+  int sq;
 };
 
 std::vector<Gate> gates {
-  { H, "H", 0 },
-/*{ X, "X", 0 },
-  { Y, "Y", 0 },
-  { Z, "Z", 0 },*/
-  { T, "T", +1 },
-  { Ti, "Ti", -1 }
+  { I, "I", 0, 0 },
+  { H, "H", 0, -1 },
+/*{ X, "X", 0, -2 },
+  { Y, "Y", 0, -3 },
+  { Z, "Z", 0, -4 },*/
+  { T, "T", +1, 0/*+2*/ },
+  { Ti, "Ti", -1, 0/*+2*/ },
+/*{ S, "S", +1, -3 },
+  { Si, "Si", -1, -4 }*/
 };
 
 arma::cx_vec out{};
@@ -71,7 +87,7 @@ public:
   static Gene getNew() {
     /* Distributions: cheap and safer in MT environment this way */
     // distribution of possible gates
-    std::uniform_int_distribution<unsigned> dOp{0,
+    std::uniform_int_distribution<unsigned> dOp{1,
       (unsigned)internal::gates.size() - 1};
     // distribution of targets
     std::uniform_int_distribution<unsigned> dTgt{1, Config::nBit};
@@ -98,6 +114,30 @@ public:
 
   void invert() {
     op += gate().inv;
+  }
+
+  bool merge(const Gene& g) {
+    if(op == 0) {
+      // Identity * G = G
+      *this = g;
+      return true;
+    } else if(g.op == op
+        && g.tgt == tgt
+        && g.ixs.size() == ixs.size()
+        && arma::all(g.ixs == ixs)
+        && internal::gates[op].sq != 0) {
+      // G * G = square(G) if also among our operations
+      op += internal::gates[op].sq;
+      return true;
+    } else return false;
+  }
+
+  void mutate() {
+    /* no-op */
+  }
+
+  void simplify() {
+    /* no-op */
   }
 
   friend std::ostream& operator<< (std::ostream& os, const Gene& g) {

@@ -14,7 +14,7 @@ namespace Config {
   extern const float heurFactor;
   extern const float expLengthIni;
   extern const float expLengthAdd;
-  extern const float pDeleteUniform;
+  extern const float pChoiceUniform;
   extern const float pControl;
 }
 
