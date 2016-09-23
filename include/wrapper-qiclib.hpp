@@ -14,13 +14,20 @@ namespace Wrapper {
 
 namespace internal {
 
+using cxd = arma::cx_double;
+
+const double pi = std::acos(-1);
+
+const cxd i{0,1};
+
+const double v12 = 1/std::sqrt(2);
+
 arma::cx_mat22 I {
   1, 0, 0, 1
 };
 
 arma::cx_mat22 H {
-  1/std::sqrt(2),  1/std::sqrt(2),
-  1/std::sqrt(2), -1/std::sqrt(2)
+  v12, v12, v12, -v12
 };
 
 arma::cx_mat22 X {
@@ -28,7 +35,7 @@ arma::cx_mat22 X {
 };
 
 arma::cx_mat22 Y {
-  0, {0,-1}, {0,1}, 0
+  0, -i, i, 0
 };
 
 arma::cx_mat22 Z {
@@ -36,19 +43,19 @@ arma::cx_mat22 Z {
 };
 
 arma::cx_mat22 T {
-  1, 0, 0, {1/std::sqrt(2), 1/std::sqrt(2)}
+  1, 0, 0, std::exp(i*pi/4.)
 };
 
 arma::cx_mat22 Ti {
-  1, 0, 0, {1/std::sqrt(2), -1/std::sqrt(2)}
+  1, 0, 0, std::exp(-i*pi/4.)
 };
 
 arma::cx_mat22 S {
-  1, 0, 0, {0, 1}
+  1, 0, 0, i
 };
 
 arma::cx_mat22 Si {
-  1, 0, 0, {0, -1}
+  1, 0, 0, -i
 };
 
 struct Gate {
