@@ -46,9 +46,7 @@ public:
 
   NOINLINE Candidate getNew() {
     auto op = sel.select();
-    Candidate c = (this->*op.first)();
-    c.setOrigin(op.second);
-    return c;
+    return (this->*op.first)().setOrigin(op.second);
   }
 
 private:
@@ -142,10 +140,13 @@ private:
     std::uniform_real_distribution<> dUni{0, 1};
     std::vector<Gene> gm;
     gm.reserve(gt.size());
+    size_t cnt = 0;
     for(auto& g : gt)
       if(dUni(gen::rng) >= Config::pDeleteUniform)
         gm.push_back(g);
-    return Candidate{std::move(gm)};
+      else
+        cnt++;
+    return cnt ? Candidate{std::move(gm)} : p;
   }
 
   Candidate mSplitSwap() {

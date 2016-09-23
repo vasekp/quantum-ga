@@ -71,8 +71,10 @@ public:
     return hw;
   }
 
-  void invert() {
-    op += gate().inv;
+  bool invert() {
+    int dIx = gate().inv;
+    op += dIx;
+    return dIx ? true : false;
   }
 
   friend std::ostream& operator<< (std::ostream& os, const Gene& g) {

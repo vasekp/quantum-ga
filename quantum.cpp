@@ -91,7 +91,7 @@ int main() {
   std::chrono::time_point<std::chrono::steady_clock> pre, post;
   pre = std::chrono::steady_clock::now();
 
-  Population pop{Config::popSize, [&] { return CandidateFactory::genInit(); }};
+  Population pop{Config::popSize, [&] { return CandidateFactory::genInit().setGen(0); }};
 
   std::cout << std::fixed << std::setprecision(4);
 
@@ -101,33 +101,33 @@ int main() {
   for(gen = 0; gen < Config::nGen; gen++) {
 
     /* Find the nondominated subset and trim down do arSize */
-    auto nondom = pop.front();
+    Population pop2 = pop.front();
     // trimming not necessary: this is usually about 10
-    //nondom.randomTrim(Config::arSize);
-    size_t nd = nondom.size();
+    //pop2.randomTrim(Config::arSize);
+    size_t nd = pop2.size();
 
     /* Top up to popSize candidates in parallel */
-    Population pop2{Config::popSize};
+    pop2.reserve(Config::popSize);
     pop.precompute();
     CandidateFactory cf{pop, sel};
     pop2.add(Config::popSize - nd,
-            [&]() -> const Candidate { return cf.getNew(); });
+            [&]() -> const Candidate { return cf.getNew().setGen(gen); });
 
-    /* Merge the nondominated subset of the previous population */
-    pop2.add(nondom);
+    /* We don't need the original population anymore */
     pop = std::move(pop2);
-
-    /* Take a record which GenOps were successful in making good candidates */
-    for(auto& c : pop.front())
-      sel.hit(c.getOrigin());
 
     /* Leave only one representative of each fitness */
     pop.prune([](const GenCandidate& a, const GenCandidate& b) -> bool {
-      return a.fitness() == b.fitness();
-      });
+        return a.fitness() == b.fitness();
+      }, 0, false);
+
+    /* Take a record which GenOps were successful in making good candidates */
+    auto nondom = pop.front();
+    for(auto& c : nondom)
+      if(c.getGen() == gen)
+        sel.hit(c.getOrigin());
 
     /* Summarize */
-    nondom = pop.front();
     std::cout << Colours::bold() << "Gen " << gen << ": " << Colours::reset()
       << Colours::yellow() << pop.size() << Colours::reset()
       << " unique fitnesses, "
@@ -173,7 +173,9 @@ int main() {
     << " nondominated candidates:\n";
   for(auto& c : vec)
     std::cout << Colours::green() << c.fitness() << Colours::reset()
-      << ' ' << c << ": " << c.dump(std::cout);
+      << " [" << Colours::blue() << 'g' << c.getGen() << Colours::reset()
+      << "] " << c << ": " << c.dump(std::cout);
+
 }
 
 
