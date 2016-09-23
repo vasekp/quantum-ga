@@ -43,7 +43,7 @@ namespace Config {
   const float pCrossUniform = 0.1;
 
   // How much prior success of genetic ops should influence future choices
-  const float heurFactor = 0.10;
+  const float heurFactor = 1.0 / nGen;
 
   // How much each bit is likely to be a control bit at gate creation
   const float pControl = 0.25;
