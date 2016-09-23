@@ -14,9 +14,20 @@ namespace Wrapper {
 
 namespace internal {
 
+using cxd = arma::cx_double;
+
+const double pi = std::acos(-1);
+
+const cxd i{0,1};
+
+const double v12 = 1/std::sqrt(2);
+
+arma::cx_mat22 I {
+  1, 0, 0, 1
+};
+
 arma::cx_mat22 H {
-  1/std::sqrt(2),  1/std::sqrt(2),
-  1/std::sqrt(2), -1/std::sqrt(2)
+  v12, v12, v12, -v12
 };
 
 arma::cx_mat22 X {
@@ -24,7 +35,7 @@ arma::cx_mat22 X {
 };
 
 arma::cx_mat22 Y {
-  0, {0,-1}, {0,1}, 0
+  0, -i, i, 0
 };
 
 arma::cx_mat22 Z {
@@ -32,26 +43,38 @@ arma::cx_mat22 Z {
 };
 
 arma::cx_mat22 T {
-  1, 0, 0, {1/std::sqrt(2), 1/std::sqrt(2)}
+  1, 0, 0, std::exp(i*pi/4.)
 };
 
 arma::cx_mat22 Ti {
-  1, 0, 0, {1/std::sqrt(2), -1/std::sqrt(2)}
+  1, 0, 0, std::exp(-i*pi/4.)
+};
+
+arma::cx_mat22 S {
+  1, 0, 0, i
+};
+
+arma::cx_mat22 Si {
+  1, 0, 0, -i
 };
 
 struct Gate {
   arma::cx_mat22 op;
   std::string name;
   int inv;
+  int sq;
 };
 
 std::vector<Gate> gates {
-  { H, "H", 0 },
-/*{ X, "X", 0 },
-  { Y, "Y", 0 },
-  { Z, "Z", 0 },*/
-  { T, "T", +1 },
-  { Ti, "Ti", -1 }
+  { I, "I", 0, 0 },
+  { H, "H", 0, -1 },
+/*{ X, "X", 0, -2 },
+  { Y, "Y", 0, -3 },
+  { Z, "Z", 0, -4 },*/
+  { T, "T", +1, 0/*+2*/ },
+  { Ti, "Ti", -1, 0/*+2*/ },
+/*{ S, "S", +1, -3 },
+  { Si, "Si", -1, -4 }*/
 };
 
 arma::cx_vec out{};
@@ -71,7 +94,7 @@ public:
   static Gene getNew() {
     /* Distributions: cheap and safer in MT environment this way */
     // distribution of possible gates
-    std::uniform_int_distribution<unsigned> dOp{0,
+    std::uniform_int_distribution<unsigned> dOp{1,
       (unsigned)internal::gates.size() - 1};
     // distribution of targets
     std::uniform_int_distribution<unsigned> dTgt{1, Config::nBit};
@@ -96,8 +119,36 @@ public:
     return hw;
   }
 
-  void invert() {
-    op += gate().inv;
+  bool invert() {
+    int dIx = gate().inv;
+    op += dIx;
+    return dIx ? true : false;
+  }
+
+  bool merge(const Gene& g) {
+    if(op == 0) {
+      // Identity * G = G
+      *this = g;
+      return true;
+    } else if(g.op == op
+        && g.tgt == tgt
+        && g.ixs.size() == ixs.size()
+        && arma::all(g.ixs == ixs)
+        && internal::gates[op].sq != 0) {
+      // G * G = square(G) if also among our operations
+      op += internal::gates[op].sq;
+      return true;
+    } else return false;
+  }
+
+  bool mutate() {
+    /* no-op */
+    return false;
+  }
+
+  bool simplify() {
+    /* no-op */
+    return false;
   }
 
   friend std::ostream& operator<< (std::ostream& os, const Gene& g) {

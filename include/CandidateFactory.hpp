@@ -46,9 +46,7 @@ public:
 
   NOINLINE Candidate getNew() {
     auto op = sel.select();
-    Candidate c = (this->*op.first)();
-    c.setOrigin(op.second);
-    return c;
+    return (this->*op.first)().setOrigin(op.second);
   }
 
 private:
@@ -57,16 +55,37 @@ private:
     return pop.NSGASelect(Config::selectBias);
   }
 
-  Candidate mAlterSingle() {
+  Candidate mAlterDiscrete() {
     auto &p = get();
     auto &gt = p.genotype();
     auto sz = gt.size();
     if(!sz)
       return p;
     auto gm = gt;
-    unsigned pos = gen::rng() % sz;
-    gm[pos] = Gene::getNew();
-    return Candidate{std::move(gm)};
+    std::uniform_real_distribution<> dUni{0, 1};
+    size_t cnt = 0;
+    for(auto& g : gm)
+      if(dUni(gen::rng) < Config::pChoiceUniform) {
+        g = Gene::getNew();
+        cnt++;
+      }
+    return cnt ? Candidate{std::move(gm)} : p;
+  }
+
+  Candidate mAlterContinuous() {
+    auto &p = get();
+    auto &gt = p.genotype();
+    auto sz = gt.size();
+    if(!sz)
+      return p;
+    auto gm = gt;
+    std::uniform_real_distribution<> dUni{0, 1};
+    size_t cnt = 0;
+    for(auto& g : gm)
+      if(dUni(gen::rng) < Config::pChoiceUniform)
+        if(g.mutate())
+          cnt++;
+    return cnt ? Candidate{std::move(gm)} : p;
   }
 
   Candidate mAddSlice() {
@@ -142,10 +161,13 @@ private:
     std::uniform_real_distribution<> dUni{0, 1};
     std::vector<Gene> gm;
     gm.reserve(gt.size());
+    size_t cnt = 0;
     for(auto& g : gt)
-      if(dUni(gen::rng) >= Config::pDeleteUniform)
+      if(dUni(gen::rng) >= Config::pChoiceUniform)
         gm.push_back(g);
-    return Candidate{std::move(gm)};
+      else
+        cnt++;
+    return cnt ? Candidate{std::move(gm)} : p;
   }
 
   Candidate mSplitSwap() {
@@ -192,37 +214,87 @@ private:
     return Candidate{std::move(gm)};
   }
 
-  Candidate crossover1() {
+  Candidate crossoverUniform() {
     auto &p1 = get(),
          &p2 = get();
     auto &gt1 = p1.genotype(),
          &gt2 = p2.genotype();
-    unsigned pos1 = gen::rng() % (gt1.size() + 1),
-             pos2 = gen::rng() % (gt2.size() + 1);
+    size_t sz1 = gt1.size(),
+           sz2 = gt2.size(),
+           szS = std::min(sz1, sz2);
+    double pTest1 = (double)szS / sz1,
+           pTest2 = (double)szS / sz2;
+    std::uniform_real_distribution<> dUni{0, 1};
     std::vector<Gene> gm;
-    gm.reserve(pos1 + (gt2.size() - pos2));
-    gm.insert(gm.end(), gt1.begin(), gt1.begin() + pos1);
-    gm.insert(gm.end(), gt2.begin() + pos2, gt2.end());
+    gm.reserve(sz1 + sz2 - szS);
+    auto it1 = gt1.begin(),
+         it2 = gt2.begin(),
+         ie1 = gt1.end(),
+         ie2 = gt2.end();
+    while(it1 != ie1) {
+      gm.push_back(*it1++);
+      if(dUni(gen::rng) < pTest1) {
+        // happens every time on the shorter genotype,
+        // 1/ratio of the time on the longer one
+        // We might still decide to stay, though.
+        if(dUni(gen::rng) < Config::pCrossUniform) {
+          std::swap(it1, it2);
+          std::swap(ie1, ie2);
+          std::swap(pTest1, pTest2);
+        }
+      }
+    }
+    // now it1 is at its boundary, if there's anything left past it2 we
+    // flush it with no more crossovers
+    gm.insert(gm.end(), it2, ie2);
     return Candidate{std::move(gm)};
   }
 
-  Candidate crossover2() {
+  Candidate concat3() {
     auto &p1 = get(),
-         &p2 = get();
+         &p2 = get(),
+         &p3 = get();
     auto &gt1 = p1.genotype(),
-         &gt2 = p2.genotype();
-    unsigned pos1l = gen::rng() % (gt1.size() + 1),
-             pos1r = gen::rng() % (gt1.size() + 1),
-             pos2l = gen::rng() % (gt2.size() + 1),
-             pos2r = gen::rng() % (gt2.size() + 1);
-    if(pos1r < pos1l) std::swap(pos1l, pos1r);
-    if(pos2r < pos2l) std::swap(pos2l, pos2r);
+         &gt2 = p2.genotype(),
+         &gt3 = p3.genotype();
     std::vector<Gene> gm;
-    gm.reserve(gt1.size() - (pos1r - pos1l) + (pos2r - pos2r));
-    gm.insert(gm.end(), gt1.begin(), gt1.begin() + pos1l);
-    gm.insert(gm.end(), gt2.begin() + pos2l, gt2.begin() + pos2r);
-    gm.insert(gm.end(), gt1.begin() + pos1r, gt1.end());
+    gm.reserve(gt1.size() + gt2.size() + gt3.size());
+    gm.insert(gm.end(), gt1.begin(), gt1.end());
+    {
+      auto start = gm.end();
+      gm.insert(gm.end(), gt2.rbegin(), gt2.rend());
+      auto end = gm.end();
+      for(auto it = start; it != end; it++)
+        it->invert();
+    }
+    gm.insert(gm.end(), gt3.begin(), gt3.end());
     return Candidate{std::move(gm)};
+  }
+
+  Candidate simplify() {
+    auto &p = get();
+    auto &gt = p.genotype();
+    size_t sz = gt.size();
+    if(!sz)
+      return p;
+    std::vector<Gene> gm;
+    gm.reserve(sz);
+    auto it = gt.begin(), end = gt.end();
+    gm.push_back(*it);
+    auto last = gm.begin();
+    size_t cnt = 0;
+    for(it++; it != end; it++)
+      if(!last->merge(*it)) {
+        gm.push_back(*it);
+        last++;
+      } else {
+        // merge == true: success, skip this it
+        cnt++;
+      }
+    for(auto& g : gm)
+      if(g.simplify())
+        cnt++;
+    return cnt ? Candidate{std::move(gm)} : p;
   }
 
 }; // class CandidateFactory
@@ -252,23 +324,6 @@ class CFSelector {
   std::discrete_distribution<> dFun{};
 
 public:
-
-  CFSelector() {
-    ops.push_back({ &CF::mAlterSingle,    "MSingle"  });
-    ops.push_back({ &CF::mAddSlice,       "AddSlice" });
-    ops.push_back({ &CF::mAddPairs,       "AddPairs" });
-    ops.push_back({ &CF::mDeleteSlice,    "DelShort" });
-    ops.push_back({ &CF::mDeleteUniform,  "DelUnif"  });
-    ops.push_back({ &CF::mSplitSwap,      "SpltSwp"  });
-    ops.push_back({ &CF::mReverseSlice,   "InvSlice" });
-    ops.push_back({ &CF::crossover1,      "C/Over1"  });
-    ops.push_back({ &CF::crossover2,      "C/Over2"  });
-    count = ops.size();
-    double pUniform = 1.0 / count;
-    for(auto& op : ops)
-      op.prob = pUniform;
-    update();
-  }
 
   void hit(size_t ix) {
     if(ix >= 0 && ix < count)
@@ -312,6 +367,25 @@ public:
   std::pair<FunPtr, size_t> select() {
     size_t index = dFun(gen::rng);
     return {ops[index].fun, index};
+  }
+
+  CFSelector() {
+    ops.push_back({ &CF::mAlterDiscrete,   "MDiscrete" });
+    ops.push_back({ &CF::mAlterContinuous, "MContns" });
+    ops.push_back({ &CF::mAddSlice,        "AddSlice" });
+    ops.push_back({ &CF::mAddPairs,        "AddPairs" });
+    ops.push_back({ &CF::mDeleteSlice,     "DelShort" });
+    ops.push_back({ &CF::mDeleteUniform,   "DelUnif"  });
+    ops.push_back({ &CF::mSplitSwap,       "SpltSwp"  });
+    ops.push_back({ &CF::mReverseSlice,    "InvSlice" });
+    ops.push_back({ &CF::crossoverUniform, "C/Over"   });
+    ops.push_back({ &CF::concat3,          "Concat3"  });
+    ops.push_back({ &CF::simplify,         "Simplify" });
+    count = ops.size();
+    double pUniform = 1.0 / count;
+    for(auto& op : ops)
+      op.prob = pUniform;
+    update();
   }
 
 }; // class CFSelector<CandidateFactory>
