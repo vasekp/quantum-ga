@@ -5,30 +5,30 @@
 
 #include "include/commons.hpp"
 
-#ifdef USE_QPP
+/*#ifdef USE_QPP
 #include "include/wrapper-qpp.hpp"
-#elif defined USE_QICLIB
-#include "include/wrapper-qiclib.hpp"
-#else
+#elif defined USE_QICLIB*/
+#include "include/wrapper-fourier.hpp"
+/*#else
 #error Either USE_QPP or USE_QICLIB needed.
-#endif
+#endif*/
 
 namespace Config {
 
   // Circuit width (constant)
-  const unsigned nBit = 3;
+  const unsigned nBit = 2;
 
   // strength parameter of NSGA selection
-  const float selectBias = 1.0;
+  const float selectBias = 1.7;
 
   // Archive (external population) size
-  const size_t arSize = 20;
+  const size_t arSize = 100;
 
   // Internal population size
-  const size_t popSize = 500;
+  const size_t popSize = 2000;
 
   // Number of generations (constant)
-  const int nGen = 100;
+  const int nGen = 500;
 
   // Expected curcuit depth in 0th generation
   const float expLengthIni = 30;
@@ -105,8 +105,7 @@ int main() {
 
     /* Find the nondominated subset and trim down do arSize */
     Population pop2 = pop.front();
-    // trimming not necessary: this is usually about 10
-    //pop2.randomTrim(Config::arSize);
+    pop2.randomTrim(Config::arSize);
     size_t nd = pop2.size();
 
     /* Top up to popSize candidates in parallel */
@@ -121,7 +120,8 @@ int main() {
 
     /* Leave only one representative of each fitness */
     pop.prune([](const GenCandidate& a, const GenCandidate& b) -> bool {
-        return a.fitness() == b.fitness();
+        return a.fitness() == b.fitness() ||
+          std::abs(a.fitness().error - b.fitness().error) < 0.0001;
       }, 0, false);
 
     /* Take a record which GenOps were successful in making good candidates */
@@ -131,9 +131,14 @@ int main() {
         sel.hit(c.getOrigin());
 
     /* Summarize */
+    auto minerr = std::min_element(nondom.begin(), nondom.end(),
+        [](const GenCandidate& a, const GenCandidate& b) -> bool {
+          return a.fitness().error + 0.05*a.fitness().length
+               < b.fitness().error + 0.05*b.fitness().length; });
     std::cout << Colours::bold() << "Gen " << gen << ": " << Colours::reset()
       << Colours::yellow() << pop.size() << Colours::reset()
-      << " unique fitnesses, "
+      << " unique fitnesses, lowest err+len "
+      << Colours::green() << minerr->fitness() << Colours::reset() << ", "
       << Colours::yellow() << nondom.size() << Colours::reset()
       << " nondominated";
     if(nondom.size() > 0) {
@@ -154,10 +159,6 @@ int main() {
     << Colours::blue() << QGA::counter.total() << Colours::reset()
     << " candidates tested" << std::endl;
 
-  /* Dump the heuristic distribution */
-  std::cout << "\nGenetic operator distribution:\n";
-  sel.dump(std::cout);
-
   /* List results */
   auto nondom = pop.front();
   std::vector<GenCandidate> vec{};
@@ -174,10 +175,19 @@ int main() {
   std::cout << '\n'
     << Colours::yellow() << vec.size() << Colours::reset()
     << " nondominated candidates:\n";
-  for(auto& c : vec)
+  for(auto& c : vec) {
     std::cout << Colours::green() << c.fitness() << Colours::reset()
       << " [" << Colours::blue() << 'g' << c.getGen() << Colours::reset()
-      << "] " << c << ": " << c.dump(std::cout);
+      << "] " << c;
+    if(c.fitness().error < 0.01)
+      std::cout << ": " << c.dump(std::cout);
+    else
+      std::cout << '\n';
+  }
+
+  /* Dump the heuristic distribution */
+  std::cout << "\nGenetic operator distribution:\n";
+  sel.dump(std::cout);
 
 }
 
