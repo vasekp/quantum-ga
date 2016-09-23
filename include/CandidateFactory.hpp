@@ -335,12 +335,14 @@ public:
      * rate */
     double denom = 0;
     for(auto& op : ops)
-      denom += std::sqrt(op.hits);
+      denom += op.hits / op.prob;
     /* If we're not counting hits the probabilities will stay constant */
     if(denom != 0)
-      for(auto& op : ops)
+      for(auto& op : ops) {
         op.prob = (1 - Config::heurFactor) * op.prob
-          + Config::heurFactor * std::sqrt(op.hits) / denom;
+          + Config::heurFactor * op.hits / op.prob / denom;
+        op.hits = 0;
+      }
     std::vector<double> weights(count);
     for(size_t i = 0; i < count; i++)
       weights[i] = ops[i].prob;
