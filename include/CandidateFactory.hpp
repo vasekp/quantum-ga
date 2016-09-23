@@ -208,36 +208,39 @@ private:
     return Candidate{std::move(gm)};
   }
 
-  Candidate crossover1() {
+  Candidate crossoverUniform() {
     auto &p1 = get(),
          &p2 = get();
     auto &gt1 = p1.genotype(),
          &gt2 = p2.genotype();
-    unsigned pos1 = gen::rng() % (gt1.size() + 1),
-             pos2 = gen::rng() % (gt2.size() + 1);
+    size_t sz1 = gt1.size(),
+           sz2 = gt2.size(),
+           szS = std::min(sz1, sz2);
+    double pTest1 = (double)szS / sz1,
+           pTest2 = (double)szS / sz2;
+    std::uniform_real_distribution<> dUni{0, 1};
     std::vector<Gene> gm;
-    gm.reserve(pos1 + (gt2.size() - pos2));
-    gm.insert(gm.end(), gt1.begin(), gt1.begin() + pos1);
-    gm.insert(gm.end(), gt2.begin() + pos2, gt2.end());
-    return Candidate{std::move(gm)};
-  }
-
-  Candidate crossover2() {
-    auto &p1 = get(),
-         &p2 = get();
-    auto &gt1 = p1.genotype(),
-         &gt2 = p2.genotype();
-    unsigned pos1l = gen::rng() % (gt1.size() + 1),
-             pos1r = gen::rng() % (gt1.size() + 1),
-             pos2l = gen::rng() % (gt2.size() + 1),
-             pos2r = gen::rng() % (gt2.size() + 1);
-    if(pos1r < pos1l) std::swap(pos1l, pos1r);
-    if(pos2r < pos2l) std::swap(pos2l, pos2r);
-    std::vector<Gene> gm;
-    gm.reserve(gt1.size() - (pos1r - pos1l) + (pos2r - pos2r));
-    gm.insert(gm.end(), gt1.begin(), gt1.begin() + pos1l);
-    gm.insert(gm.end(), gt2.begin() + pos2l, gt2.begin() + pos2r);
-    gm.insert(gm.end(), gt1.begin() + pos1r, gt1.end());
+    gm.reserve(sz1 + sz2 - szS);
+    auto it1 = gt1.begin(),
+         it2 = gt2.begin(),
+         ie1 = gt1.end(),
+         ie2 = gt2.end();
+    while(it1 != ie1) {
+      gm.push_back(*it1++);
+      if(dUni(gen::rng) < pTest1) {
+        // happens every time on the shorter genotype,
+        // 1/ratio of the time on the longer one
+        // We might still decide to stay, though.
+        if(dUni(gen::rng) < Config::pCrossUniform) {
+          std::swap(it1, it2);
+          std::swap(ie1, ie2);
+          std::swap(pTest1, pTest2);
+        }
+      }
+    }
+    // now it1 is at its boundary, if there's anything left past it2 we
+    // flush it with no more crossovers
+    gm.insert(gm.end(), it2, ie2);
     return Candidate{std::move(gm)};
   }
 
@@ -365,8 +368,7 @@ public:
     ops.push_back({ &CF::mDeleteUniform,   "DelUnif"  });
     ops.push_back({ &CF::mSplitSwap,       "SpltSwp"  });
     ops.push_back({ &CF::mReverseSlice,    "InvSlice" });
-    ops.push_back({ &CF::crossover1,       "C/Over1"  });
-    ops.push_back({ &CF::crossover2,       "C/Over2"  });
+    ops.push_back({ &CF::crossoverUniform, "C/Over"   });
     ops.push_back({ &CF::concat3,          "Concat3"  });
     ops.push_back({ &CF::simplify,         "Simplify" });
     count = ops.size();

@@ -38,6 +38,9 @@ namespace Config {
   // Probability of altering / deleting a single gate in uniform operators
   const float pChoiceUniform = 0.03;
 
+  // Probability of a crossover at any given point
+  const float pCrossUniform = 0.1;
+
   // How much prior success of genetic ops should influence future choices
   const float heurFactor = 0.10;
 
