@@ -123,15 +123,20 @@ public:
       a = 1/(a - coeffs[i]);
     }
     int t;
-    for(t = 0; t < N; t++)
+    for(t = 1; t < N; t++)
       if(std::abs(coeffs[t]) > 20)
         break;
-    if(t == N)
-      // no simplification
+    // 1 ≤ t ≤ N
+    if(t == N) // no simplification
       return false;
+    // 1 ≤ t < N
     angle = coeffs[--t];
-    while(t--)
+    // 0 ≤ t < N-1
+#pragma GCC diagnostic ignored "-Warray-bounds"
+    while(t--) // t = 0 breaks loop
+      // 0 ≤ t
       angle = coeffs[t] + 1/angle;
+#pragma GCC diagnostic pop
     angle *= internal::pi;
     return true;
   }
