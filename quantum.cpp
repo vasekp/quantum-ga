@@ -180,21 +180,11 @@ int main() {
 void list(Population& pop, CandidateFactory::Selector& sel) {
   /* List results */
   auto nondom = pop.front();
-  std::vector<GenCandidate> vec{};
-
-  /* Sort by error, from high to low */
-  vec.reserve(nondom.size());
-  for(auto& c : nondom)
-    vec.push_back(c);
-  std::sort(vec.begin(), vec.end(),
-      [](const GenCandidate& a, const GenCandidate&b ) -> bool {
-        return a.fitness().error > b.fitness().error;
-      }
-  );
+  nondom.sort();
   std::cout << '\n'
-    << Colours::yellow() << vec.size() << Colours::reset()
+    << Colours::yellow() << nondom.size() << Colours::reset()
     << " nondominated candidates:\n";
-  for(auto& c : vec) {
+  for(auto& c : nondom.reverse()) {
     std::cout << Colours::green() << c.fitness() << Colours::reset()
       << " [" << Colours::blue() << 'g' << c.getGen() << Colours::reset()
       << "] " << c;
