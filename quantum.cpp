@@ -60,6 +60,7 @@ namespace SigComm {
 
   enum Response {
     CONTINUE,
+    LIST,
     STOP
   };
 
@@ -83,6 +84,7 @@ QGA::CandidateCounter QGA::counter{};
 
 void int_handler(int);
 SigComm::Response int_response();
+void list(Population&, CandidateFactory::Selector&);
 
 
 int main() {
@@ -147,9 +149,15 @@ int main() {
     }
     std::cout << std::endl;
 
-    if(SigComm::state != SigComm::RUNNING)
-      if(int_response() == SigComm::STOP)
+    if(SigComm::state != SigComm::RUNNING) {
+      SigComm::Response res = int_response();
+      while(res == SigComm::LIST) {
+        list(pop, sel);
+        res = int_response();
+      }
+      if(res == SigComm::STOP)
         break;
+    }
   }
 
   post = std::chrono::steady_clock::now();
@@ -160,6 +168,11 @@ int main() {
     << Colours::blue() << QGA::counter.total() << Colours::reset()
     << " candidates tested" << std::endl;
 
+  list(pop, sel);
+}
+
+
+void list(Population& pop, CandidateFactory::Selector& sel) {
   /* Dump the heuristic distribution */
   std::cout << "\nGenetic operator distribution:\n";
   sel.dump(std::cout);
@@ -184,7 +197,6 @@ int main() {
     std::cout << Colours::green() << c.fitness() << Colours::reset()
       << " [" << Colours::blue() << 'g' << c.getGen() << Colours::reset()
       << "] " << c << ": " << c.dump(std::cout);
-
 }
 
 
@@ -195,14 +207,16 @@ void int_handler(int) {
     std::_Exit(1);
   SigComm::state = SigComm::INTERRUPTED;
 }
-  
+
+
 SigComm::Response int_response() {
   std::chrono::time_point<std::chrono::steady_clock> pre, post;
   pre = std::chrono::steady_clock::now();
   std::cerr << "\nComputation stopped. Choose action:\n"
     << Colours::blue() << "a: " << Colours::reset() << "abort,\n"
     << Colours::blue() << "c: " << Colours::reset() << "continue,\n"
-    << Colours::blue() << "s: " << Colours::reset() << "stop now and output results.\n";
+    << Colours::blue() << "d: " << Colours::reset() << "diagnose / list current results,\n"
+    << Colours::blue() << "s: " << Colours::reset() << "stop after this generation.\n";
   char c;
   do {
     std::cerr << "\nYour choice: ";
@@ -212,15 +226,18 @@ SigComm::Response int_response() {
       c = 'a';
       break;
     }
-  } while(c != 'a' && c != 'c' && c != 's');
+  } while(c != 'a' && c != 'c' && c != 'd' && c != 's');
   post = std::chrono::steady_clock::now();
+  SigComm::timeOut += post - pre;
   switch(c) {
     case 'a':
       std::_Exit(1);
     case 'c':
       SigComm::state = SigComm::RUNNING;
-      SigComm::timeOut += post - pre;
       return SigComm::CONTINUE;
+      break;
+    case 'd':
+      return SigComm::LIST;
       break;
     case 's':
     default:
