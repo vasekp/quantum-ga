@@ -55,13 +55,17 @@ namespace SigComm {
 
   enum StopState {
     RUNNING,
-    HANDLER,
-    STOPPING
+    INTERRUPTED
   };
 
-  volatile sig_atomic_t stopped = RUNNING;
+  enum Response {
+    CONTINUE,
+    STOP
+  };
 
-  std::atomic<std::chrono::duration<double>> timeOut{};
+  volatile sig_atomic_t state = RUNNING;
+
+  std::chrono::duration<double> timeOut{};
 
 } // namespace SigComm
 
@@ -78,6 +82,7 @@ QGA::CandidateCounter QGA::counter{};
 
 
 void int_handler(int);
+SigComm::Response int_response();
 
 
 int main() {
@@ -142,12 +147,13 @@ int main() {
     }
     std::cout << std::endl;
 
-    if(SigComm::stopped == SigComm::STOPPING)
-      break;
+    if(SigComm::state != SigComm::RUNNING)
+      if(int_response() == SigComm::STOP)
+        break;
   }
 
   post = std::chrono::steady_clock::now();
-  std::chrono::duration<double> dur = post - pre - SigComm::timeOut.load();
+  std::chrono::duration<double> dur = post - pre - SigComm::timeOut;
   std::cout << std::endl << "Run took " << dur.count() << " s ("
     << Colours::blue() << dur.count()/gen
     << " s/gen " << Colours::reset() << "avg), "
@@ -183,15 +189,17 @@ int main() {
 
 
 void int_handler(int) {
-  if(SigComm::stopped == SigComm::HANDLER)
-    return;
-  else if(SigComm::stopped == SigComm::STOPPING)
-    // we got stuck during a stop request (e.g., popSize too large)
+  if(SigComm::state != SigComm::RUNNING)
+    // we got stuck while processing another signal (e.g., popSize too large
+    // or a deadlock)
     std::_Exit(1);
-  SigComm::stopped = SigComm::HANDLER;
+  SigComm::state = SigComm::INTERRUPTED;
+}
+  
+SigComm::Response int_response() {
   std::chrono::time_point<std::chrono::steady_clock> pre, post;
   pre = std::chrono::steady_clock::now();
-  std::cerr << "\n\nComputation stopped. Choose action:\n"
+  std::cerr << "\nComputation stopped. Choose action:\n"
     << Colours::blue() << "a: " << Colours::reset() << "abort,\n"
     << Colours::blue() << "c: " << Colours::reset() << "continue,\n"
     << Colours::blue() << "s: " << Colours::reset() << "stop now and output results.\n";
@@ -200,17 +208,23 @@ void int_handler(int) {
     std::cerr << "\nYour choice: ";
     std::cin >> c;
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    if(std::cin.eof()) {
+      c = 'a';
+      break;
+    }
   } while(c != 'a' && c != 'c' && c != 's');
+  post = std::chrono::steady_clock::now();
   switch(c) {
     case 'a':
       std::_Exit(1);
     case 'c':
-      SigComm::stopped = SigComm::RUNNING;
+      SigComm::state = SigComm::RUNNING;
+      SigComm::timeOut += post - pre;
+      return SigComm::CONTINUE;
       break;
     case 's':
-      SigComm::stopped = SigComm::STOPPING;
+    default:
+      return SigComm::STOP;
       break;
   }
-  post = std::chrono::steady_clock::now();
-  SigComm::timeOut.store(SigComm::timeOut.load() + (post - pre));
 }
