@@ -5,12 +5,20 @@
 
 #include "include/commons.hpp"
 
-#ifdef USE_QPP
-#include "include/wrapper-qpp.hpp"
-#elif defined USE_QICLIB
-#include "include/wrapper-qiclib.hpp"
+#ifdef FOURIER
+  #ifdef USE_QICLIB
+    #include "include/wrapper-fourier.hpp"
+  #else
+    #error Fourier problem is only implemented using QIClib.
+  #endif
 #else
-#error Either USE_QPP or USE_QICLIB needed.
+  #ifdef USE_QPP
+    #include "include/wrapper-qpp.hpp"
+  #elif defined USE_QICLIB
+    #include "include/wrapper-qiclib.hpp"
+  #else
+    #error Either USE_QPP or USE_QICLIB needed.
+  #endif
 #endif
 
 namespace Config {
@@ -19,16 +27,16 @@ namespace Config {
   const unsigned nBit = 3;
 
   // strength parameter of NSGA selection
-  const float selectBias = 1.0;
+  const float selectBias = 3.0;
 
   // Archive (external population) size
-  const size_t arSize = 20;
+  const size_t arSize = 100;
 
   // Internal population size
-  const size_t popSize = 500;
+  const size_t popSize = 2000;
 
   // Number of generations (constant)
-  const int nGen = 100;
+  const size_t nGen = std::numeric_limits<size_t>::max();
 
   // Expected curcuit depth in 0th generation
   const float expLengthIni = 30;
@@ -107,13 +115,12 @@ int main() {
 
   CandidateFactory::Selector sel = CandidateFactory::getInitSelector();
 
-  int gen;
+  size_t gen;
   for(gen = 0; gen < Config::nGen; gen++) {
 
     /* Find the nondominated subset and trim down do arSize */
     Population pop2 = pop.front();
-    // trimming not necessary: this is usually about 10
-    //pop2.randomTrim(Config::arSize);
+    pop2.rankTrim(Config::arSize);
     size_t nd = pop2.size();
 
     /* Top up to popSize candidates in parallel */
@@ -140,7 +147,8 @@ int main() {
     /* Summarize */
     std::cout << Colours::bold() << "Gen " << gen << ": " << Colours::reset()
       << Colours::yellow() << pop.size() << Colours::reset()
-      << " unique fitnesses, "
+      << " unique fitnesses, lowest error "
+      << Colours::green() << pop.best().fitness() << Colours::reset() << ", "
       << Colours::yellow() << nondom.size() << Colours::reset()
       << " nondominated";
     if(nondom.size() > 0) {
@@ -173,30 +181,25 @@ int main() {
 
 
 void list(Population& pop, CandidateFactory::Selector& sel) {
+  /* List results */
+  auto nondom = pop.front();
+  nondom.sort();
+  std::cout << '\n'
+    << Colours::yellow() << nondom.size() << Colours::reset()
+    << " nondominated candidates:\n";
+  for(auto& c : nondom.reverse()) {
+    std::cout << Colours::green() << c.fitness() << Colours::reset()
+      << " [" << Colours::blue() << 'g' << c.getGen() << Colours::reset()
+      << "] " << c;
+    if(c.fitness().error < 0.01)
+      std::cout << ": " << c.dump(std::cout);
+    else
+      std::cout << '\n';
+  }
+
   /* Dump the heuristic distribution */
   std::cout << "\nGenetic operator distribution:\n";
   sel.dump(std::cout);
-
-  /* List results */
-  auto nondom = pop.front();
-  std::vector<GenCandidate> vec{};
-
-  /* Sort by error, from high to low */
-  vec.reserve(nondom.size());
-  for(auto& c : nondom)
-    vec.push_back(c);
-  std::sort(vec.begin(), vec.end(),
-      [](const GenCandidate& a, const GenCandidate&b ) -> bool {
-        return a.fitness().error > b.fitness().error;
-      }
-  );
-  std::cout << '\n'
-    << Colours::yellow() << vec.size() << Colours::reset()
-    << " nondominated candidates:\n";
-  for(auto& c : vec)
-    std::cout << Colours::green() << c.fitness() << Colours::reset()
-      << " [" << Colours::blue() << 'g' << c.getGen() << Colours::reset()
-      << "] " << c << ": " << c.dump(std::cout);
 }
 
 
@@ -216,7 +219,7 @@ SigComm::Response int_response() {
     << Colours::blue() << "a: " << Colours::reset() << "abort,\n"
     << Colours::blue() << "c: " << Colours::reset() << "continue,\n"
     << Colours::blue() << "d: " << Colours::reset() << "diagnose / list current results,\n"
-    << Colours::blue() << "s: " << Colours::reset() << "stop after this generation.\n";
+    << Colours::blue() << "q: " << Colours::reset() << "quit after this generation.\n";
   char c;
   do {
     std::cerr << "\nYour choice: ";
@@ -226,7 +229,7 @@ SigComm::Response int_response() {
       c = 'a';
       break;
     }
-  } while(c != 'a' && c != 'c' && c != 'd' && c != 's');
+  } while(c != 'a' && c != 'c' && c != 'd' && c != 'q');
   post = std::chrono::steady_clock::now();
   SigComm::timeOut += post - pre;
   switch(c) {
@@ -239,7 +242,7 @@ SigComm::Response int_response() {
     case 'd':
       return SigComm::LIST;
       break;
-    case 's':
+    case 'q':
     default:
       return SigComm::STOP;
       break;

@@ -272,7 +272,12 @@ private:
   }
 
   Candidate simplify() {
-    auto &p = get();
+    return simplify(get());
+  }
+
+public:
+
+  static Candidate simplify(const Candidate& p) {
     auto &gt = p.genotype();
     size_t sz = gt.size();
     if(!sz)
@@ -311,10 +316,11 @@ class CFSelector {
     FunPtr fun;
     std::string name;
     double prob;
-    unsigned hits;
+    size_t hits;
+    size_t thits;
 
     GenOp(FunPtr fun_, std::string name_):
-      fun(fun_), name(name_), prob(1), hits(0) { }
+      fun(fun_), name(name_), prob(1), hits(0), thits(0) { }
 
   };
 
@@ -341,6 +347,7 @@ public:
       for(auto& op : ops) {
         op.prob = (1 - Config::heurFactor) * op.prob
           + Config::heurFactor * op.hits / op.prob / denom;
+        op.thits += op.hits;
         op.hits = 0;
       }
     std::vector<double> weights(count);
@@ -361,7 +368,8 @@ public:
     auto precision_ = os.precision(4);
     /* List all op names and probabilities */
     for(auto& op : ops)
-      os << std::setw(maxw+3) << op.name + ':' << op.prob << '\n';
+      os << std::setw(maxw+3) << op.name + ':'
+         << op.prob << "  " << op.thits << '\n';
     os.flags(flags_);
     os.precision(precision_);
   }
@@ -381,7 +389,7 @@ public:
     ops.push_back({ &CF::mSplitSwap,       "SpltSwp"  });
     ops.push_back({ &CF::mReverseSlice,    "InvSlice" });
     ops.push_back({ &CF::crossoverUniform, "C/Over"   });
-    ops.push_back({ &CF::concat3,          "Concat3"  });
+  //ops.push_back({ &CF::concat3,          "Concat3"  });
     ops.push_back({ &CF::simplify,         "Simplify" });
     count = ops.size();
     double pUniform = 1.0 / count;

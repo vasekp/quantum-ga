@@ -13,6 +13,10 @@ struct Fitness {
        << f.cplx << '}';
   }
 
+  friend NOINLINE bool operator< (const Fitness& a, const Fitness& b) {
+    return a.error < b.error;
+  }
+
   friend NOINLINE bool operator<< (const Fitness& a, const Fitness& b) {
     return a.error <= b.error
         && a.length <= b.length
