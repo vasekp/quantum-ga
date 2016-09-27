@@ -10,7 +10,7 @@ protected:
 private:
 
   int origin = -1;
-  int gen = -1;
+  size_t gen = (size_t)(~0);
 
   const Derived& derived() const {
     return static_cast<const Derived&>(*this);
@@ -55,13 +55,13 @@ public:
     return origin;
   }
 
-  Derived& setGen(int gen_) {
-    if(gen == -1)
+  Derived& setGen(size_t gen_) {
+    if(gen == (size_t)(~0))
       gen = gen_;
     return static_cast<Derived&>(*this);
   }
 
-  int getGen() const {
+  size_t getGen() const {
     return gen;
   }
 

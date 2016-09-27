@@ -28,7 +28,7 @@ namespace Config {
   const size_t popSize = 2000;
 
   // Number of generations (constant)
-  const int nGen = 500;
+  const size_t nGen = std::numeric_limits<size_t>::max();
 
   // Expected curcuit depth in 0th generation
   const float expLengthIni = 30;
@@ -107,7 +107,7 @@ int main() {
 
   CandidateFactory::Selector sel = CandidateFactory::getInitSelector();
 
-  int gen;
+  size_t gen;
   for(gen = 0; gen < Config::nGen; gen++) {
 
     /* Find the nondominated subset and trim down do arSize */
