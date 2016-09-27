@@ -5,13 +5,21 @@
 
 #include "include/commons.hpp"
 
-/*#ifdef USE_QPP
-#include "include/wrapper-qpp.hpp"
-#elif defined USE_QICLIB*/
-#include "include/wrapper-fourier.hpp"
-/*#else
-#error Either USE_QPP or USE_QICLIB needed.
-#endif*/
+#ifdef FOURIER
+  #ifdef USE_QICLIB
+    #include "include/wrapper-fourier.hpp"
+  #else
+    #error Fourier problem is only implemented using QIClib.
+  #endif
+#else
+  #ifdef USE_QPP
+    #include "include/wrapper-qpp.hpp"
+  #elif defined USE_QICLIB
+    #include "include/wrapper-qiclib.hpp"
+  #else
+    #error Either USE_QPP or USE_QICLIB needed.
+  #endif
+#endif
 
 namespace Config {
 
