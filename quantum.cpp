@@ -112,7 +112,7 @@ int main() {
 
     /* Find the nondominated subset and trim down do arSize */
     Population pop2 = pop.front();
-    pop2.randomTrim(Config::arSize);
+    pop2.rankTrim(Config::arSize);
     size_t nd = pop2.size();
 
     /* Top up to popSize candidates in parallel */
@@ -128,7 +128,7 @@ int main() {
     /* Leave only one representative of each fitness */
     pop.prune([](const GenCandidate& a, const GenCandidate& b) -> bool {
         return a.fitness() == b.fitness() ||
-          std::abs(a.fitness().error - b.fitness().error) < 0.0001;
+          false; //std::abs(a.fitness().error - b.fitness().error) < 0.0001;
       }, 0, false);
 
     /* Take a record which GenOps were successful in making good candidates */
@@ -138,14 +138,10 @@ int main() {
         sel.hit(c.getOrigin());
 
     /* Summarize */
-    auto minerr = std::min_element(nondom.begin(), nondom.end(),
-        [](const GenCandidate& a, const GenCandidate& b) -> bool {
-          return a.fitness().error + 0.05*a.fitness().length
-               < b.fitness().error + 0.05*b.fitness().length; });
     std::cout << Colours::bold() << "Gen " << gen << ": " << Colours::reset()
       << Colours::yellow() << pop.size() << Colours::reset()
-      << " unique fitnesses, lowest err+len "
-      << Colours::green() << minerr->fitness() << Colours::reset() << ", "
+      << " unique fitnesses, lowest error "
+      << Colours::green() << pop.best().fitness() << Colours::reset() << ", "
       << Colours::yellow() << nondom.size() << Colours::reset()
       << " nondominated";
     if(nondom.size() > 0) {
