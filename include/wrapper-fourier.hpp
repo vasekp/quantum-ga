@@ -104,14 +104,28 @@ public:
   }
 
   bool merge(const Gene& g) {
-    if(g.op == op
+    if(angle == 0) {
+      // op1 = (phase*)identity
+      op = g.op;
+      tgt = g.tgt;
+      ixs = g.ixs;
+      hw = g.hw;
+      angle = g.angle;
+      gphase += g.gphase;
+      return true;
+    } else if(g.angle == 0) {
+      // op2 = (phase*)identity
+      gphase += g.gphase;
+      return true;
+    } else if(g.op == op
         && g.tgt == tgt
         && g.ixs.size() == ixs.size()
         && arma::all(g.ixs == ixs)) {
       angle += g.angle;
       gphase += g.gphase;
       return true;
-    } else return false;
+    } else
+      return false;
   }
 
   double rationalize(double x) {
