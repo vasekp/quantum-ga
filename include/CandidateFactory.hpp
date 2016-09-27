@@ -389,7 +389,7 @@ public:
     ops.push_back({ &CF::mSplitSwap,       "SpltSwp"  });
     ops.push_back({ &CF::mReverseSlice,    "InvSlice" });
     ops.push_back({ &CF::crossoverUniform, "C/Over"   });
-    ops.push_back({ &CF::concat3,          "Concat3"  });
+  //ops.push_back({ &CF::concat3,          "Concat3"  });
     ops.push_back({ &CF::simplify,         "Simplify" });
     count = ops.size();
     double pUniform = 1.0 / count;

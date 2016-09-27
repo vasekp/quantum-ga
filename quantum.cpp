@@ -24,10 +24,10 @@
 namespace Config {
 
   // Circuit width (constant)
-  const unsigned nBit = 2;
+  const unsigned nBit = 3;
 
   // strength parameter of NSGA selection
-  const float selectBias = 1.7;
+  const float selectBias = 3.0;
 
   // Archive (external population) size
   const size_t arSize = 100;
@@ -135,8 +135,7 @@ int main() {
 
     /* Leave only one representative of each fitness */
     pop.prune([](const GenCandidate& a, const GenCandidate& b) -> bool {
-        return a.fitness() == b.fitness() ||
-          false; //std::abs(a.fitness().error - b.fitness().error) < 0.0001;
+        return a.fitness() == b.fitness();
       }, 0, false);
 
     /* Take a record which GenOps were successful in making good candidates */
