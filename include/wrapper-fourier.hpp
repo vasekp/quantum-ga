@@ -98,8 +98,8 @@ public:
 
   bool mutate() {
     std::normal_distribution<> dAng{0.0, 0.1};
-    angle += dAng(gen::rng);
-    gphase += dAng(gen::rng);
+    std::bernoulli_distribution dWhich{};
+    (dWhich(gen::rng) ? angle : gphase) += dAng(gen::rng);
     return true;
   }
 
@@ -203,7 +203,7 @@ public:
       out = arma::fft(psi) / sqrt(dim);
       error += std::max(1 - std::real(arma::cdot(out, sim(psi))), 0.0);
     }
-    return error;
+    return error < 1E-6 ? 0 : error;
   }
 
   friend std::ostream& operator<< (std::ostream& os, const Candidate& c) {
@@ -225,10 +225,9 @@ public:
     for(size_t i = 0; i < dim; i++) {
       psi.fill(0);
       psi[i] = 1;
-      //sim(psi).st().raw_print(os);
       for(auto& p : sim(psi))
         os << std::abs(p)*std::sqrt(dim) << "/√" << dim << "∠"
-          << std::showpos << std::arg(p)/3.14159 << "π " << std::noshowpos;
+          << std::showpos << std::arg(p)/internal::pi << "π " << std::noshowpos;
       os << '\n';
     }
     return os.str();
