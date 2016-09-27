@@ -272,7 +272,12 @@ private:
   }
 
   Candidate simplify() {
-    auto &p = get();
+    return simplify(get());
+  }
+
+public:
+
+  static Candidate simplify(const Candidate& p) {
     auto &gt = p.genotype();
     size_t sz = gt.size();
     if(!sz)
