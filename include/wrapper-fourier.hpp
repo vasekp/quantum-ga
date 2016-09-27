@@ -142,14 +142,14 @@ public:
   }
 
   friend std::ostream& operator<< (std::ostream& os, const Gene& g) {
-    os << g.names[g.op] << g.target()
-      << '(' << g.angle / internal::pi << "π)";
+    os << g.names[g.op] << g.target();
     if(g.ixs.size()) {
       os << '[';
       for(auto ctrl : g.ixs)
         os << ctrl;
       os << ']';
     }
+    os << '(' << g.angle / internal::pi << "π)";
     return os;
   }
 
@@ -182,6 +182,8 @@ public:
   using Base::Base;
 
   double error() const {
+    if(gt.size() > 1000)
+      return INFINITY;
     double error{0};
     size_t dim = arma::uword(1) << Config::nBit;
     arma::cx_vec psi(dim), in, out;
@@ -190,8 +192,7 @@ public:
       psi[i] = 1;
       in = psi;
       out = arma::fft(psi) / sqrt(dim);
-      //error += 1 - std::pow(std::abs(arma::cdot(out, sim(psi))), 2);
-      error += 1 - std::real(arma::cdot(out, sim(psi)));
+      error += std::max(1 - std::real(arma::cdot(out, sim(psi))), 0.0);
     }
     return error;
   }
