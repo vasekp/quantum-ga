@@ -20,10 +20,6 @@ const double pi = std::acos(-1);
 
 const cxd i{0,1};
 
-arma::cx_mat22 phi(double a) {
-  return { std::exp(i*a), 0, 0, std::exp(i*a) };
-}
-
 arma::cx_mat22 xrot(double a) {
   return { std::cos(a), i*std::sin(a), i*std::sin(a), std::cos(a) };
 }
@@ -41,28 +37,29 @@ arma::cx_mat22 zrot(double a) {
 
 class Gene {
 
-  char names[4] = { 'P', 'X', 'Y', 'Z' };
+  char names[3] = { 'X', 'Y', 'Z' };
 
   unsigned op;
   double angle;
+  double gphase;
   unsigned tgt;
   unsigned hw;
   arma::uvec ixs;
-  arma::cx_mat22 mat;
 
 public:
 
   static Gene getNew() {
     /* Distributions: cheap and safer in MT environment this way */
     // distribution of possible gates
-    std::uniform_int_distribution<unsigned> dOp{0, 3};
+    std::uniform_int_distribution<unsigned> dOp{0, 2};
     // distribution of targets
     std::uniform_int_distribution<unsigned> dTgt{1, Config::nBit};
     // distribution of controls
     std::uniform_int_distribution<unsigned> dCtrl{};
     // distribution of angle
     std::uniform_real_distribution<> dAng{0, 2.0*internal::pi};
-    return {dOp(gen::rng), dAng(gen::rng), dTgt(gen::rng), dCtrl(gen::rng)};
+    return {dOp(gen::rng), dAng(gen::rng), dAng(gen::rng),
+      dTgt(gen::rng), dCtrl(gen::rng)};
   }
 
   const arma::uvec& ix_vector() const {
@@ -76,20 +73,22 @@ public:
   arma::cx_mat22 gate() const {
     switch(op) {
       case 0:
-        return internal::phi(angle);
+        return internal::xrot(angle) * std::exp(gphase * internal::i);
       case 1:
-        return internal::xrot(angle);
+        return internal::yrot(angle) * std::exp(gphase * internal::i);
       case 2:
-        return internal::yrot(angle);
-      case 3:
-        return internal::zrot(angle);
+        return internal::zrot(angle) * std::exp(gphase * internal::i);
       default:
-        throw std::logic_error("gate must be between 0 and 3");
+        throw std::logic_error("gate must be between 0 and 2");
     }
   }
 
   unsigned weight() const {
     return hw;
+  }
+
+  double phase() const {
+    return gphase;
   }
 
   bool invert() {
@@ -100,6 +99,7 @@ public:
   bool mutate() {
     std::normal_distribution<> dAng{0.0, 0.1};
     angle += dAng(gen::rng);
+    gphase += dAng(gen::rng);
     return true;
   }
 
@@ -109,15 +109,16 @@ public:
         && g.ixs.size() == ixs.size()
         && arma::all(g.ixs == ixs)) {
       angle += g.angle;
+      gphase += g.gphase;
       return true;
     } else return false;
   }
 
-  bool simplify() {
+  double rationalize(double x) {
+    double a = x;
     /* TODO: parametrize */
-    constexpr int N = 5;
+    constexpr int N = 10;
     int coeffs[N];
-    double a = std::fmod(angle, 2*internal::pi) / internal::pi;
     for(int i = 0; i < N; i++) {
       coeffs[i] = std::floor(a);
       a = 1/(a - coeffs[i]);
@@ -128,16 +129,23 @@ public:
         break;
     // 1 ≤ t ≤ N
     if(t == N) // no simplification
-      return false;
+      return x;
     // 1 ≤ t < N
-    angle = coeffs[--t];
+    a = coeffs[--t];
     // 0 ≤ t < N-1
 #pragma GCC diagnostic ignored "-Warray-bounds"
     while(t--) // t = 0 breaks loop
       // 0 ≤ t
-      angle = coeffs[t] + 1/angle;
+      a = coeffs[t] + 1/a;
 #pragma GCC diagnostic pop
-    angle *= internal::pi;
+    return a;
+  }
+
+  bool simplify() {
+    angle = rationalize(std::fmod(angle, 2*internal::pi) / internal::pi)
+      * internal::pi;
+    gphase = rationalize(std::fmod(gphase, 2*internal::pi) / internal::pi)
+      * internal::pi;
     return true;
   }
 
@@ -155,8 +163,9 @@ public:
 
 private:
 
-  NOINLINE Gene(unsigned op_, double angle_, unsigned tgt_, unsigned control_enc):
-      op(op_), angle(angle_), tgt(tgt_), hw(0) {
+  NOINLINE Gene(unsigned op_, double angle_, double phase_,
+    unsigned tgt_, unsigned control_enc):
+      op(op_), angle(angle_), gphase(phase_), tgt(tgt_), hw(0) {
     std::vector<arma::uword> ixv;
     ixv.reserve(Config::nBit);
     unsigned ctrl = QGA::GeneTools::ctrlBitString(control_enc, tgt - 1);
@@ -197,6 +206,15 @@ public:
     return error;
   }
 
+  friend std::ostream& operator<< (std::ostream& os, const Candidate& c) {
+    os << (Base&)c;
+    double phase = 0;
+    for(auto& g : c.gt)
+      phase += g.phase();
+    os << "φ " << phase / internal::pi << "π";
+    return os;
+  }
+
   std::string dump(const std::ostream& ex) const {
     std::ostringstream os{};
     os.flags(ex.flags());
@@ -213,14 +231,13 @@ public:
           << std::showpos << std::arg(p)/3.14159 << "π " << std::noshowpos;
       os << '\n';
     }
-    os << '\n';
     return os.str();
   }
 
 private:
 
   arma::cx_vec sim(arma::cx_vec& psi) const {
-    for(const Gene& g : gt) {
+    for(auto& g : gt) {
       /* control-gate (QIClib) */
       psi = qic::apply_ctrl(
           psi,            // state
