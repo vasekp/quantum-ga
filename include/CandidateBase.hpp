@@ -22,7 +22,16 @@ public:
 
   CandidateBase(std::vector<Gene>&) = delete;
 
-  CandidateBase(std::vector<Gene>&& gt_): gt(std::move(gt_)) { }
+  CandidateBase(std::vector<Gene>&& gt_): gt(std::move(gt_)) {
+    if(gt.size() == 0)
+      return;
+    auto end = gt.end();
+    for(auto last = gt.begin(), cur = last + 1; cur != end; cur++)
+      // Can be merged: done, go to next cur
+      // Can not: put *cur after *last and increase last
+      if(!last->merge(*cur))
+        std::swap(*++last, *cur);
+  }
 
   NOINLINE Fitness fitness() const {
     /* Complexity = square sum of numbers of control bits per gate */

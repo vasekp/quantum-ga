@@ -282,20 +282,8 @@ public:
     size_t sz = gt.size();
     if(!sz)
       return p;
-    std::vector<Gene> gm;
-    gm.reserve(sz);
-    auto it = gt.begin(), end = gt.end();
-    gm.push_back(*it);
-    auto last = gm.begin();
+    std::vector<Gene> gm = gt;
     size_t cnt = 0;
-    for(it++; it != end; it++)
-      if(!last->merge(*it)) {
-        gm.push_back(*it);
-        last++;
-      } else {
-        // merge == true: success, skip this it
-        cnt++;
-      }
     for(auto& g : gm)
       if(g.simplify())
         cnt++;

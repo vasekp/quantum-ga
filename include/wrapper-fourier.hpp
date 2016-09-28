@@ -110,6 +110,7 @@ public:
         && arma::all(g.ixs == ixs)) {
       angle += g.angle;
       gphase += g.gphase;
+      update();
       return true;
     } else return false;
   }

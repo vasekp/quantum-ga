@@ -86,6 +86,9 @@ public:
       // Identity * G = G
       *this = g;
       return true;
+    } else if(g.op == 0) {
+      // G * Identity = G
+      return true;
     } else if(g.op == op
         && g.tgt == tgt
         && g.ixv == ixv
