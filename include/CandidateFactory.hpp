@@ -63,13 +63,12 @@ private:
       return p;
     auto gm = gt;
     std::uniform_real_distribution<> dUni{0, 1};
-    size_t cnt = 0;
-    for(auto& g : gm)
-      if(dUni(gen::rng) < Config::pChoiceUniform) {
-        g = Gene::getNew();
-        cnt++;
-      }
-    return cnt ? Candidate{std::move(gm)} : p;
+    std::uniform_int_distribution<size_t> dPos{0, sz - 1};
+    const double probTerm = 1/Config::expMutationCount;
+    do
+      gm[dPos(gen::rng)] = Gene::getNew();
+    while(dUni(gen::rng) > probTerm);
+    return Candidate{std::move(gm)};
   }
 
   Candidate mAlterContinuous() {
@@ -80,12 +79,12 @@ private:
       return p;
     auto gm = gt;
     std::uniform_real_distribution<> dUni{0, 1};
-    size_t cnt = 0;
-    for(auto& g : gm)
-      if(dUni(gen::rng) < Config::pChoiceUniform)
-        if(g.mutate())
-          cnt++;
-    return cnt ? Candidate{std::move(gm)} : p;
+    std::uniform_int_distribution<size_t> dPos{0, sz - 1};
+    const double probTerm = 1/Config::expMutationCount;
+    do
+      gm[dPos(gen::rng)].mutate();
+    while(dUni(gen::rng) > probTerm);
+    return Candidate{std::move(gm)};
   }
 
   Candidate mAddSlice() {
@@ -95,8 +94,8 @@ private:
     std::uniform_real_distribution<> dUni{0, 1};
     unsigned pos = gen::rng() % (sz + 1);
     std::vector<Gene> ins;
-    ins.reserve(Config::expLengthAdd);
-    double probTerm = 1/Config::expLengthAdd;
+    ins.reserve(2*Config::expMutationCount);
+    double probTerm = 1/Config::expMutationCount;
     do
       ins.push_back(Gene::getNew());
     while(dUni(gen::rng) > probTerm);
@@ -118,8 +117,8 @@ private:
     if(pos2 < pos1)
       std::swap(pos1, pos2);
     std::vector<Gene> ins;
-    ins.reserve(2*Config::expLengthAdd);
-    double probTerm = 1/Config::expLengthAdd;
+    ins.reserve(2*Config::expMutationCount);
+    double probTerm = 1/Config::expMutationCount;
     do
       ins.push_back(Gene::getNew());
     while(dUni(gen::rng) > probTerm);
@@ -146,7 +145,8 @@ private:
       return p;
     unsigned pos1 = gen::rng() % (sz + 1);
     /* Integer with the same distribution in mAddSlice */
-    int len = 1 + floor(log(dUni(gen::rng)) / log(1 - 1/Config::expLengthAdd));
+    int len = 1 + floor(log(dUni(gen::rng))
+        / log(1 - 1/Config::expMutationCount));
     unsigned pos2 = pos1 + len > sz ? sz : pos1 + len;
     std::vector<Gene> gm;
     gm.reserve(sz - (pos2 - pos1));
@@ -174,12 +174,14 @@ private:
     auto &p = get();
     auto &gt = p.genotype();
     auto sz = gt.size();
-    if(!sz)
+    if(sz < 2)
       return p;
     std::array<unsigned, 4> pos;
     for(int i = 0; i < 4; i++)
-      pos[i] = gen::rng() % (sz + 1);
+      pos[i] = gen::rng() % (sz - 1);
     std::sort(pos.begin(), pos.end());
+    // ensure that pos[1]-pos[0] and pos[3]-pos[2] are nonzero
+    pos[1]++, pos[2]++, pos[3] += 2;
     std::vector<Gene> gm;
     gm.reserve(sz);
     gm.insert(gm.end(), gt.begin(), gt.begin() + pos[0]);
@@ -194,12 +196,14 @@ private:
     auto &p = get();
     auto &gt = p.genotype();
     auto sz = gt.size();
-    if(!sz)
+    if(sz < 2)
       return p;
-    unsigned pos1 = gen::rng() % (sz + 1),
-             pos2 = gen::rng() % (sz + 1);
+    unsigned pos1 = gen::rng() % (sz - 1),
+             pos2 = gen::rng() % (sz - 1);
     if(pos2 < pos1)
       std::swap(pos1, pos2);
+    // ensure that pos2-pos1 is at least 2
+    pos2 += 2;
     std::vector<Gene> gm;
     gm.reserve(sz);
     gm.insert(gm.end(), gt.begin(), gt.begin() + pos1);
@@ -234,9 +238,10 @@ private:
     while(it1 != ie1) {
       gm.push_back(*it1++);
       if(dUni(gen::rng) < pTest1) {
-        // happens every time on the shorter genotype,
-        // 1/ratio of the time on the longer one
-        // We might still decide to stay, though.
+        // Whether to make this a possible crossover point.
+        // The above check passes every time on the shorter genotype,
+        // 1/ratio of the time on the longer one.
+        // We might still decide to stay on the same branch, though.
         if(dUni(gen::rng) < Config::pCrossUniform) {
           std::swap(it1, it2);
           std::swap(ie1, ie2);
@@ -282,20 +287,8 @@ public:
     size_t sz = gt.size();
     if(!sz)
       return p;
-    std::vector<Gene> gm;
-    gm.reserve(sz);
-    auto it = gt.begin(), end = gt.end();
-    gm.push_back(*it);
-    auto last = gm.begin();
+    std::vector<Gene> gm = gt;
     size_t cnt = 0;
-    for(it++; it != end; it++)
-      if(!last->merge(*it)) {
-        gm.push_back(*it);
-        last++;
-      } else {
-        // merge == true: success, skip this it
-        cnt++;
-      }
     for(auto& g : gm)
       if(g.simplify())
         cnt++;

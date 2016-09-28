@@ -13,7 +13,7 @@ namespace Config {
   extern const float selectBias;
   extern const float heurFactor;
   extern const float expLengthIni;
-  extern const float expLengthAdd;
+  extern const float expMutationCount;
   extern const float pChoiceUniform;
   extern const float pCrossUniform;
   extern const float pControl;
