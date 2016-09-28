@@ -32,12 +32,24 @@ arma::cx_mat22 zrot(double a) {
   return { std::exp(i*a), 0, 0, std::exp(-i*a) };
 }
 
+
+struct Gate {
+  arma::cx_mat22(*fn)(double);
+  std::string name;
+};
+
+Gate gates[] = {
+  {xrot, "X"},
+  {yrot, "Y"},
+  {zrot, "Z"}
+};
+
+constexpr size_t gate_count = std::extent<decltype(gates)>::value;
+
 } // namespace internal
 
 
 class Gene {
-
-  char names[3] = { 'X', 'Y', 'Z' };
 
   unsigned op;
   double angle;
@@ -52,7 +64,7 @@ public:
   static Gene getNew() {
     /* Distributions: cheap and safer in MT environment this way */
     // distribution of possible gates
-    std::uniform_int_distribution<unsigned> dOp{0, 2};
+    std::uniform_int_distribution<unsigned> dOp{1, internal::gate_count};
     // distribution of targets
     std::uniform_int_distribution<unsigned> dTgt{1, Config::nBit};
     // distribution of controls
@@ -161,7 +173,7 @@ public:
   }
 
   friend std::ostream& operator<< (std::ostream& os, const Gene& g) {
-    os << g.names[g.op] << g.target();
+    os << internal::gates[g.op - 1].name << g.target();
     if(g.ixs.size()) {
       os << '[';
       for(auto ctrl : g.ixs)
@@ -192,19 +204,9 @@ private:
   }
 
   void update() {
-    switch(op) {
-      case 0:
-        mat = internal::xrot(angle) * std::exp(gphase * internal::i);
-        break;
-      case 1:
-        mat = internal::yrot(angle) * std::exp(gphase * internal::i);
-        break;
-      case 2:
-        mat = internal::zrot(angle) * std::exp(gphase * internal::i);
-        break;
-      default:
-        throw std::logic_error("gate must be between 0 and 2");
-    }
+    if(op < 1 || op > internal::gate_count)
+      throw std::logic_error("gate must be between 0 and 2");
+    mat = std::exp(gphase * internal::i) * internal::gates[op - 1].fn(angle);
   }
 
 }; // class Gene
