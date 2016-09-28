@@ -144,9 +144,8 @@ public:
     } else return false;
   }
 
-  bool mutate() {
+  void mutate() {
     /* no-op */
-    return false;
   }
 
   bool simplify() {

@@ -96,11 +96,11 @@ public:
     return true;
   }
 
-  bool mutate() {
+  void mutate() {
     std::normal_distribution<> dAng{0.0, 0.1};
     angle += dAng(gen::rng);
     gphase += dAng(gen::rng);
-    return true;
+    update();
   }
 
   bool merge(const Gene& g) {

@@ -41,11 +41,11 @@ namespace Config {
   // Expected curcuit depth in 0th generation
   const float expLengthIni = 30;
 
-  // Expected number of gates inserted in mutation
-  const float expLengthAdd = 1.5;
+  // Expected number of gates inserted / modified / removed in mutation
+  const float expMutationCount = 3.0;
 
-  // Probability of altering / deleting a single gate in uniform operators
-  const float pChoiceUniform = 0.03;
+  // Probability of removing a single gate in uniform deletion
+  const float pChoiceUniform = 0.1;
 
   // Probability of a crossover at any given point
   const float pCrossUniform = 0.1;
