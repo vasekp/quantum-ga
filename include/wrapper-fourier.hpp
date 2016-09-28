@@ -71,7 +71,7 @@ public:
     // distribution of controls
     std::uniform_int_distribution<unsigned> dCtrl{};
     // distribution of angle
-    std::uniform_real_distribution<> dAng{0, 2.0*internal::pi};
+    std::uniform_real_distribution<> dAng{-0.5*internal::pi, 0.5*internal::pi};
     return {dOp(gen::rng), dAng(gen::rng), dAng(gen::rng),
       dTgt(gen::rng), dCtrl(gen::rng)};
   }
@@ -165,10 +165,8 @@ public:
   }
 
   bool simplify() {
-    angle = rationalize(std::fmod(angle, 2*internal::pi) / internal::pi)
-      * internal::pi;
-    gphase = rationalize(std::fmod(gphase, 2*internal::pi) / internal::pi)
-      * internal::pi;
+    angle = rationalize(std::fmod(angle / internal::pi, 2.0)) * internal::pi;
+    gphase = rationalize(std::fmod(gphase / internal::pi, 2.0)) * internal::pi;
     update();
     return true;
   }
