@@ -45,6 +45,7 @@ class Gene {
   unsigned tgt;
   unsigned hw;
   arma::uvec ixs;
+  arma::cx_mat22 mat;
 
 public:
 
@@ -70,17 +71,8 @@ public:
     return tgt;
   }
 
-  arma::cx_mat22 gate() const {
-    switch(op) {
-      case 0:
-        return internal::xrot(angle) * std::exp(gphase * internal::i);
-      case 1:
-        return internal::yrot(angle) * std::exp(gphase * internal::i);
-      case 2:
-        return internal::zrot(angle) * std::exp(gphase * internal::i);
-      default:
-        throw std::logic_error("gate must be between 0 and 2");
-    }
+  const arma::cx_mat22& gate() const {
+    return mat;
   }
 
   unsigned weight() const {
@@ -93,6 +85,7 @@ public:
 
   bool invert() {
     angle = -angle;
+    update();
     return true;
   }
 
@@ -100,6 +93,7 @@ public:
     std::normal_distribution<> dAng{0.0, 0.1};
     std::bernoulli_distribution dWhich{};
     (dWhich(gen::rng) ? angle : gphase) += dAng(gen::rng);
+    update();
     return true;
   }
 
@@ -112,10 +106,12 @@ public:
       hw = g.hw;
       angle = g.angle;
       gphase += g.gphase;
+      update();
       return true;
     } else if(g.angle == 0) {
       // op2 = (phase*)identity
       gphase += g.gphase;
+      update();
       return true;
     } else if(g.op == op
         && g.tgt == tgt
@@ -160,6 +156,7 @@ public:
       * internal::pi;
     gphase = rationalize(std::fmod(gphase, 2*internal::pi) / internal::pi)
       * internal::pi;
+    update();
     return true;
   }
 
@@ -191,6 +188,23 @@ private:
       ctrl >>= 1;
     }
     ixs = ixv;
+    update();
+  }
+
+  void update() {
+    switch(op) {
+      case 0:
+        mat = internal::xrot(angle) * std::exp(gphase * internal::i);
+        break;
+      case 1:
+        mat = internal::yrot(angle) * std::exp(gphase * internal::i);
+        break;
+      case 2:
+        mat = internal::zrot(angle) * std::exp(gphase * internal::i);
+        break;
+      default:
+        throw std::logic_error("gate must be between 0 and 2");
+    }
   }
 
 }; // class Gene
