@@ -35,6 +35,9 @@ namespace Config {
   // Internal population size
   const size_t popSize = 2000;
 
+  // Number of candidates to keep from parent generation
+  const size_t popKeep = 200;
+
   // Number of generations (constant)
   const size_t nGen = std::numeric_limits<size_t>::max();
 
@@ -128,14 +131,17 @@ int main() {
     /* Find the nondominated subset and trim down do arSize */
     Population pop2 = pop.front();
     pop2.rankTrim(Config::arSize);
-    size_t nd = pop2.size();
 
-    /* Top up to popSize candidates in parallel */
+    /* Select popKeep candidates for survival without modification */
     pop2.reserve(Config::popSize);
     pop.precompute();
+    pop2.add(Config::popKeep,
+        [&] { return pop.NSGASelect(Config::selectBias); });
+
+    /* Top up to popSize candidates in parallel */
     CandidateFactory cf{pop, sel};
-    pop2.add(Config::popSize - nd,
-            [&]() -> const Candidate { return cf.getNew().setGen(gen); });
+    pop2.add(Config::popSize - pop2.size(),
+        [&] { return cf.getNew().setGen(gen); });
 
     /* We don't need the original population anymore */
     pop = std::move(pop2);
