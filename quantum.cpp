@@ -56,6 +56,9 @@ namespace Config {
   // How much each bit is likely to be a control bit at gate creation
   const float pControl = 0.25;
 
+  // Size of random subset of candidates to list on demand at interrupt
+  const int nIntList = 20;
+
 } // namespace Config
 
 
@@ -63,11 +66,14 @@ namespace SigComm {
 
   enum StopState {
     RUNNING,
-    INTERRUPTED
+    INTERRUPTED,
+    STOPPING
   };
 
   enum Response {
     CONTINUE,
+    DUMP,
+    RESTART,
     LIST,
     STOP
   };
@@ -91,8 +97,9 @@ QGA::CandidateCounter QGA::counter{};
 
 
 void int_handler(int);
-SigComm::Response int_response();
-void list(Population&, CandidateFactory::Selector&);
+int int_response();
+void dumpResults(Population&, CandidateFactory::Selector&);
+void listRandom(Population&);
 
 
 int main() {
@@ -158,15 +165,25 @@ int main() {
     }
     std::cout << std::endl;
 
-    if(SigComm::state != SigComm::RUNNING) {
-      SigComm::Response res = int_response();
-      while(res == SigComm::LIST) {
-        list(pop, sel);
-        res = int_response();
+    while(SigComm::state == SigComm::INTERRUPTED) {
+      int res = int_response();
+      switch(res) {
+        case SigComm::DUMP:
+          dumpResults(pop, sel);
+          break;
+        case SigComm::LIST:
+          listRandom(pop);
+          break;
+        case SigComm::RESTART:
+          pop = Population{Config::popSize, [&] { return CandidateFactory::genInit().setGen(0); }};
+          sel = CandidateFactory::getInitSelector();
+          pre = std::chrono::steady_clock::now();
+          gen = 0;
+          break;
       }
-      if(res == SigComm::STOP)
-        break;
     }
+    if(SigComm::state == SigComm::STOPPING)
+      break;
   }
 
   post = std::chrono::steady_clock::now();
@@ -177,11 +194,11 @@ int main() {
     << Colours::blue() << QGA::counter.total() << Colours::reset()
     << " candidates tested" << std::endl;
 
-  list(pop, sel);
+  dumpResults(pop, sel);
 }
 
 
-void list(Population& pop, CandidateFactory::Selector& sel) {
+void dumpResults(Population& pop, CandidateFactory::Selector& sel) {
   /* List results */
   auto nondom = pop.front();
   nondom.sort();
@@ -204,6 +221,14 @@ void list(Population& pop, CandidateFactory::Selector& sel) {
 }
 
 
+void listRandom(Population& pop) {
+  for(auto& c : pop.randomSelect(Config::nIntList))
+    std::cout << Colours::green() << c.fitness() << Colours::reset()
+      << " [" << Colours::blue() << 'g' << c.getGen() << Colours::reset()
+      << "] " << c << '\n';
+}
+
+
 void int_handler(int) {
   if(SigComm::state != SigComm::RUNNING)
     // we got stuck while processing another signal (e.g., popSize too large
@@ -213,39 +238,49 @@ void int_handler(int) {
 }
 
 
-SigComm::Response int_response() {
+int int_response() {
   std::chrono::time_point<std::chrono::steady_clock> pre, post;
   pre = std::chrono::steady_clock::now();
   std::cerr << "\nComputation stopped. Choose action:\n"
     << Colours::blue() << "a: " << Colours::reset() << "abort,\n"
     << Colours::blue() << "c: " << Colours::reset() << "continue,\n"
     << Colours::blue() << "d: " << Colours::reset() << "diagnose / list current results,\n"
+    << Colours::blue() << "l: " << Colours::reset() << "list "
+      << Config::nIntList << " random candidates,\n"
+    << Colours::blue() << "r: " << Colours::reset() << "restart,\n"
     << Colours::blue() << "q: " << Colours::reset() << "quit after this generation.\n";
-  char c;
+  int ret = -1;
   do {
+    char c;
     std::cerr << "\nYour choice: ";
     std::cin >> c;
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    if(std::cin.eof()) {
+    if(std::cin.eof())
       c = 'a';
-      break;
+    switch(c) {
+      case 'a':
+        std::_Exit(1);
+      case 'c':
+        SigComm::state = SigComm::RUNNING;
+        ret = SigComm::CONTINUE;
+        break;
+      case 'd':
+        ret = SigComm::DUMP;
+        break;
+      case 'l':
+        ret = SigComm::LIST;
+        break;
+      case 'r':
+        SigComm::state = SigComm::RUNNING;
+        ret = SigComm::RESTART;
+        break;
+      case 'q':
+        SigComm::state = SigComm::STOPPING;
+        ret = SigComm::STOP;
+        break;
     }
-  } while(c != 'a' && c != 'c' && c != 'd' && c != 'q');
+  } while(ret < 0);
   post = std::chrono::steady_clock::now();
   SigComm::timeOut += post - pre;
-  switch(c) {
-    case 'a':
-      std::_Exit(1);
-    case 'c':
-      SigComm::state = SigComm::RUNNING;
-      return SigComm::CONTINUE;
-      break;
-    case 'd':
-      return SigComm::LIST;
-      break;
-    case 'q':
-    default:
-      return SigComm::STOP;
-      break;
-  }
+  return ret;
 }
