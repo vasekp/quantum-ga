@@ -36,12 +36,13 @@ arma::cx_mat22 zrot(double a) {
 struct Gate {
   arma::cx_mat22(*fn)(double);
   std::string name;
+  bool ctrl;
 };
 
 Gate gates[] = {
-  {xrot, "X"},
-  {yrot, "Y"},
-  {zrot, "Z"}
+  {xrot, "X", false},
+  {yrot, "Y", false},
+  {zrot, "Z", true}
 };
 
 constexpr size_t gate_count = std::extent<decltype(gates)>::value;
@@ -189,17 +190,20 @@ private:
   NOINLINE Gene(unsigned op_, double angle_, double phase_,
     unsigned tgt_, unsigned control_enc):
       op(op_), angle(angle_), gphase(phase_), tgt(tgt_), hw(0) {
-    std::vector<arma::uword> ixv;
-    ixv.reserve(Config::nBit);
-    unsigned ctrl = QGA::GeneTools::ctrlBitString(control_enc, tgt - 1);
-    for(unsigned i = 0; i < Config::nBit; i++) {
-      if(ctrl & 1) {
-        ixv.push_back(i + 1);
-        hw++;
+    if(internal::gates[op - 1].ctrl) {
+      std::vector<arma::uword> ixv;
+      ixv.reserve(Config::nBit);
+      unsigned ctrl = QGA::GeneTools::ctrlBitString(control_enc, tgt - 1);
+      for(unsigned i = 0; i < Config::nBit; i++) {
+        if(ctrl & 1) {
+          ixv.push_back(i + 1);
+          hw++;
+        }
+        ctrl >>= 1;
       }
-      ctrl >>= 1;
-    }
-    ixs = ixv;
+      ixs = ixv;
+    } else
+      ixs.clear();
     update();
   }
 
