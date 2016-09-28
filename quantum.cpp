@@ -155,7 +155,8 @@ int main() {
     std::cout << Colours::bold() << "Gen " << gen << ": " << Colours::reset()
       << Colours::yellow() << pop.size() << Colours::reset()
       << " unique fitnesses, lowest error "
-      << Colours::green() << pop.best().fitness() << Colours::reset() << ", "
+      << Colours::green() << pop.best().fitness() << Colours::blue()
+      << " [" << pop.best().getGen() << ']' << Colours::reset() << ", "
       << Colours::yellow() << nondom.size() << Colours::reset()
       << " nondominated";
     if(nondom.size() > 0) {
