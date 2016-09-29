@@ -40,8 +40,8 @@ struct Gate {
 };
 
 Gate gates[] = {
-  {xrot, "X", false},
-  {yrot, "Y", false},
+  {xrot, "X", true},
+  {yrot, "Y", true},
   {zrot, "Z", true}
 };
 
@@ -231,7 +231,7 @@ public:
       out = arma::fft(psi) / sqrt(dim);
       error += std::max(1 - std::real(arma::cdot(out, sim(psi))), 0.0);
     }
-    return error < 1E-6 ? 0 : error;
+    return error < 1E-8 ? 0 : error;
   }
 
   friend std::ostream& operator<< (std::ostream& os, const Candidate& c) {

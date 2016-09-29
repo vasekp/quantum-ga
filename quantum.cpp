@@ -27,13 +27,13 @@ namespace Config {
   const unsigned nBit = 3;
 
   // strength parameter of NSGA selection
-  const float selectBias = 2.0;
+  const float selectBias = 1.0;
 
   // Archive (external population) size
   const size_t arSize = 100;
 
   // Internal population size
-  const size_t popSize = 2000;
+  const size_t popSize = 500;
 
   // Number of candidates to keep from parent generation
   const size_t popKeep = 200;
