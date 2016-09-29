@@ -138,30 +138,26 @@ public:
   }
 
   double rationalize(double x) {
-    double a = x;
-    /* TODO: parametrize */
-    constexpr int N = 10;
-    int coeffs[N];
-    for(int i = 0; i < N; i++) {
-      coeffs[i] = std::floor(a);
-      a = 1/(a - coeffs[i]);
-    }
+    double a = std::abs(x);
+    constexpr int N = 8;
+    double coeffs[N];
     int t;
-    for(t = 1; t < N; t++)
-      if(std::abs(coeffs[t]) > 20)
+    for(t = 0; t < N; t++) {
+      coeffs[t] = std::floor(a);
+      if(coeffs[t] > 100) {
+        coeffs[t++] = 100;
         break;
-    // 1 ≤ t ≤ N
-    if(t == N) // no simplification
+      }
+      a = 1/(a - coeffs[t]);
+    }
+    std::discrete_distribution<> dStop(&coeffs[1], &coeffs[t]);
+    int cut = dStop(gen::rng) + 1;
+    if(cut == t)
       return x;
-    // 1 ≤ t < N
-    a = coeffs[--t];
-    // 0 ≤ t < N-1
-#pragma GCC diagnostic ignored "-Warray-bounds"
-    while(t--) // t = 0 breaks loop
-      // 0 ≤ t
-      a = coeffs[t] + 1/a;
-#pragma GCC diagnostic pop
-    return a;
+    a = coeffs[--cut];
+    while(cut > 0)
+      a = coeffs[--cut] + 1/a;
+    return x < 0 ? -a : a;
   }
 
   bool simplify() {
