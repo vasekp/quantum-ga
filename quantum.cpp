@@ -98,7 +98,8 @@ QGA::CandidateCounter QGA::counter{};
 
 void int_handler(int);
 int int_response();
-void dumpResults(Population&, CandidateFactory::Selector&);
+void dumpResults(Population&, CandidateFactory::Selector&,
+    std::chrono::time_point<std::chrono::steady_clock> start, size_t gen);
 void listRandom(Population&);
 
 
@@ -113,8 +114,7 @@ int main() {
 
   std::signal(SIGINT, int_handler);
 
-  std::chrono::time_point<std::chrono::steady_clock> pre, post;
-  pre = std::chrono::steady_clock::now();
+  std::chrono::time_point<std::chrono::steady_clock> start{std::chrono::steady_clock::now()};
 
   Population pop{Config::popSize, [&] { return CandidateFactory::genInit().setGen(0); }};
 
@@ -168,7 +168,7 @@ int main() {
       int res = int_response();
       switch(res) {
         case SigComm::DUMP:
-          dumpResults(pop, sel);
+          dumpResults(pop, sel, start, gen);
           break;
         case SigComm::LIST:
           listRandom(pop);
@@ -176,7 +176,7 @@ int main() {
         case SigComm::RESTART:
           pop = Population{Config::popSize, [&] { return CandidateFactory::genInit().setGen(0); }};
           sel = CandidateFactory::getInitSelector();
-          pre = std::chrono::steady_clock::now();
+          start = std::chrono::steady_clock::now();
           gen = 0;
           break;
       }
@@ -185,19 +185,21 @@ int main() {
       break;
   }
 
-  post = std::chrono::steady_clock::now();
-  std::chrono::duration<double> dur = post - pre - SigComm::timeOut;
+  dumpResults(pop, sel, start, gen);
+}
+
+
+void dumpResults(Population& pop, CandidateFactory::Selector& sel,
+    std::chrono::time_point<std::chrono::steady_clock> start, size_t gen) {
+  /* Timing information */
+  std::chrono::time_point<std::chrono::steady_clock> now{std::chrono::steady_clock::now()};
+  std::chrono::duration<double> dur = now - start - SigComm::timeOut;
   std::cout << std::endl << "Run took " << dur.count() << " s ("
     << Colours::blue() << dur.count()/gen
     << " s/gen " << Colours::reset() << "avg), "
     << Colours::blue() << QGA::counter.total() << Colours::reset()
     << " candidates tested" << std::endl;
 
-  dumpResults(pop, sel);
-}
-
-
-void dumpResults(Population& pop, CandidateFactory::Selector& sel) {
   /* List results */
   auto nondom = pop.front();
   nondom.sort();
