@@ -160,9 +160,17 @@ public:
     return x < 0 ? -a : a;
   }
 
+  bool simplify(double& x) {
+    double orig = x;
+    x = rationalize(std::fmod(x / internal::pi, 2.0)) * internal::pi;
+    return x != orig;
+  }
+
   bool simplify() {
-    angle = rationalize(std::fmod(angle / internal::pi, 2.0)) * internal::pi;
-    gphase = rationalize(std::fmod(gphase / internal::pi, 2.0)) * internal::pi;
+    std::normal_distribution<> dAng{0.0, 0.1};
+    std::bernoulli_distribution dWhich{};
+    if(!simplify(dWhich(gen::rng) ? angle : gphase))
+      return false;
     update();
     return true;
   }
