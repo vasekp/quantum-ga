@@ -221,7 +221,9 @@ void dumpResults(Population& pop, CandidateFactory::Selector& sel) {
 
 
 void listRandom(Population& pop) {
-  for(auto& c : pop.randomSelect(Config::nIntList))
+  auto sel = pop.randomSelect(Config::nIntList);
+  sel.sort();
+  for(auto& c : sel.reverse())
     std::cout << Colours::green() << c.fitness() << Colours::reset()
       << " [" << Colours::blue() << 'g' << c.getGen() << Colours::reset()
       << "] " << c << '\n';
