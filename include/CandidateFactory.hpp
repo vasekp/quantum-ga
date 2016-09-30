@@ -1,6 +1,7 @@
 namespace QGA {
 
 
+// Defined below CandidateFactory
 template<class Candidate, class Population>
 class CFSelector;
 
@@ -36,12 +37,12 @@ public:
     // probability of termination; expLengthIni = expected number of genes
     const double probTerm = 1/Config::expLengthIni;
     std::uniform_real_distribution<> dUni{0, 1};
-    std::vector<Gene> gt{};
-    gt.reserve(Config::expLengthIni);
+    std::vector<Gene> gtOrig{};
+    gtOrig.reserve(Config::expLengthIni);
     do
-      gt.push_back(Gene::getNew());
+      gtOrig.push_back(Gene::getNew());
     while(dUni(gen::rng) > probTerm);
-    return Candidate{std::move(gt)};
+    return Candidate{std::move(gtOrig)};
   }
 
   NOINLINE Candidate getNew() {
@@ -56,41 +57,41 @@ private:
   }
 
   Candidate mAlterDiscrete() {
-    auto &p = get();
-    auto &gt = p.genotype();
-    auto sz = gt.size();
-    if(!sz)
-      return p;
-    auto gm = gt;
+    auto &parent = get();
+    auto &gtOrig = parent.genotype();
+    auto sz = gtOrig.size();
+    if(sz == 0)
+      return parent;
+    auto gtNew = gtOrig;
     std::uniform_real_distribution<> dUni{0, 1};
     std::uniform_int_distribution<size_t> dPos{0, sz - 1};
     const double probTerm = 1/Config::expMutationCount;
     do
-      gm[dPos(gen::rng)] = Gene::getNew();
+      gtNew[dPos(gen::rng)] = Gene::getNew();
     while(dUni(gen::rng) > probTerm);
-    return Candidate{std::move(gm)};
+    return Candidate{std::move(gtNew)};
   }
 
   Candidate mAlterContinuous() {
-    auto &p = get();
-    auto &gt = p.genotype();
-    auto sz = gt.size();
-    if(!sz)
-      return p;
-    auto gm = gt;
+    auto &parent = get();
+    auto &gtOrig = parent.genotype();
+    auto sz = gtOrig.size();
+    if(sz == 0)
+      return parent;
+    auto gtNew = gtOrig;
     std::uniform_real_distribution<> dUni{0, 1};
     std::uniform_int_distribution<size_t> dPos{0, sz - 1};
     const double probTerm = 1/Config::expMutationCount;
     do
-      gm[dPos(gen::rng)].mutate();
+      gtNew[dPos(gen::rng)].mutate();
     while(dUni(gen::rng) > probTerm);
-    return Candidate{std::move(gm)};
+    return Candidate{std::move(gtNew)};
   }
 
   Candidate mAddSlice() {
-    auto &p = get();
-    auto &gt = p.genotype();
-    auto sz = gt.size();
+    auto &parent = get();
+    auto &gtOrig = parent.genotype();
+    auto sz = gtOrig.size();
     std::uniform_real_distribution<> dUni{0, 1};
     unsigned pos = gen::rng() % (sz + 1);
     std::vector<Gene> ins{};
@@ -99,18 +100,18 @@ private:
     do
       ins.push_back(Gene::getNew());
     while(dUni(gen::rng) > probTerm);
-    std::vector<Gene> gm{};
-    gm.reserve(sz + ins.size());
-    gm.insert(gm.end(), gt.begin(), gt.begin() + pos);
-    gm.insert(gm.end(), ins.begin(), ins.end());
-    gm.insert(gm.end(), gt.begin() + pos, gt.end());
-    return Candidate{std::move(gm)};
+    std::vector<Gene> gtNew{};
+    gtNew.reserve(sz + ins.size());
+    gtNew.insert(gtNew.end(), gtOrig.begin(), gtOrig.begin() + pos);
+    gtNew.insert(gtNew.end(), ins.begin(), ins.end());
+    gtNew.insert(gtNew.end(), gtOrig.begin() + pos, gtOrig.end());
+    return Candidate{std::move(gtNew)};
   }
 
   Candidate mAddPairs() {
-    auto &p = get();
-    auto &gt = p.genotype();
-    auto sz = gt.size();
+    auto &parent = get();
+    auto &gtOrig = parent.genotype();
+    auto sz = gtOrig.size();
     std::uniform_real_distribution<> dUni{0, 1};
     unsigned pos1 = gen::rng() % (sz + 1),
              pos2 = gen::rng() % (sz + 1);
@@ -122,121 +123,126 @@ private:
     do
       ins.push_back(Gene::getNew());
     while(dUni(gen::rng) > probTerm);
-    std::vector<Gene> gm{};
-    gm.reserve(sz + 2*ins.size());
-    gm.insert(gm.end(), gt.begin(), gt.begin() + pos1);
-    gm.insert(gm.end(), ins.begin(), ins.end());
-    gm.insert(gm.end(), gt.begin() + pos1, gt.begin() + pos2);
+    std::vector<Gene> gtNew{};
+    gtNew.reserve(sz + 2*ins.size());
+    gtNew.insert(gtNew.end(), gtOrig.begin(), gtOrig.begin() + pos1);
+    gtNew.insert(gtNew.end(), ins.begin(), ins.end());
+    gtNew.insert(gtNew.end(), gtOrig.begin() + pos1, gtOrig.begin() + pos2);
     for(auto& g : ins)
       g.invert();
-    gm.insert(gm.end(),
+    gtNew.insert(gtNew.end(),
         std::make_move_iterator(ins.rbegin()),
         std::make_move_iterator(ins.rend()));
-    gm.insert(gm.end(), gt.begin() + pos2, gt.end());
-    return Candidate{std::move(gm)};
+    gtNew.insert(gtNew.end(), gtOrig.begin() + pos2, gtOrig.end());
+    return Candidate{std::move(gtNew)};
   }
 
   Candidate mDeleteSlice() {
-    auto &p = get();
-    auto &gt = p.genotype();
-    auto sz = gt.size();
+    auto &parent = get();
+    auto &gtOrig = parent.genotype();
+    auto sz = gtOrig.size();
     std::uniform_real_distribution<> dUni{0, 1};
-    if(!sz)
-      return p;
+    if(sz == 0)
+      return parent;
     unsigned pos1 = gen::rng() % (sz + 1);
     /* Integer with the same distribution in mAddSlice */
     int len = 1 + floor(log(dUni(gen::rng))
         / log(1 - 1/Config::expMutationCount));
     unsigned pos2 = pos1 + len > sz ? sz : pos1 + len;
-    std::vector<Gene> gm{};
-    gm.reserve(sz - (pos2 - pos1));
-    gm.insert(gm.end(), gt.begin(), gt.begin() + pos1);
-    gm.insert(gm.end(), gt.begin() + pos2, gt.end());
-    return Candidate{std::move(gm)};
+    std::vector<Gene> gtNew{};
+    gtNew.reserve(sz - (pos2 - pos1));
+    gtNew.insert(gtNew.end(), gtOrig.begin(), gtOrig.begin() + pos1);
+    gtNew.insert(gtNew.end(), gtOrig.begin() + pos2, gtOrig.end());
+    return Candidate{std::move(gtNew)};
   }
 
   Candidate mDeleteUniform() {
-    auto &p = get();
-    auto gt = p.genotype();
+    auto &parent = get();
+    auto gtOrig = parent.genotype();
     std::uniform_real_distribution<> dUni{0, 1};
-    std::vector<Gene> gm{};
-    gm.reserve(gt.size());
+    std::vector<Gene> gtNew{};
+    gtNew.reserve(gtOrig.size());
     size_t cnt = 0;
-    for(auto& g : gt)
+    for(auto& g : gtOrig)
       if(dUni(gen::rng) >= Config::pChoiceUniform)
-        gm.push_back(g);
+        gtNew.push_back(g);
       else
         cnt++;
-    return cnt ? Candidate{std::move(gm)} : p;
+    return cnt ? Candidate{std::move(gtNew)} : parent;
   }
 
   Candidate mSplitSwap() {
-    auto &p = get();
-    auto &gt = p.genotype();
-    auto sz = gt.size();
+    auto &parent = get();
+    auto &gtOrig = parent.genotype();
+    auto sz = gtOrig.size();
     if(sz < 2)
-      return p;
+      return parent;
     std::array<unsigned, 4> pos;
     for(int i = 0; i < 4; i++)
       pos[i] = gen::rng() % (sz - 1);
     std::sort(pos.begin(), pos.end());
     // ensure that pos[1]-pos[0] and pos[3]-pos[2] are nonzero
     pos[1]++, pos[2]++, pos[3] += 2;
-    std::vector<Gene> gm{};
-    gm.reserve(sz);
-    gm.insert(gm.end(), gt.begin(), gt.begin() + pos[0]);
-    gm.insert(gm.end(), gt.begin() + pos[2], gt.begin() + pos[3]);
-    gm.insert(gm.end(), gt.begin() + pos[1], gt.begin() + pos[2]);
-    gm.insert(gm.end(), gt.begin() + pos[0], gt.begin() + pos[1]);
-    gm.insert(gm.end(), gt.begin() + pos[3], gt.end());
-    return Candidate{std::move(gm)};
+    std::vector<Gene> gtNew{};
+    gtNew.reserve(sz);
+    gtNew.insert(gtNew.end(),
+        gtOrig.begin(), gtOrig.begin() + pos[0]);
+    gtNew.insert(gtNew.end(),
+        gtOrig.begin() + pos[2], gtOrig.begin() + pos[3]);
+    gtNew.insert(gtNew.end(),
+        gtOrig.begin() + pos[1], gtOrig.begin() + pos[2]);
+    gtNew.insert(gtNew.end(),
+        gtOrig.begin() + pos[0], gtOrig.begin() + pos[1]);
+    gtNew.insert(gtNew.end(), gtOrig.begin() + pos[3], gtOrig.end());
+    return Candidate{std::move(gtNew)};
   }
 
   Candidate mReverseSlice() {
-    auto &p = get();
-    auto &gt = p.genotype();
-    auto sz = gt.size();
+    auto &parent = get();
+    auto &gtOrig = parent.genotype();
+    auto sz = gtOrig.size();
     if(sz < 2)
-      return p;
+      return parent;
     unsigned pos1 = gen::rng() % (sz - 1),
              pos2 = gen::rng() % (sz - 1);
     if(pos2 < pos1)
       std::swap(pos1, pos2);
     // ensure that pos2-pos1 is at least 2
     pos2 += 2;
-    std::vector<Gene> gm{};
-    gm.reserve(sz);
-    gm.insert(gm.end(), gt.begin(), gt.begin() + pos1);
+    std::vector<Gene> gtNew{};
+    gtNew.reserve(sz);
+    gtNew.insert(gtNew.end(), gtOrig.begin(), gtOrig.begin() + pos1);
     {
-      auto prev_end = gm.end();
-      gm.insert(gm.end(), gt.rbegin() + sz - pos2, gt.rbegin() + sz - pos1);
-      auto end = gm.end();
+      auto prev_end = gtNew.end();
+      gtNew.insert(gtNew.end(),
+          gtOrig.rbegin() + sz - pos2, gtOrig.rbegin() + sz - pos1);
+      auto end = gtNew.end();
       for(auto it = prev_end; it != end; it++)
         it->invert();
     }
-    gm.insert(gm.end(), gt.begin() + pos2, gt.end());
-    return Candidate{std::move(gm)};
+    gtNew.insert(gtNew.end(), gtOrig.begin() + pos2, gtOrig.end());
+    return Candidate{std::move(gtNew)};
   }
 
   Candidate crossoverUniform() {
-    auto &p1 = get(),
-         &p2 = get();
-    auto &gt1 = p1.genotype(),
-         &gt2 = p2.genotype();
+    auto &parent1 = get(),
+         &parent2 = get();
+    auto &gt1 = parent1.genotype(),
+         &gt2 = parent2.genotype();
     size_t sz1 = gt1.size(),
            sz2 = gt2.size(),
-           szS = std::min(sz1, sz2);
-    double pTest1 = (double)szS / sz1,
-           pTest2 = (double)szS / sz2;
+           szShorter = std::min(sz1, sz2);
+    double pTest1 = (double)szShorter / sz1,
+           pTest2 = (double)szShorter / sz2;
     std::uniform_real_distribution<> dUni{0, 1};
-    std::vector<Gene> gm{};
-    gm.reserve(sz1 + sz2 - szS);
+    std::vector<Gene> gtNew{};
+    gtNew.reserve(sz1 + sz2 - szShorter);
     auto it1 = gt1.begin(),
          it2 = gt2.begin(),
          ie1 = gt1.end(),
          ie2 = gt2.end();
     while(it1 != ie1) {
-      gm.push_back(*it1++);
+      gtNew.push_back(*it1++);
       if(dUni(gen::rng) < pTest1) {
         // Whether to make this a possible crossover point.
         // The above check passes every time on the shorter genotype,
@@ -251,29 +257,29 @@ private:
     }
     // now it1 is at its boundary, if there's anything left past it2 we
     // flush it with no more crossovers
-    gm.insert(gm.end(), it2, ie2);
-    return Candidate{std::move(gm)};
+    gtNew.insert(gtNew.end(), it2, ie2);
+    return Candidate{std::move(gtNew)};
   }
 
   Candidate concat3() {
-    auto &p1 = get(),
-         &p2 = get(),
-         &p3 = get();
-    auto &gt1 = p1.genotype(),
-         &gt2 = p2.genotype(),
-         &gt3 = p3.genotype();
-    std::vector<Gene> gm{};
-    gm.reserve(gt1.size() + gt2.size() + gt3.size());
-    gm.insert(gm.end(), gt1.begin(), gt1.end());
+    auto &parent1 = get(),
+         &parent2 = get(),
+         &parent3 = get();
+    auto &gt1 = parent1.genotype(),
+         &gt2 = parent2.genotype(),
+         &gt3 = parent3.genotype();
+    std::vector<Gene> gtNew{};
+    gtNew.reserve(gt1.size() + gt2.size() + gt3.size());
+    gtNew.insert(gtNew.end(), gt1.begin(), gt1.end());
     {
-      auto start = gm.end();
-      gm.insert(gm.end(), gt2.rbegin(), gt2.rend());
-      auto end = gm.end();
+      auto start = gtNew.end();
+      gtNew.insert(gtNew.end(), gt2.rbegin(), gt2.rend());
+      auto end = gtNew.end();
       for(auto it = start; it != end; it++)
         it->invert();
     }
-    gm.insert(gm.end(), gt3.begin(), gt3.end());
-    return Candidate{std::move(gm)};
+    gtNew.insert(gtNew.end(), gt3.begin(), gt3.end());
+    return Candidate{std::move(gtNew)};
   }
 
   Candidate simplify() {
@@ -282,17 +288,17 @@ private:
 
 public:
 
-  static Candidate simplify(const Candidate& p) {
-    auto &gt = p.genotype();
-    size_t sz = gt.size();
-    if(!sz)
-      return p;
-    std::vector<Gene> gm = gt;
+  static Candidate simplify(const Candidate& parent) {
+    auto &gtOrig = parent.genotype();
+    size_t sz = gtOrig.size();
+    if(sz == 0)
+      return parent;
+    std::vector<Gene> gtNew = gtOrig;
     size_t cnt = 0;
-    for(auto& g : gm)
+    for(auto& g : gtNew)
       if(g.simplify())
         cnt++;
-    return cnt ? Candidate{std::move(gm)} : p;
+    return cnt ? Candidate{std::move(gtNew)} : parent;
   }
 
 }; // class CandidateFactory
