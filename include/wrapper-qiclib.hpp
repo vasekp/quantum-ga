@@ -208,7 +208,7 @@ private:
 
   arma::cx_vec sim() const {
     arma::cx_vec psi = qic::mket({0}, {arma::uword(1) << Config::nBit});
-    for(const Gene& g : gt) {
+    for(const auto& g : gt) {
       /* control-gate (QIClib) */
       psi = qic::apply_ctrl(
           psi,            // state

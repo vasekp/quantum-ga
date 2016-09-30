@@ -36,7 +36,7 @@ public:
   NOINLINE Fitness fitness() const {
     /* Complexity = square sum of numbers of control bits per gate */
     size_t cplx = 0;
-    for(const Gene& g : gt) {
+    for(const auto& g : gt) {
       unsigned h = g.weight();
       cplx += h*h;
     }
@@ -45,7 +45,7 @@ public:
   }
 
   friend std::ostream& operator<< (std::ostream& os, const CandidateBase& c) {
-    for(const GeneType& g : c.gt)
+    for(const auto& g : c.gt)
       os << g << ' ';
     return os;
   }

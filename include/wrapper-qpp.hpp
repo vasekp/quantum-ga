@@ -164,7 +164,7 @@ private:
   qpp::ket sim() const {
     std::vector<qpp::idx> dims(Config::nBit, 2);
     qpp::ket psi = qpp::mket(qpp::n2multiidx(0, dims));
-    for(const Gene& g : gt) {
+    for(const auto& g : gt) {
       /* control-gate (QIClib) */
       psi = qpp::applyCTRL(
           psi,            // state
