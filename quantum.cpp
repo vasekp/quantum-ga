@@ -117,9 +117,11 @@ int main() {
 
   std::signal(SIGINT, int_handler);
 
-  std::chrono::time_point<std::chrono::steady_clock> start{std::chrono::steady_clock::now()};
+  std::chrono::time_point<std::chrono::steady_clock>
+    start{std::chrono::steady_clock::now()};
 
-  Population pop{Config::popSize, [&] { return CandidateFactory::genInit().setGen(0); }};
+  Population pop{Config::popSize,
+    [&] { return CandidateFactory::genInit().setGen(0); }};
 
   std::cout << std::fixed << std::setprecision(4);
 
@@ -183,7 +185,8 @@ int main() {
           listRandom(pop);
           break;
         case SigComm::RESTART:
-          pop = Population{Config::popSize, [&] { return CandidateFactory::genInit().setGen(0); }};
+          pop = Population{Config::popSize,
+            [&] { return CandidateFactory::genInit().setGen(0); }};
           sel = CandidateFactory::getInitSelector();
           start = std::chrono::steady_clock::now();
           gen = 0;
@@ -201,7 +204,8 @@ int main() {
 void dumpResults(Population& pop, CandidateFactory::Selector& sel,
     std::chrono::time_point<std::chrono::steady_clock> start, size_t gen) {
   /* Timing information */
-  std::chrono::time_point<std::chrono::steady_clock> now{std::chrono::steady_clock::now()};
+  std::chrono::time_point<std::chrono::steady_clock>
+    now{std::chrono::steady_clock::now()};
   std::chrono::duration<double> dur = now - start - SigComm::timeOut;
   std::cout << std::endl << "Run took " << dur.count() << " s ("
     << Colours::blue() << dur.count()/gen
@@ -254,13 +258,18 @@ int int_response() {
   std::chrono::time_point<std::chrono::steady_clock> pre, post;
   pre = std::chrono::steady_clock::now();
   std::cerr << "\nComputation stopped. Choose action:\n"
-    << Colours::blue() << "a: " << Colours::reset() << "abort,\n"
-    << Colours::blue() << "c: " << Colours::reset() << "continue,\n"
-    << Colours::blue() << "d: " << Colours::reset() << "diagnose / list current results,\n"
-    << Colours::blue() << "l: " << Colours::reset() << "list "
-      << Config::nIntList << " random candidates,\n"
-    << Colours::blue() << "r: " << Colours::reset() << "restart,\n"
-    << Colours::blue() << "q: " << Colours::reset() << "quit after this generation.\n";
+    << Colours::blue() << "a: " << Colours::reset()
+      << "abort,\n"
+    << Colours::blue() << "c: " << Colours::reset()
+      << "continue,\n"
+    << Colours::blue() << "d: " << Colours::reset()
+      << "diagnose / list current results,\n"
+    << Colours::blue() << "l: " << Colours::reset()
+      << "list " << Config::nIntList << " random candidates,\n"
+    << Colours::blue() << "r: " << Colours::reset()
+      << "restart,\n"
+    << Colours::blue() << "q: " << Colours::reset()
+      << "quit after this generation.\n";
   int ret = -1;
   do {
     char c;
