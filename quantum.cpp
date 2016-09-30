@@ -27,7 +27,7 @@ namespace Config {
   const unsigned nBit = 3;
 
   // strength parameter of NSGA selection
-  const float selectBias = 1.0;
+  const double selectBias = 1.0;
 
   // Archive (external population) size
   const size_t arSize = 100;
@@ -39,28 +39,28 @@ namespace Config {
   const size_t popKeep = 200;
 
   // Number of generations (constant)
-  const size_t nGen = std::numeric_limits<size_t>::max();
+  const unsigned long nGen = std::numeric_limits<unsigned long>::max();
 
   // Expected curcuit depth in 0th generation
-  const float expLengthIni = 30;
+  const double expLengthIni = 30;
 
   // Expected number of gates inserted / modified / removed in mutation
-  const float expMutationCount = 3.0;
+  const double expMutationCount = 3.0;
 
   // Probability of removing a single gate in uniform deletion
-  const float pChoiceUniform = 0.1;
+  const double pChoiceUniform = 0.1;
 
   // Probability of a crossover at any given point
-  const float pCrossUniform = 0.1;
+  const double pCrossUniform = 0.1;
 
   // How much prior success of genetic ops should influence future choices
-  const float heurFactor = 1.0 / nGen;
+  const double heurFactor = 1.0 / nGen;
 
   // How much each bit is likely to be a control bit at gate creation
-  const float pControl = 0.25;
+  const double pControl = 0.25;
 
   // Size of random subset of candidates to list on demand at interrupt
-  const int nIntList = 20;
+  const size_t nIntList = 20;
 
 } // namespace Config
 
@@ -102,7 +102,7 @@ QGA::CandidateCounter QGA::counter{};
 void int_handler(int);
 int int_response();
 void dumpResults(Population&, CandidateFactory::Selector&,
-    std::chrono::time_point<std::chrono::steady_clock> start, size_t gen);
+    std::chrono::time_point<std::chrono::steady_clock>, unsigned long);
 void listRandom(Population&);
 
 
@@ -117,15 +117,17 @@ int main() {
 
   std::signal(SIGINT, int_handler);
 
-  std::chrono::time_point<std::chrono::steady_clock> start{std::chrono::steady_clock::now()};
+  std::chrono::time_point<std::chrono::steady_clock>
+    start{std::chrono::steady_clock::now()};
 
-  Population pop{Config::popSize, [&] { return CandidateFactory::genInit().setGen(0); }};
+  Population pop{Config::popSize,
+    [&] { return CandidateFactory::genInit().setGen(0); }};
 
   std::cout << std::fixed << std::setprecision(4);
 
   CandidateFactory::Selector sel = CandidateFactory::getInitSelector();
 
-  size_t gen;
+  unsigned long gen;
   for(gen = 0; gen < Config::nGen; gen++) {
 
     /* Find the nondominated subset and trim down do arSize */
@@ -183,7 +185,8 @@ int main() {
           listRandom(pop);
           break;
         case SigComm::RESTART:
-          pop = Population{Config::popSize, [&] { return CandidateFactory::genInit().setGen(0); }};
+          pop = Population{Config::popSize,
+            [&] { return CandidateFactory::genInit().setGen(0); }};
           sel = CandidateFactory::getInitSelector();
           start = std::chrono::steady_clock::now();
           gen = 0;
@@ -199,15 +202,17 @@ int main() {
 
 
 void dumpResults(Population& pop, CandidateFactory::Selector& sel,
-    std::chrono::time_point<std::chrono::steady_clock> start, size_t gen) {
+    std::chrono::time_point<std::chrono::steady_clock> start,
+    unsigned long gen) {
   /* Timing information */
-  std::chrono::time_point<std::chrono::steady_clock> now{std::chrono::steady_clock::now()};
+  std::chrono::time_point<std::chrono::steady_clock>
+    now{std::chrono::steady_clock::now()};
   std::chrono::duration<double> dur = now - start - SigComm::timeOut;
-  std::cout << std::endl << "Run took " << dur.count() << " s ("
+  std::cout << "\nRun took " << dur.count() << " s ("
     << Colours::blue() << dur.count()/gen
     << " s/gen " << Colours::reset() << "avg), "
     << Colours::blue() << QGA::counter.total() << Colours::reset()
-    << " candidates tested" << std::endl;
+    << " candidates tested\n";
 
   /* List results */
   auto nondom = pop.front();
@@ -254,13 +259,18 @@ int int_response() {
   std::chrono::time_point<std::chrono::steady_clock> pre, post;
   pre = std::chrono::steady_clock::now();
   std::cerr << "\nComputation stopped. Choose action:\n"
-    << Colours::blue() << "a: " << Colours::reset() << "abort,\n"
-    << Colours::blue() << "c: " << Colours::reset() << "continue,\n"
-    << Colours::blue() << "d: " << Colours::reset() << "diagnose / list current results,\n"
-    << Colours::blue() << "l: " << Colours::reset() << "list "
-      << Config::nIntList << " random candidates,\n"
-    << Colours::blue() << "r: " << Colours::reset() << "restart,\n"
-    << Colours::blue() << "q: " << Colours::reset() << "quit after this generation.\n";
+    << Colours::blue() << "a: " << Colours::reset()
+      << "abort,\n"
+    << Colours::blue() << "c: " << Colours::reset()
+      << "continue,\n"
+    << Colours::blue() << "d: " << Colours::reset()
+      << "diagnose / list current results,\n"
+    << Colours::blue() << "l: " << Colours::reset()
+      << "list " << Config::nIntList << " random candidates,\n"
+    << Colours::blue() << "r: " << Colours::reset()
+      << "restart,\n"
+    << Colours::blue() << "q: " << Colours::reset()
+      << "quit after this generation.\n";
   int ret = -1;
   do {
     char c;

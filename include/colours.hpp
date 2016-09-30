@@ -5,7 +5,7 @@
 
 namespace Colours {
 
-  bool use;
+  bool use{false};
 
   const char* bold() { return use ? "\033[1m" : ""; }
   const char* red() { return use ? "\033[1;31m" : ""; }
