@@ -2,8 +2,8 @@ namespace QGA {
 
 namespace GeneTools {
 
-size_t ctrlBitString(unsigned rand, unsigned target) {
-  size_t ctrl = 0;
+unsigned ctrlBitString(unsigned rand, unsigned target) {
+  unsigned ctrl = 0;
   double c = (double)rand / std::numeric_limits<unsigned>::max();
   /* Convert an unsigned between 0 and UINT_MAX to a bit string where the
    * probability of 1 in each position is given by Config::pControl. A value

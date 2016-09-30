@@ -4,19 +4,22 @@
 #include <atomic>
 #include <string>
 #include <iomanip>
+#include <cstddef>
+
+using std::size_t;
 
 /* Forward declarations */
 namespace Config {
   extern const unsigned nBit;
   extern const size_t arSize;
   extern const size_t popSize;
-  extern const float selectBias;
-  extern const float heurFactor;
-  extern const float expLengthIni;
-  extern const float expMutationCount;
-  extern const float pChoiceUniform;
-  extern const float pCrossUniform;
-  extern const float pControl;
+  extern const double selectBias;
+  extern const double heurFactor;
+  extern const double expLengthIni;
+  extern const double expMutationCount;
+  extern const double pChoiceUniform;
+  extern const double pCrossUniform;
+  extern const double pControl;
 }
 
 #include "GeneTools.hpp"

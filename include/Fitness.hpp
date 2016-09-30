@@ -4,7 +4,7 @@ struct Fitness {
 
   double error;
   size_t length;
-  size_t cplx;
+  unsigned cplx;
 
   friend std::ostream& operator<< (std::ostream& os, const Fitness& f) {
     return os << '{'

@@ -52,7 +52,7 @@ constexpr size_t gate_count = std::extent<decltype(gates)>::value;
 
 class Gene {
 
-  unsigned op;
+  size_t op;
   double angle;
   double gphase;
   unsigned tgt;
@@ -65,7 +65,7 @@ public:
   static Gene getNew() {
     /* Distributions: cheap and safer in MT environment this way */
     // distribution of possible gates
-    std::uniform_int_distribution<unsigned> dOp{1, internal::gate_count};
+    std::uniform_int_distribution<size_t> dOp{1, internal::gate_count};
     // distribution of targets
     std::uniform_int_distribution<unsigned> dTgt{1, Config::nBit};
     // distribution of controls
@@ -139,9 +139,9 @@ public:
 
   double rationalize(double x) {
     double a = std::abs(x);
-    constexpr int N = 8;
+    constexpr unsigned N = 8;
     double coeffs[N];
-    int t;
+    unsigned t;
     for(t = 0; t < N; t++) {
       coeffs[t] = std::floor(a);
       if(coeffs[t] > 100) {
@@ -150,8 +150,8 @@ public:
       }
       a = 1/(a - coeffs[t]);
     }
-    std::discrete_distribution<> dStop(&coeffs[1], &coeffs[t]);
-    int cut = dStop(gen::rng) + 1;
+    std::discrete_distribution<unsigned> dStop(&coeffs[1], &coeffs[t]);
+    unsigned cut = dStop(gen::rng) + 1;
     if(cut == t)
       return x;
     a = coeffs[--cut];
@@ -181,7 +181,7 @@ public:
 
 private:
 
-  NOINLINE Gene(unsigned op_, double angle_, double phase_,
+  NOINLINE Gene(size_t op_, double angle_, double phase_,
     unsigned tgt_, unsigned control_enc):
       op(op_), angle(angle_), gphase(phase_), tgt(tgt_), hw(0) {
     if(internal::gates[op - 1].ctrl) {
@@ -222,9 +222,9 @@ public:
     if(gt.size() > 1000)
       return INFINITY;
     double error{0};
-    size_t dim = arma::uword(1) << Config::nBit;
+    arma::uword dim = arma::uword(1) << Config::nBit;
     arma::cx_vec psi(dim), in, out;
-    for(size_t i = 0; i < dim; i++) {
+    for(arma::uword i = 0; i < dim; i++) {
       psi.fill(0);
       psi[i] = 1;
       in = psi;
@@ -247,10 +247,10 @@ public:
     std::ostringstream os{};
     os.flags(ex.flags());
     os.precision(ex.precision());
-    arma::cx_vec psi(arma::uword(1) << Config::nBit);
     os << '\n';
-    size_t dim = arma::uword(1) << Config::nBit;
-    for(size_t i = 0; i < dim; i++) {
+    arma::uword dim = arma::uword(1) << Config::nBit;
+    arma::cx_vec psi(dim);
+    for(arma::uword i = 0; i < dim; i++) {
       psi.fill(0);
       psi[i] = 1;
       for(auto& p : sim(psi))

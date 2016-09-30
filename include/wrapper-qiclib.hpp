@@ -84,7 +84,7 @@ arma::cx_vec out{};
 
 class Gene {
 
-  unsigned op;
+  size_t op;
   unsigned tgt;
   unsigned hw;
   arma::uvec ixs;
@@ -94,8 +94,7 @@ public:
   static Gene getNew() {
     /* Distributions: cheap and safer in MT environment this way */
     // distribution of possible gates
-    std::uniform_int_distribution<unsigned> dOp{1,
-      (unsigned)internal::gates.size() - 1};
+    std::uniform_int_distribution<size_t> dOp{1, internal::gates.size() - 1};
     // distribution of targets
     std::uniform_int_distribution<unsigned> dTgt{1, Config::nBit};
     // distribution of controls
@@ -166,7 +165,7 @@ public:
 
 private:
 
-  NOINLINE Gene(unsigned op_, unsigned tgt_, unsigned control_enc):
+  NOINLINE Gene(size_t op_, unsigned tgt_, unsigned control_enc):
       op(op_), tgt(tgt_), hw(0) {
     std::vector<arma::uword> ixv;
     ixv.reserve(Config::nBit);
@@ -208,7 +207,7 @@ private:
 
   arma::cx_vec sim() const {
     arma::cx_vec psi = qic::mket({0}, {arma::uword(1) << Config::nBit});
-    for(const Gene& g : gt) {
+    for(const auto& g : gt) {
       /* control-gate (QIClib) */
       psi = qic::apply_ctrl(
           psi,            // state
