@@ -36,7 +36,7 @@ public:
     // probability of termination; expLengthIni = expected number of genes
     const double probTerm = 1/Config::expLengthIni;
     std::uniform_real_distribution<> dUni{0, 1};
-    std::vector<Gene> gt;
+    std::vector<Gene> gt{};
     gt.reserve(Config::expLengthIni);
     do
       gt.push_back(Gene::getNew());
@@ -93,13 +93,13 @@ private:
     auto sz = gt.size();
     std::uniform_real_distribution<> dUni{0, 1};
     unsigned pos = gen::rng() % (sz + 1);
-    std::vector<Gene> ins;
+    std::vector<Gene> ins{};
     ins.reserve(2*Config::expMutationCount);
     double probTerm = 1/Config::expMutationCount;
     do
       ins.push_back(Gene::getNew());
     while(dUni(gen::rng) > probTerm);
-    std::vector<Gene> gm;
+    std::vector<Gene> gm{};
     gm.reserve(sz + ins.size());
     gm.insert(gm.end(), gt.begin(), gt.begin() + pos);
     gm.insert(gm.end(), ins.begin(), ins.end());
@@ -116,13 +116,13 @@ private:
              pos2 = gen::rng() % (sz + 1);
     if(pos2 < pos1)
       std::swap(pos1, pos2);
-    std::vector<Gene> ins;
+    std::vector<Gene> ins{};
     ins.reserve(2*Config::expMutationCount);
     double probTerm = 1/Config::expMutationCount;
     do
       ins.push_back(Gene::getNew());
     while(dUni(gen::rng) > probTerm);
-    std::vector<Gene> gm;
+    std::vector<Gene> gm{};
     gm.reserve(sz + 2*ins.size());
     gm.insert(gm.end(), gt.begin(), gt.begin() + pos1);
     gm.insert(gm.end(), ins.begin(), ins.end());
@@ -148,7 +148,7 @@ private:
     int len = 1 + floor(log(dUni(gen::rng))
         / log(1 - 1/Config::expMutationCount));
     unsigned pos2 = pos1 + len > sz ? sz : pos1 + len;
-    std::vector<Gene> gm;
+    std::vector<Gene> gm{};
     gm.reserve(sz - (pos2 - pos1));
     gm.insert(gm.end(), gt.begin(), gt.begin() + pos1);
     gm.insert(gm.end(), gt.begin() + pos2, gt.end());
@@ -159,7 +159,7 @@ private:
     auto &p = get();
     auto gt = p.genotype();
     std::uniform_real_distribution<> dUni{0, 1};
-    std::vector<Gene> gm;
+    std::vector<Gene> gm{};
     gm.reserve(gt.size());
     size_t cnt = 0;
     for(auto& g : gt)
@@ -182,7 +182,7 @@ private:
     std::sort(pos.begin(), pos.end());
     // ensure that pos[1]-pos[0] and pos[3]-pos[2] are nonzero
     pos[1]++, pos[2]++, pos[3] += 2;
-    std::vector<Gene> gm;
+    std::vector<Gene> gm{};
     gm.reserve(sz);
     gm.insert(gm.end(), gt.begin(), gt.begin() + pos[0]);
     gm.insert(gm.end(), gt.begin() + pos[2], gt.begin() + pos[3]);
@@ -204,7 +204,7 @@ private:
       std::swap(pos1, pos2);
     // ensure that pos2-pos1 is at least 2
     pos2 += 2;
-    std::vector<Gene> gm;
+    std::vector<Gene> gm{};
     gm.reserve(sz);
     gm.insert(gm.end(), gt.begin(), gt.begin() + pos1);
     {
@@ -229,7 +229,7 @@ private:
     double pTest1 = (double)szS / sz1,
            pTest2 = (double)szS / sz2;
     std::uniform_real_distribution<> dUni{0, 1};
-    std::vector<Gene> gm;
+    std::vector<Gene> gm{};
     gm.reserve(sz1 + sz2 - szS);
     auto it1 = gt1.begin(),
          it2 = gt2.begin(),
@@ -262,7 +262,7 @@ private:
     auto &gt1 = p1.genotype(),
          &gt2 = p2.genotype(),
          &gt3 = p3.genotype();
-    std::vector<Gene> gm;
+    std::vector<Gene> gm{};
     gm.reserve(gt1.size() + gt2.size() + gt3.size());
     gm.insert(gm.end(), gt1.begin(), gt1.end());
     {
