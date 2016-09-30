@@ -27,7 +27,7 @@ namespace Config {
   const unsigned nBit = 3;
 
   // strength parameter of NSGA selection
-  const float selectBias = 1.0;
+  const double selectBias = 1.0;
 
   // Archive (external population) size
   const size_t arSize = 100;
@@ -39,28 +39,28 @@ namespace Config {
   const size_t popKeep = 200;
 
   // Number of generations (constant)
-  const size_t nGen = std::numeric_limits<size_t>::max();
+  const unsigned long nGen = std::numeric_limits<unsigned long>::max();
 
   // Expected curcuit depth in 0th generation
-  const float expLengthIni = 30;
+  const double expLengthIni = 30;
 
   // Expected number of gates inserted / modified / removed in mutation
-  const float expMutationCount = 3.0;
+  const double expMutationCount = 3.0;
 
   // Probability of removing a single gate in uniform deletion
-  const float pChoiceUniform = 0.1;
+  const double pChoiceUniform = 0.1;
 
   // Probability of a crossover at any given point
-  const float pCrossUniform = 0.1;
+  const double pCrossUniform = 0.1;
 
   // How much prior success of genetic ops should influence future choices
-  const float heurFactor = 1.0 / nGen;
+  const double heurFactor = 1.0 / nGen;
 
   // How much each bit is likely to be a control bit at gate creation
-  const float pControl = 0.25;
+  const double pControl = 0.25;
 
   // Size of random subset of candidates to list on demand at interrupt
-  const int nIntList = 20;
+  const size_t nIntList = 20;
 
 } // namespace Config
 
@@ -102,7 +102,7 @@ QGA::CandidateCounter QGA::counter{};
 void int_handler(int);
 int int_response();
 void dumpResults(Population&, CandidateFactory::Selector&,
-    std::chrono::time_point<std::chrono::steady_clock> start, size_t gen);
+    std::chrono::time_point<std::chrono::steady_clock>, unsigned long);
 void listRandom(Population&);
 
 
@@ -127,7 +127,7 @@ int main() {
 
   CandidateFactory::Selector sel = CandidateFactory::getInitSelector();
 
-  size_t gen;
+  unsigned long gen;
   for(gen = 0; gen < Config::nGen; gen++) {
 
     /* Find the nondominated subset and trim down do arSize */
@@ -202,7 +202,8 @@ int main() {
 
 
 void dumpResults(Population& pop, CandidateFactory::Selector& sel,
-    std::chrono::time_point<std::chrono::steady_clock> start, size_t gen) {
+    std::chrono::time_point<std::chrono::steady_clock> start,
+    unsigned long gen) {
   /* Timing information */
   std::chrono::time_point<std::chrono::steady_clock>
     now{std::chrono::steady_clock::now()};

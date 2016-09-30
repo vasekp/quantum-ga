@@ -40,7 +40,7 @@ qpp::ket out{};
 
 class Gene {
 
-  unsigned op;
+  size_t op;
   unsigned tgt;
   unsigned hw;
   std::vector<qpp::idx> ixv{};
@@ -50,8 +50,7 @@ public:
   static Gene getNew() {
     /* Distributions: cheap and safer in MT environment this way */
     // distribution of possible gates
-    std::uniform_int_distribution<unsigned> dOp{1,
-      (unsigned)internal::gates.size() - 1};
+    std::uniform_int_distribution<size_t> dOp{1, internal::gates.size() - 1};
     // distribution of targets
     std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
     // distribution of controls
@@ -121,7 +120,7 @@ public:
 
 private:
 
-  NOINLINE Gene(unsigned op_, unsigned tgt_, unsigned control_enc):
+  NOINLINE Gene(size_t op_, unsigned tgt_, unsigned control_enc):
       op(op_), tgt(tgt_), hw(0) {
     ixv.reserve(Config::nBit);
     unsigned ctrl = QGA::GeneTools::ctrlBitString(control_enc, tgt);

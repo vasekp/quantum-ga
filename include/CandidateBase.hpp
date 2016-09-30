@@ -9,8 +9,8 @@ protected:
 
 private:
 
-  int origin = -1;
-  size_t gen = (size_t)(~0);
+  size_t origin = (size_t)(~0);
+  unsigned long gen = (unsigned long)(~0);
 
   const Derived& derived() const {
     return static_cast<const Derived&>(*this);
@@ -35,7 +35,7 @@ public:
 
   NOINLINE Fitness fitness() const {
     /* Complexity = square sum of numbers of control bits per gate */
-    size_t cplx = 0;
+    unsigned cplx = 0;
     for(const auto& g : gt) {
       unsigned h = g.weight();
       cplx += h*h;
@@ -54,23 +54,23 @@ public:
     return gt;
   }
 
-  Derived& setOrigin(int origin_) {
-    if(origin == -1)
+  Derived& setOrigin(size_t origin_) {
+    if(origin == (size_t)(~0))
       origin = origin_;
     return static_cast<Derived&>(*this);
   }
 
-  int getOrigin() const {
+  size_t getOrigin() const {
     return origin;
   }
 
-  Derived& setGen(size_t gen_) {
-    if(gen == (size_t)(~0))
+  Derived& setGen(unsigned long gen_) {
+    if(gen == (unsigned long)(~0))
       gen = gen_;
     return static_cast<Derived&>(*this);
   }
 
-  size_t getGen() const {
+  unsigned long getGen() const {
     return gen;
   }
 

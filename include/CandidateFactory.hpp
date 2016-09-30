@@ -93,7 +93,7 @@ private:
     auto &gtOrig = parent.genotype();
     auto sz = gtOrig.size();
     std::uniform_real_distribution<> dUni{0, 1};
-    unsigned pos = gen::rng() % (sz + 1);
+    size_t pos = gen::rng() % (sz + 1);
     std::vector<Gene> ins{};
     ins.reserve(2*Config::expMutationCount);
     double probTerm = 1/Config::expMutationCount;
@@ -113,8 +113,8 @@ private:
     auto &gtOrig = parent.genotype();
     auto sz = gtOrig.size();
     std::uniform_real_distribution<> dUni{0, 1};
-    unsigned pos1 = gen::rng() % (sz + 1),
-             pos2 = gen::rng() % (sz + 1);
+    size_t pos1 = gen::rng() % (sz + 1),
+           pos2 = gen::rng() % (sz + 1);
     if(pos2 < pos1)
       std::swap(pos1, pos2);
     std::vector<Gene> ins{};
@@ -144,11 +144,11 @@ private:
     std::uniform_real_distribution<> dUni{0, 1};
     if(sz == 0)
       return parent;
-    unsigned pos1 = gen::rng() % (sz + 1);
+    size_t pos1 = gen::rng() % (sz + 1);
     /* Integer with the same distribution in mAddSlice */
-    int len = 1 + floor(log(dUni(gen::rng))
+    size_t len = 1 + floor(log(dUni(gen::rng))
         / log(1 - 1/Config::expMutationCount));
-    unsigned pos2 = pos1 + len > sz ? sz : pos1 + len;
+    size_t pos2 = pos1 + len > sz ? sz : pos1 + len;
     std::vector<Gene> gtNew{};
     gtNew.reserve(sz - (pos2 - pos1));
     gtNew.insert(gtNew.end(), gtOrig.begin(), gtOrig.begin() + pos1);
@@ -177,9 +177,9 @@ private:
     auto sz = gtOrig.size();
     if(sz < 2)
       return parent;
-    std::array<unsigned, 4> pos;
-    for(int i = 0; i < 4; i++)
-      pos[i] = gen::rng() % (sz - 1);
+    std::array<size_t, 4> pos;
+    for(auto& p : pos)
+      p = gen::rng() % (sz - 1);
     std::sort(pos.begin(), pos.end());
     // ensure that pos[1]-pos[0] and pos[3]-pos[2] are nonzero
     pos[1]++, pos[2]++, pos[3] += 2;
@@ -203,8 +203,8 @@ private:
     auto sz = gtOrig.size();
     if(sz < 2)
       return parent;
-    unsigned pos1 = gen::rng() % (sz - 1),
-             pos2 = gen::rng() % (sz - 1);
+    size_t pos1 = gen::rng() % (sz - 1),
+           pos2 = gen::rng() % (sz - 1);
     if(pos2 < pos1)
       std::swap(pos1, pos2);
     // ensure that pos2-pos1 is at least 2
@@ -315,8 +315,8 @@ class CFSelector {
     FunPtr fun;
     std::string name;
     double prob;
-    size_t hits;
-    size_t thits;
+    unsigned long hits;
+    unsigned long thits;
 
     GenOp(FunPtr fun_, std::string name_):
       fun(fun_), name(name_), prob(1), hits(0), thits(0) { }
@@ -326,7 +326,7 @@ class CFSelector {
   std::vector<GenOp> ops;
   size_t count;
 
-  std::discrete_distribution<> dFun{};
+  std::discrete_distribution<size_t> dFun{};
 
 public:
 
@@ -352,7 +352,7 @@ public:
     std::vector<double> weights(count);
     for(size_t i = 0; i < count; i++)
       weights[i] = ops[i].prob;
-    dFun = std::discrete_distribution<>(weights.begin(), weights.end());
+    dFun = std::discrete_distribution<size_t>(weights.begin(), weights.end());
   }
 
   void dump(std::ostream& os) {
