@@ -27,13 +27,16 @@ namespace Config {
   const unsigned nBit = 3;
 
   // strength parameter of NSGA selection
-  const float selectBias = 3.0;
+  const float selectBias = 1.0;
 
   // Archive (external population) size
   const size_t arSize = 100;
 
   // Internal population size
-  const size_t popSize = 2000;
+  const size_t popSize = 500;
+
+  // Number of candidates to keep from parent generation
+  const size_t popKeep = 200;
 
   // Number of generations (constant)
   const size_t nGen = std::numeric_limits<size_t>::max();
@@ -128,14 +131,17 @@ int main() {
     /* Find the nondominated subset and trim down do arSize */
     Population pop2 = pop.front();
     pop2.rankTrim(Config::arSize);
-    size_t nd = pop2.size();
 
-    /* Top up to popSize candidates in parallel */
+    /* Select popKeep candidates for survival without modification */
     pop2.reserve(Config::popSize);
     pop.precompute();
+    pop2.add(Config::popKeep,
+        [&] { return pop.NSGASelect(Config::selectBias); });
+
+    /* Top up to popSize candidates in parallel */
     CandidateFactory cf{pop, sel};
-    pop2.add(Config::popSize - nd,
-            [&]() -> const Candidate { return cf.getNew().setGen(gen); });
+    pop2.add(Config::popSize - pop2.size(),
+        [&] { return cf.getNew().setGen(gen); });
 
     /* We don't need the original population anymore */
     pop = std::move(pop2);
@@ -155,14 +161,17 @@ int main() {
     std::cout << Colours::bold() << "Gen " << gen << ": " << Colours::reset()
       << Colours::yellow() << pop.size() << Colours::reset()
       << " unique fitnesses, lowest error "
-      << Colours::green() << pop.best().fitness() << Colours::reset() << ", "
+      << Colours::green() << pop.best().fitness() << Colours::blue()
+      << " [" << pop.best().getGen() << ']' << Colours::reset() << ", "
       << Colours::yellow() << nondom.size() << Colours::reset()
-      << " nondominated";
-    if(nondom.size() > 0) {
-      auto& e = nondom.randomSelect();
-      std::cout << ", e.g. " << e.fitness() << ' ' << e;
-    }
-    std::cout << std::endl;
+      << " nondominated, newest: ";
+    auto& newest = *std::min_element(nondom.begin(), nondom.end(),
+        [](const GenCandidate& c1, const GenCandidate& c2) {
+          return c1.getGen() > c2.getGen();
+        });
+    std::cout
+      << Colours::green() << newest.fitness() << Colours::blue()
+      << " [" << newest.getGen() << ']' << Colours::reset() << std::endl;
 
     while(SigComm::state == SigComm::INTERRUPTED) {
       int res = int_response();

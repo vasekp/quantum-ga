@@ -32,12 +32,25 @@ arma::cx_mat22 zrot(double a) {
   return { std::exp(i*a), 0, 0, std::exp(-i*a) };
 }
 
+
+struct Gate {
+  arma::cx_mat22(*fn)(double);
+  std::string name;
+  bool ctrl;
+};
+
+Gate gates[] = {
+  {xrot, "X", true},
+  {yrot, "Y", true},
+  {zrot, "Z", true}
+};
+
+constexpr size_t gate_count = std::extent<decltype(gates)>::value;
+
 } // namespace internal
 
 
 class Gene {
-
-  char names[3] = { 'X', 'Y', 'Z' };
 
   unsigned op;
   double angle;
@@ -45,19 +58,20 @@ class Gene {
   unsigned tgt;
   unsigned hw;
   arma::uvec ixs;
+  arma::cx_mat22 mat;
 
 public:
 
   static Gene getNew() {
     /* Distributions: cheap and safer in MT environment this way */
     // distribution of possible gates
-    std::uniform_int_distribution<unsigned> dOp{0, 2};
+    std::uniform_int_distribution<unsigned> dOp{1, internal::gate_count};
     // distribution of targets
     std::uniform_int_distribution<unsigned> dTgt{1, Config::nBit};
     // distribution of controls
     std::uniform_int_distribution<unsigned> dCtrl{};
     // distribution of angle
-    std::uniform_real_distribution<> dAng{0, 2.0*internal::pi};
+    std::uniform_real_distribution<> dAng{-0.5*internal::pi, 0.5*internal::pi};
     return {dOp(gen::rng), dAng(gen::rng), dAng(gen::rng),
       dTgt(gen::rng), dCtrl(gen::rng)};
   }
@@ -70,17 +84,8 @@ public:
     return tgt;
   }
 
-  arma::cx_mat22 gate() const {
-    switch(op) {
-      case 0:
-        return internal::xrot(angle) * std::exp(gphase * internal::i);
-      case 1:
-        return internal::yrot(angle) * std::exp(gphase * internal::i);
-      case 2:
-        return internal::zrot(angle) * std::exp(gphase * internal::i);
-      default:
-        throw std::logic_error("gate must be between 0 and 2");
-    }
+  const arma::cx_mat22& gate() const {
+    return mat;
   }
 
   unsigned weight() const {
@@ -93,63 +98,77 @@ public:
 
   bool invert() {
     angle = -angle;
+    update();
     return true;
   }
 
   void mutate() {
     std::normal_distribution<> dAng{0.0, 0.1};
-    angle += dAng(gen::rng);
-    gphase += dAng(gen::rng);
+    std::bernoulli_distribution dWhich{};
+    (dWhich(gen::rng) ? angle : gphase) += dAng(gen::rng);
+    update();
   }
 
   bool merge(const Gene& g) {
-    if(g.op == op
+    if(angle == 0) {
+      // op1 = (phase*)identity
+      op = g.op;
+      tgt = g.tgt;
+      ixs = g.ixs;
+      hw = g.hw;
+      angle = g.angle;
+      gphase += g.gphase;
+      update();
+      return true;
+    } else if(g.angle == 0) {
+      // op2 = (phase*)identity
+      gphase += g.gphase;
+      update();
+      return true;
+    } else if(g.op == op
         && g.tgt == tgt
         && g.ixs.size() == ixs.size()
         && arma::all(g.ixs == ixs)) {
       angle += g.angle;
       gphase += g.gphase;
+      update();
       return true;
-    } else return false;
+    } else
+      return false;
   }
 
   double rationalize(double x) {
-    double a = x;
-    /* TODO: parametrize */
-    constexpr int N = 10;
-    int coeffs[N];
-    for(int i = 0; i < N; i++) {
-      coeffs[i] = std::floor(a);
-      a = 1/(a - coeffs[i]);
-    }
+    double a = std::abs(x);
+    constexpr int N = 8;
+    double coeffs[N];
     int t;
-    for(t = 1; t < N; t++)
-      if(std::abs(coeffs[t]) > 20)
+    for(t = 0; t < N; t++) {
+      coeffs[t] = std::floor(a);
+      if(coeffs[t] > 100) {
+        coeffs[t++] = 100;
         break;
-    // 1 ≤ t ≤ N
-    if(t == N) // no simplification
+      }
+      a = 1/(a - coeffs[t]);
+    }
+    std::discrete_distribution<> dStop(&coeffs[1], &coeffs[t]);
+    int cut = dStop(gen::rng) + 1;
+    if(cut == t)
       return x;
-    // 1 ≤ t < N
-    a = coeffs[--t];
-    // 0 ≤ t < N-1
-#pragma GCC diagnostic ignored "-Warray-bounds"
-    while(t--) // t = 0 breaks loop
-      // 0 ≤ t
-      a = coeffs[t] + 1/a;
-#pragma GCC diagnostic pop
-    return a;
+    a = coeffs[--cut];
+    while(cut > 0)
+      a = coeffs[--cut] + 1/a;
+    return x < 0 ? -a : a;
   }
 
   bool simplify() {
-    angle = rationalize(std::fmod(angle, 2*internal::pi) / internal::pi)
-      * internal::pi;
-    gphase = rationalize(std::fmod(gphase, 2*internal::pi) / internal::pi)
-      * internal::pi;
+    angle = rationalize(std::fmod(angle / internal::pi, 2.0)) * internal::pi;
+    gphase = rationalize(std::fmod(gphase / internal::pi, 2.0)) * internal::pi;
+    update();
     return true;
   }
 
   friend std::ostream& operator<< (std::ostream& os, const Gene& g) {
-    os << g.names[g.op] << g.target();
+    os << internal::gates[g.op - 1].name << g.target();
     if(g.ixs.size()) {
       os << '[';
       for(auto ctrl : g.ixs)
@@ -165,17 +184,27 @@ private:
   NOINLINE Gene(unsigned op_, double angle_, double phase_,
     unsigned tgt_, unsigned control_enc):
       op(op_), angle(angle_), gphase(phase_), tgt(tgt_), hw(0) {
-    std::vector<arma::uword> ixv;
-    ixv.reserve(Config::nBit);
-    unsigned ctrl = QGA::GeneTools::ctrlBitString(control_enc, tgt - 1);
-    for(unsigned i = 0; i < Config::nBit; i++) {
-      if(ctrl & 1) {
-        ixv.push_back(i + 1);
-        hw++;
+    if(internal::gates[op - 1].ctrl) {
+      std::vector<arma::uword> ixv;
+      ixv.reserve(Config::nBit);
+      unsigned ctrl = QGA::GeneTools::ctrlBitString(control_enc, tgt - 1);
+      for(unsigned i = 0; i < Config::nBit; i++) {
+        if(ctrl & 1) {
+          ixv.push_back(i + 1);
+          hw++;
+        }
+        ctrl >>= 1;
       }
-      ctrl >>= 1;
-    }
-    ixs = ixv;
+      ixs = ixv;
+    } else
+      ixs.clear();
+    update();
+  }
+
+  void update() {
+    if(op < 1 || op > internal::gate_count)
+      throw std::logic_error("gate must be between 0 and 2");
+    mat = std::exp(gphase * internal::i) * internal::gates[op - 1].fn(angle);
   }
 
 }; // class Gene
@@ -202,7 +231,7 @@ public:
       out = arma::fft(psi) / sqrt(dim);
       error += std::max(1 - std::real(arma::cdot(out, sim(psi))), 0.0);
     }
-    return error;
+    return error < 1E-8 ? 0 : error;
   }
 
   friend std::ostream& operator<< (std::ostream& os, const Candidate& c) {
@@ -224,10 +253,9 @@ public:
     for(size_t i = 0; i < dim; i++) {
       psi.fill(0);
       psi[i] = 1;
-      //sim(psi).st().raw_print(os);
       for(auto& p : sim(psi))
         os << std::abs(p)*std::sqrt(dim) << "/√" << dim << "∠"
-          << std::showpos << std::arg(p)/3.14159 << "π " << std::noshowpos;
+          << std::showpos << std::arg(p)/internal::pi << "π " << std::noshowpos;
       os << '\n';
     }
     return os.str();
