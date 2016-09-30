@@ -158,12 +158,14 @@ int main() {
       << Colours::green() << pop.best().fitness() << Colours::blue()
       << " [" << pop.best().getGen() << ']' << Colours::reset() << ", "
       << Colours::yellow() << nondom.size() << Colours::reset()
-      << " nondominated";
-    if(nondom.size() > 0) {
-      auto& e = nondom.randomSelect();
-      std::cout << ", e.g. " << e.fitness() << ' ' << e;
-    }
-    std::cout << std::endl;
+      << " nondominated, newest: ";
+    auto& newest = *std::min_element(nondom.begin(), nondom.end(),
+        [](const GenCandidate& c1, const GenCandidate& c2) {
+          return c1.getGen() > c2.getGen();
+        });
+    std::cout
+      << Colours::green() << newest.fitness() << Colours::blue()
+      << " [" << newest.getGen() << ']' << Colours::reset() << std::endl;
 
     while(SigComm::state == SigComm::INTERRUPTED) {
       int res = int_response();
