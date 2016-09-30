@@ -208,11 +208,11 @@ void dumpResults(Population& pop, CandidateFactory::Selector& sel,
   std::chrono::time_point<std::chrono::steady_clock>
     now{std::chrono::steady_clock::now()};
   std::chrono::duration<double> dur = now - start - SigComm::timeOut;
-  std::cout << std::endl << "Run took " << dur.count() << " s ("
+  std::cout << "\nRun took " << dur.count() << " s ("
     << Colours::blue() << dur.count()/gen
     << " s/gen " << Colours::reset() << "avg), "
     << Colours::blue() << QGA::counter.total() << Colours::reset()
-    << " candidates tested" << std::endl;
+    << " candidates tested\n";
 
   /* List results */
   auto nondom = pop.front();
