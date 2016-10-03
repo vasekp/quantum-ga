@@ -189,6 +189,7 @@ int main() {
             [&] { return CandidateFactory::genInit().setGen(0); }};
           sel = CandidateFactory::getInitSelector();
           start = std::chrono::steady_clock::now();
+          SigComm::timeOut = std::chrono::duration<double>(0);
           gen = 0;
           break;
       }
