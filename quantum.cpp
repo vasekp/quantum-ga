@@ -140,14 +140,13 @@ int main() {
     Population pop2 = pop.front();
     pop2.rankTrim(Config::arSize);
 
-    /* Select popKeep candidates for survival without modification */
+    /* Randomly select popKeep candidates for survival without modification */
     pop2.reserve(Config::popSize);
-    pop.precompute();
-    pop2.add(Config::popKeep,
-        [&] { return pop.NSGASelect(Config::selectBias); });
+    pop2.add(pop.randomSelect(Config::popKeep));
 
     /* Top up to popSize candidates in parallel */
     CandidateFactory cf{pop, sel};
+    pop.precompute();
     pop2.add(Config::popSize - pop2.size(),
         [&] { return cf.getNew().setGen(gen); });
 
