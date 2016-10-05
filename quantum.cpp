@@ -51,7 +51,7 @@ namespace Config {
   const double expLengthIni = 30;
 
   // Expected number of gates inserted / modified / removed in mutation
-  const double expMutationCount = 3.0;
+  const double expMutationCount = 4.0;
 
   // Probability of removing a single gate in uniform deletion
   const double pChoiceUniform = 0.1;

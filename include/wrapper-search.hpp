@@ -32,6 +32,11 @@ arma::cx_mat22 zrot(double a) {
   return { std::exp(i*a), 0, 0, std::exp(-i*a) };
 }
 
+// An assymetric version of zrot
+arma::cx_mat22 phase(double a) {
+  return { 1, 0, 0, std::exp(i*a) };
+}
+
 
 struct Gate {
   arma::cx_mat22(*fn)(double);
@@ -40,9 +45,10 @@ struct Gate {
 };
 
 Gate gates[] = {
-  {xrot, "X", true},
-  {yrot, "Y", true},
-  {zrot, "Z", true}
+  {xrot, "X", false},
+//{yrot, "Y", true},
+//{zrot, "Z", true}
+  {phase, "P", true}
 };
 
 constexpr size_t gate_count = std::extent<decltype(gates)>::value;
@@ -65,7 +71,7 @@ public:
   static Gene getNew() {
     /* Distributions: cheap and safer in MT environment this way */
     // distribution of being an oracle
-    std::bernoulli_distribution dOracle{0.05};
+    std::bernoulli_distribution dOracle{0.1};
     if(dOracle(gen::rng))
       return {true};
     // distribution of possible gates
