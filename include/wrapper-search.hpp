@@ -230,14 +230,12 @@ struct Fitness {
 
   double error;
   size_t length;
-//unsigned cplx;
   size_t ocalls;
 
   friend std::ostream& operator<< (std::ostream& os, const Fitness& f) {
     return os << '{'
        << f.error << ','
        << f.length << ','
-//     << f.cplx << ','
        << f.ocalls << '}';
   }
 
@@ -248,7 +246,6 @@ struct Fitness {
   friend NOINLINE bool operator<< (const Fitness& a, const Fitness& b) {
     return a.error <= b.error
         && a.length <= b.length
-//      && a.cplx <= b.cplx
         && a.ocalls <= b.ocalls
         && !(a == b);
   }
@@ -256,7 +253,6 @@ struct Fitness {
   friend bool operator== (const Fitness& a, const Fitness& b) {
     return a.error == b.error
         && a.length == b.length
-//      && a.cplx == b.cplx
         && a.ocalls == b.ocalls;
   }
 
@@ -272,17 +268,12 @@ public:
   using Base::Base;
 
   NOINLINE Fitness fitness() const {
-    /* Complexity = square sum of numbers of control bits per gate */
-//  unsigned cplx = 0;
     size_t ocalls = 0;
-    for(const auto& g : gt) {
-//    unsigned h = g.weight();
-//    cplx += h*h;
+    for(const auto& g : gt)
       if(g.isOracle())
         ocalls++;
-    }
     QGA::counter.hit();
-    return {error(), gt.size(), /*cplx,*/ ocalls};
+    return {error(), gt.size(), ocalls};
   }
 
   double error() const {
