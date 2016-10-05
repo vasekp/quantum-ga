@@ -11,6 +11,12 @@
   #else
     #error Fourier problem is only implemented using QIClib.
   #endif
+#elif defined(SEARCH)
+  #ifdef USE_QICLIB
+    #include "include/wrapper-search.hpp"
+  #else
+    #error Search problem is only implemented using QIClib.
+  #endif
 #else
   #ifdef USE_QPP
     #include "include/wrapper-qpp.hpp"
@@ -27,16 +33,16 @@ namespace Config {
   const unsigned nBit = 3;
 
   // strength parameter of NSGA selection
-  const double selectBias = 1.0;
+  const double selectBias = 0.3;
 
   // Archive (external population) size
   const size_t arSize = 100;
 
   // Internal population size
-  const size_t popSize = 500;
+  const size_t popSize = 2000;
 
   // Number of candidates to keep from parent generation
-  const size_t popKeep = 200;
+  const size_t popKeep = 300;
 
   // Number of generations (constant)
   const unsigned long nGen = std::numeric_limits<unsigned long>::max();
