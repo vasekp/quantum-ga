@@ -76,16 +76,13 @@ public:
       dTgt(gen::rng), dCtrl(gen::rng)};
   }
 
-  const arma::uvec& ix_vector() const {
-    return ixs;
-  }
-
-  unsigned target() const {
-    return tgt;
-  }
-
-  const arma::cx_mat22& gate() const {
-    return mat;
+  arma::cx_vec apply(const arma::cx_vec& psi) {
+    // control-gate (QIClib)
+    return qic::apply_ctrl(
+        psi,    // state
+        mat,    // operator
+        ixs,    // arma::uvec of control systems
+        {tgt}); // arma::uvec of target systems
   }
 
   unsigned weight() const {
@@ -137,29 +134,6 @@ public:
       return false;
   }
 
-  double rationalize(double x) {
-    double a = std::abs(x);
-    constexpr unsigned N = 8;
-    double coeffs[N];
-    unsigned t;
-    for(t = 0; t < N; t++) {
-      coeffs[t] = std::floor(a);
-      if(coeffs[t] > 100) {
-        coeffs[t++] = 100;
-        break;
-      }
-      a = 1/(a - coeffs[t]);
-    }
-    std::discrete_distribution<unsigned> dStop(&coeffs[1], &coeffs[t]);
-    unsigned cut = dStop(gen::rng) + 1;
-    if(cut == t)
-      return x;
-    a = coeffs[--cut];
-    while(cut > 0)
-      a = coeffs[--cut] + 1/a;
-    return x < 0 ? -a : a;
-  }
-
   bool simplify() {
     angle = rationalize(std::fmod(angle / internal::pi, 2.0)) * internal::pi;
     gphase = rationalize(std::fmod(gphase / internal::pi, 2.0)) * internal::pi;
@@ -168,7 +142,7 @@ public:
   }
 
   friend std::ostream& operator<< (std::ostream& os, const Gene& g) {
-    os << internal::gates[g.op - 1].name << g.target();
+    os << internal::gates[g.op - 1].name << g.tgt;
     if(g.ixs.size()) {
       os << '[';
       for(auto ctrl : g.ixs)
@@ -199,6 +173,29 @@ private:
     } else
       ixs.clear();
     update();
+  }
+
+  double rationalize(double x) {
+    double a = std::abs(x);
+    constexpr unsigned N = 8;
+    double coeffs[N];
+    unsigned t;
+    for(t = 0; t < N; t++) {
+      coeffs[t] = std::floor(a);
+      if(coeffs[t] > 100) {
+        coeffs[t++] = 100;
+        break;
+      }
+      a = 1/(a - coeffs[t]);
+    }
+    std::discrete_distribution<unsigned> dStop(&coeffs[1], &coeffs[t]);
+    unsigned cut = dStop(gen::rng) + 1;
+    if(cut == t)
+      return x;
+    a = coeffs[--cut];
+    while(cut > 0)
+      a = coeffs[--cut] + 1/a;
+    return x < 0 ? -a : a;
   }
 
   void update() {
@@ -264,14 +261,8 @@ public:
 private:
 
   arma::cx_vec sim(arma::cx_vec& psi) const {
-    for(auto& g : gt) {
-      /* control-gate (QIClib) */
-      psi = qic::apply_ctrl(
-          psi,            // state
-          g.gate(),       // operator
-          g.ix_vector(),  // arma::uvec of control systems
-          {g.target()});  // arma::uvec of target systems
-    }
+    for(auto& g : gt)
+      psi = g.apply(psi);
     return psi;
   }
 
