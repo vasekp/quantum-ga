@@ -228,6 +228,7 @@ public:
       out = arma::fft(psi) / sqrt(dim);
       error += std::max(1 - std::real(arma::cdot(out, sim(psi))), 0.0);
     }
+    error /= dim;
     return error < 1E-8 ? 0 : error;
   }
 
