@@ -11,6 +11,12 @@
   #else
     #error Fourier problem is only implemented using QIClib.
   #endif
+#elif defined(SEARCH)
+  #ifdef USE_QICLIB
+    #include "include/wrapper-search.hpp"
+  #else
+    #error Search problem is only implemented using QIClib.
+  #endif
 #else
   #ifdef USE_QPP
     #include "include/wrapper-qpp.hpp"
@@ -27,16 +33,16 @@ namespace Config {
   const unsigned nBit = 3;
 
   // strength parameter of NSGA selection
-  const double selectBias = 1.0;
+  const double selectBias = 0.3;
 
   // Archive (external population) size
   const size_t arSize = 100;
 
   // Internal population size
-  const size_t popSize = 500;
+  const size_t popSize = 2000;
 
   // Number of candidates to keep from parent generation
-  const size_t popKeep = 200;
+  const size_t popKeep = 300;
 
   // Number of generations (constant)
   const unsigned long nGen = std::numeric_limits<unsigned long>::max();
@@ -45,7 +51,7 @@ namespace Config {
   const double expLengthIni = 30;
 
   // Expected number of gates inserted / modified / removed in mutation
-  const double expMutationCount = 3.0;
+  const double expMutationCount = 4.0;
 
   // Probability of removing a single gate in uniform deletion
   const double pChoiceUniform = 0.1;
@@ -134,14 +140,13 @@ int main() {
     Population pop2 = pop.front();
     pop2.rankTrim(Config::arSize);
 
-    /* Select popKeep candidates for survival without modification */
+    /* Randomly select popKeep candidates for survival without modification */
     pop2.reserve(Config::popSize);
-    pop.precompute();
-    pop2.add(Config::popKeep,
-        [&] { return pop.NSGASelect(Config::selectBias); });
+    pop2.add(pop.randomSelect(Config::popKeep));
 
     /* Top up to popSize candidates in parallel */
     CandidateFactory cf{pop, sel};
+    pop.precompute();
     pop2.add(Config::popSize - pop2.size(),
         [&] { return cf.getNew().setGen(gen); });
 

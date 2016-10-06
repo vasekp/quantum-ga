@@ -1,3 +1,4 @@
 hist/
 quantum
 *.res
+*.sed

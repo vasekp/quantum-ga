@@ -11,10 +11,10 @@ HEADERS = include/*.hpp
 # recompiling the target. If the platform or debug flag is the only change 
 # made, use -B to force a remake.
 
-TARGETS := qpp qic fourier
+TARGETS := qpp qic fourier search
 TARGETS += $(addsuffix .d,$(TARGETS))
 
-default: fourier
+default: search
 
 qpp qic qpp.d qic.d: $(PROGS) $(HEADERS)
 
@@ -27,9 +27,10 @@ $(filter-out %.d,$(TARGETS)): CXXFLAGS += -O3
 $(filter %.d,$(TARGETS)): CXXFLAGS += -O1 -g
 $(filter qic%,$(TARGETS)): CXXFLAGS += -Iqiclib/include -lopenblas -DUSE_QICLIB
 $(filter fourier%,$(TARGETS)): CXXFLAGS += -Iqiclib/include -lopenblas -DUSE_QICLIB -DFOURIER
+$(filter search%,$(TARGETS)): CXXFLAGS += -Iqiclib/include -lopenblas -DUSE_QICLIB -DSEARCH
 $(filter qpp%,$(TARGETS)): CXXFLAGS += -isystem /usr/include/eigen3 -Iquantum++/include -DUSE_QPP
 qpp: CXXFLAGS += -DNODEBUG -DEIGEN_NO_DEBUG
-fourier qic: CXXFLAGS += -DQICLIB_NO_DEBUG
+search fourier qic: CXXFLAGS += -DQICLIB_NO_DEBUG
 
 $(TARGETS): $(PROGS)
 
