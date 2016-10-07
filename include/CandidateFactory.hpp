@@ -12,6 +12,7 @@ template<
 class CandidateFactory {
 
   using Gene = typename Candidate::GeneType;
+  using SPGene = std::shared_ptr<Gene>;
 
 public:
 
@@ -37,10 +38,10 @@ public:
     // probability of termination; expLengthIni = expected number of genes
     const double probTerm = 1/Config::expLengthIni;
     std::uniform_real_distribution<> dUni{0, 1};
-    std::vector<Gene> gtOrig{};
+    std::vector<SPGene> gtOrig{};
     gtOrig.reserve(Config::expLengthIni);
     do
-      gtOrig.push_back(Gene::getNew());
+      gtOrig.push_back(SPGene{Gene::getNew()});
     while(dUni(gen::rng) > probTerm);
     return Candidate{std::move(gtOrig)};
   }
@@ -67,7 +68,7 @@ private:
     std::uniform_int_distribution<size_t> dPos{0, sz - 1};
     const double probTerm = 1/Config::expMutationCount;
     do
-      gtNew[dPos(gen::rng)] = Gene::getNew();
+      gtNew[dPos(gen::rng)] = SPGene{Gene::getNew()};
     while(dUni(gen::rng) > probTerm);
     return Candidate{std::move(gtNew)};
   }
@@ -82,10 +83,12 @@ private:
     std::uniform_real_distribution<> dUni{0, 1};
     std::uniform_int_distribution<size_t> dPos{0, sz - 1};
     const double probTerm = 1/Config::expMutationCount;
+    size_t cnt = 0;
     do
-      gtNew[dPos(gen::rng)].mutate();
+      if(gtNew[dPos(gen::rng)]->mutate())
+        cnt++;
     while(dUni(gen::rng) > probTerm);
-    return Candidate{std::move(gtNew)};
+    return cnt ? Candidate{std::move(gtNew)} : parent;
   }
 
   Candidate mAddSlice() {
@@ -94,13 +97,13 @@ private:
     auto sz = gtOrig.size();
     std::uniform_real_distribution<> dUni{0, 1};
     size_t pos = gen::rng() % (sz + 1);
-    std::vector<Gene> ins{};
+    std::vector<SPGene> ins{};
     ins.reserve(2*Config::expMutationCount);
     double probTerm = 1/Config::expMutationCount;
     do
-      ins.push_back(Gene::getNew());
+      ins.push_back(SPGene{Gene::getNew()});
     while(dUni(gen::rng) > probTerm);
-    std::vector<Gene> gtNew{};
+    std::vector<SPGene> gtNew{};
     gtNew.reserve(sz + ins.size());
     gtNew.insert(gtNew.end(), gtOrig.begin(), gtOrig.begin() + pos);
     gtNew.insert(gtNew.end(), ins.begin(), ins.end());
@@ -117,19 +120,19 @@ private:
            pos2 = gen::rng() % (sz + 1);
     if(pos2 < pos1)
       std::swap(pos1, pos2);
-    std::vector<Gene> ins{};
+    std::vector<SPGene> ins{};
     ins.reserve(2*Config::expMutationCount);
     double probTerm = 1/Config::expMutationCount;
     do
-      ins.push_back(Gene::getNew());
+      ins.push_back(SPGene{Gene::getNew()});
     while(dUni(gen::rng) > probTerm);
-    std::vector<Gene> gtNew{};
+    std::vector<SPGene> gtNew{};
     gtNew.reserve(sz + 2*ins.size());
     gtNew.insert(gtNew.end(), gtOrig.begin(), gtOrig.begin() + pos1);
     gtNew.insert(gtNew.end(), ins.begin(), ins.end());
     gtNew.insert(gtNew.end(), gtOrig.begin() + pos1, gtOrig.begin() + pos2);
     for(auto& g : ins)
-      g.invert();
+      g->invert();
     gtNew.insert(gtNew.end(),
         std::make_move_iterator(ins.rbegin()),
         std::make_move_iterator(ins.rend()));
@@ -149,7 +152,7 @@ private:
     size_t len = 1 + floor(log(dUni(gen::rng))
         / log(1 - 1/Config::expMutationCount));
     size_t pos2 = pos1 + len > sz ? sz : pos1 + len;
-    std::vector<Gene> gtNew{};
+    std::vector<SPGene> gtNew{};
     gtNew.reserve(sz - (pos2 - pos1));
     gtNew.insert(gtNew.end(), gtOrig.begin(), gtOrig.begin() + pos1);
     gtNew.insert(gtNew.end(), gtOrig.begin() + pos2, gtOrig.end());
@@ -160,7 +163,7 @@ private:
     auto &parent = get();
     auto gtOrig = parent.genotype();
     std::uniform_real_distribution<> dUni{0, 1};
-    std::vector<Gene> gtNew{};
+    std::vector<SPGene> gtNew{};
     gtNew.reserve(gtOrig.size());
     size_t cnt = 0;
     for(auto& g : gtOrig)
@@ -183,7 +186,7 @@ private:
     std::sort(pos.begin(), pos.end());
     // ensure that pos[1]-pos[0] and pos[3]-pos[2] are nonzero
     pos[1]++, pos[2]++, pos[3] += 2;
-    std::vector<Gene> gtNew{};
+    std::vector<SPGene> gtNew{};
     gtNew.reserve(sz);
     gtNew.insert(gtNew.end(),
         gtOrig.begin(), gtOrig.begin() + pos[0]);
@@ -209,7 +212,7 @@ private:
       std::swap(pos1, pos2);
     // ensure that pos2-pos1 is at least 2
     pos2 += 2;
-    std::vector<Gene> gtNew{};
+    std::vector<SPGene> gtNew{};
     gtNew.reserve(sz);
     gtNew.insert(gtNew.end(), gtOrig.begin(), gtOrig.begin() + pos1);
     {
@@ -218,7 +221,7 @@ private:
           gtOrig.rbegin() + sz - pos2, gtOrig.rbegin() + sz - pos1);
       auto end = gtNew.end();
       for(auto it = prev_end; it != end; it++)
-        it->invert();
+        (*it)->invert();
     }
     gtNew.insert(gtNew.end(), gtOrig.begin() + pos2, gtOrig.end());
     return Candidate{std::move(gtNew)};
@@ -235,7 +238,7 @@ private:
     double pTest1 = (double)szShorter / sz1,
            pTest2 = (double)szShorter / sz2;
     std::uniform_real_distribution<> dUni{0, 1};
-    std::vector<Gene> gtNew{};
+    std::vector<SPGene> gtNew{};
     gtNew.reserve(sz1 + sz2 - szShorter);
     auto it1 = gt1.begin(),
          it2 = gt2.begin(),
@@ -268,7 +271,7 @@ private:
     auto &gt1 = parent1.genotype(),
          &gt2 = parent2.genotype(),
          &gt3 = parent3.genotype();
-    std::vector<Gene> gtNew{};
+    std::vector<SPGene> gtNew{};
     gtNew.reserve(gt1.size() + gt2.size() + gt3.size());
     gtNew.insert(gtNew.end(), gt1.begin(), gt1.end());
     {
@@ -276,7 +279,7 @@ private:
       gtNew.insert(gtNew.end(), gt2.rbegin(), gt2.rend());
       auto end = gtNew.end();
       for(auto it = start; it != end; it++)
-        it->invert();
+        (*it)->invert();
     }
     gtNew.insert(gtNew.end(), gt3.begin(), gt3.end());
     return Candidate{std::move(gtNew)};
@@ -293,10 +296,10 @@ public:
     size_t sz = gtOrig.size();
     if(sz == 0)
       return parent;
-    std::vector<Gene> gtNew = gtOrig;
+    std::vector<SPGene> gtNew = gtOrig;
     size_t cnt = 0;
     for(auto& g : gtNew)
-      if(g.simplify())
+      if(g->simplify())
         cnt++;
     return cnt ? Candidate{std::move(gtNew)} : parent;
   }
