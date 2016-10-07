@@ -5,6 +5,8 @@ template<class, template<class> class, template<class> class...>
 class Visitors;
 
 
+/* The base class for all genes. Defines methods derived classes have to
+ * implement, and provides default (no-op) definition for some of them. */
 template<class Gene,
   template<class> class... Derived>
 class GeneBase : public Visitors<Gene, Derived...> {
@@ -13,9 +15,17 @@ class GeneBase : public Visitors<Gene, Derived...> {
 
 public:
 
+  // apply this gene to a state vector
   virtual Wrapper::State apply(const Wrapper::State&) const = 0;
 
+  // return an arbitrary notion of complexity of this operation (accumulative)
   virtual unsigned complexity() const = 0;
+
+  /* In the following functions, self is a std::shared_ptr (SP) to this (so it
+   * holds that self.get() == this). This means the same information is passed
+   * to the function twice, but the SP could not be retrieved from this alone.
+   * If the function did not modify the state it is required to return self,
+   * otherwise a shared pointer to a new instance. */
 
   virtual SP invert(const SP& self) {
     return self;
@@ -29,7 +39,13 @@ public:
     return self;
   }
 
-  /* http://www.oodesign.com/visitor-pattern.html */
+  /* Merge needs to be implemented using double dispatch, because only
+   * genes of the same class can typically be merged (albeit this is not a
+   * restriction) but all we know at compile time is a pointer to the base
+   * class.
+   *
+   * See: http://www.oodesign.com/visitor-pattern.html */
+
   SP merge(const SP& self, const SP& other) {
     return other.get()->invite(self);
   }
@@ -47,6 +63,15 @@ protected:
 }; // virtual class GeneBase<Gene, Derived...>
 
 
+/* The purpose of this class is to inject a virtual method for calling a
+ * particular gene class. Note that for the visitor design pattern, we need
+ * one method like this for each possible visitee.
+ *
+ * This is for the purposes of merge(). The default implementation returns
+ * self, meaning the two genes could not be merged. Subclasses can override
+ * SP visit(const SP&, const X<Gene>&) for some X (presumably themselves) to
+ * allow merging. */
+
 template<class Gene, template<class> class Derived>
 class Visitor {
 
@@ -58,8 +83,11 @@ protected:
     return self;
   }
 
-};
+}; // class Visitor
 
+
+/* Chain template dependency is used to generate the visit() methods one for
+ * each of a list of derived classes. */
 
 template<class Gene,
   template<class> class Head,
@@ -74,7 +102,7 @@ public:
   using Visitor<Gene, Head>::visit;
   using Visitors<Gene, Tail...>::visit;
 
-};
+}; // class Visitors
 
 template<class Gene,
   template<class> class Last>
@@ -86,8 +114,14 @@ public:
 
   using Visitor<Gene, Last>::visit;
 
-};
+}; // class Visitors<Gene, Last>
 
+
+/* This is the default Gene class. It can be used when the operations above
+ * are sufficient and the gene polymorphism reduces to choosing a subset from
+ * the existing Gene classes. A different class, however, must be defined when
+ * additional functionality is required in the base (see wrapper-search for an
+ * example). */
 
 template<template<class> class... Derived>
 class Gene: public GeneBase<Gene<Derived...>, Derived...> {
@@ -96,6 +130,6 @@ public:
 
   static std::shared_ptr<Gene> getNew();
 
-};
+}; // class Gene
 
 } // namespace QGA
