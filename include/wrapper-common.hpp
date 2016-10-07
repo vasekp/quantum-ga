@@ -169,7 +169,7 @@ public:
     if(internal::gates[op].ctrl) {
       std::vector<arma::uword> ixv;
       ixv.reserve(Config::nBit);
-      unsigned ctrl = QGA::GeneTools::ctrlBitString(control_enc, tgt - 1);
+      unsigned ctrl = GeneBase::ctrlBitString(control_enc, tgt - 1);
       for(unsigned i = 0; i < Config::nBit; i++) {
         if(ctrl & 1) {
           ixv.push_back(i + 1);
