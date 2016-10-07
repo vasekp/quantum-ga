@@ -1,61 +1,16 @@
-// allow only one wrapper
-#ifndef QGA_WRAPPER_HPP
-#define QGA_WRAPPER_HPP
-
-#define QICLIB_DONT_USE_NLOPT
-#define ARMA_DONT_USE_WRAPPER
-
-#include "QIClib"
-#include <string>
-#include <cmath>
-#include <sstream>
-
 namespace Wrapper {
 
-using State = arma::cx_vec;
-
-
-namespace internal {
-
-using cxd = arma::cx_double;
-
-const double pi = std::acos(-1);
-
-const cxd i{0,1};
-
-arma::cx_mat22 xrot(double a) {
-  return { std::cos(a), i*std::sin(a), i*std::sin(a), std::cos(a) };
-}
-
-arma::cx_mat22 yrot(double a) {
-  return { std::cos(a), std::sin(a), -std::sin(a), std::cos(a) };
-}
-
-arma::cx_mat22 zrot(double a) {
-  return { std::exp(i*a), 0, 0, std::exp(-i*a) };
-}
-
-// An assymetric version of zrot
-arma::cx_mat22 phase(double a) {
-  return { 1, 0, 0, std::exp(i*a) };
-}
-
-
-struct Gate {
-  arma::cx_mat22(*fn)(double);
+struct gate_struct {
+  Wrapper::Gate(*fn)(double);
   std::string name;
   bool ctrl;
 };
 
-Gate gates[] = {
-  {xrot, "X", true},
-  {yrot, "Y", true},
-  {zrot, "Z", true}
+std::vector<gate_struct> gates {
+  {internal::xrot, "X", true},
+  {internal::yrot, "Y", true},
+  {internal::zrot, "Z", true}
 };
-
-constexpr size_t gate_count = std::extent<decltype(gates)>::value;
-
-} // namespace internal
 
 
 template<class GeneBase>
@@ -67,7 +22,7 @@ class XYZGene : public GeneBase {
   unsigned tgt;
   unsigned hw;
   arma::uvec ixs;
-  arma::cx_mat22 mat;
+  Wrapper::Gate mat;
 
   using SP = std::shared_ptr<GeneBase>;
 
@@ -75,7 +30,7 @@ public:
 
   static SP getNew() {
     // distribution of possible gates
-    std::uniform_int_distribution<size_t> dOp{0, internal::gate_count - 1};
+    std::uniform_int_distribution<size_t> dOp{0, gates.size() - 1};
     // distribution of targets
     std::uniform_int_distribution<unsigned> dTgt{1, Config::nBit};
     // distribution of controls
@@ -105,7 +60,7 @@ public:
   }*/
 
   SP invert(const SP&) override {
-    return std::make_shared<XYZGene>(op, -angle, gphase, hw, tgt, ixs);
+    return std::make_shared<XYZGene>(op, -angle, -gphase, tgt, ixs, hw);
   }
 
   SP mutate(const SP&) override {
@@ -116,14 +71,14 @@ public:
         op,
         modAngle ? angle + dAng(gen::rng) : angle,
         modAngle ? gphase : gphase + dAng(gen::rng),
-        hw, tgt, ixs);
+        tgt, ixs, hw);
   }
 
   SP simplify(const SP&) override {
     return std::make_shared<XYZGene>(op,
         rationalize(std::fmod(angle / internal::pi, 2.0)) * internal::pi,
         rationalize(std::fmod(gphase / internal::pi, 2.0)) * internal::pi,
-        hw, tgt, ixs);
+        tgt, ixs, hw);
   }
 
   SP invite(const SP& g) const override {
@@ -134,23 +89,23 @@ public:
     if(angle == 0) {
       // op1 = (phase*)identity
       return std::make_shared<XYZGene>(
-          g.op, g.angle, g.gphase + gphase, g.hw, g.tgt, g.ixs);
+          g.op, g.angle, g.gphase + gphase, g.tgt, g.ixs, g.hw);
     } else if(g.angle == 0) {
       // op2 = (phase*)identity
       return std::make_shared<XYZGene>(
-          op, angle, gphase + g.gphase, hw, tgt, ixs);
+          op, angle, gphase + g.gphase, tgt, ixs, hw);
     } else if(g.op == op
         && g.tgt == tgt
         && g.ixs.size() == ixs.size()
         && arma::all(g.ixs == ixs)) {
       return std::make_shared<XYZGene>(
-          op, angle + g.angle, gphase + g.gphase, hw, tgt, ixs);
+          op, angle + g.angle, gphase + g.gphase, tgt, ixs, hw);
     } else
       return self;
   }
 
   std::ostream& write(std::ostream& os) const override {
-    os << internal::gates[op].name << tgt;
+    os << gates[op].name << tgt;
     if(ixs.size()) {
       os << '[';
       for(auto ctrl : ixs)
@@ -166,7 +121,7 @@ public:
   NOINLINE XYZGene(size_t op_, double angle_, double phase_,
     unsigned tgt_, unsigned control_enc):
       op(op_), angle(angle_), gphase(phase_), tgt(tgt_), hw(0) {
-    if(internal::gates[op].ctrl) {
+    if(gates[op].ctrl) {
       std::vector<bool> bits{GeneBase::ctrlBitString(control_enc, tgt - 1)};
       std::vector<arma::uword> ixv;
       ixv.reserve(Config::nBit);
@@ -183,7 +138,7 @@ public:
   }
 
   NOINLINE XYZGene(size_t op_, double angle_, double phase_,
-    unsigned hw_, unsigned tgt_, arma::uvec ixs_):
+    unsigned tgt_, arma::uvec ixs_, unsigned hw_):
       op(op_), angle(angle_), gphase(phase_), tgt(tgt_), hw(hw_), ixs(ixs_) {
     computeMat();
   }
@@ -214,13 +169,11 @@ private:
   }
 
   void computeMat() {
-    if(op >= internal::gate_count)
+    if(op >= gates.size())
       throw std::logic_error("gate must be between 0 and 2");
-    mat = std::exp(gphase * internal::i) * internal::gates[op].fn(angle);
+    mat = std::exp(gphase * internal::i) * gates[op].fn(angle);
   }
 
 }; // class XYZGene
 
 } // namespace Wrapper
-
-#endif // !defined QGA_WRAPPER_HPP

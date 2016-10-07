@@ -1,30 +1,23 @@
 #include <iostream>
 #include <csignal>
 
-#include "genetic.hpp"
+#ifdef USE_QPP
+  #include "include/wrapper-qpp.hpp"
+#elif defined USE_QICLIB
+  #include "include/wrapper-qiclib.hpp"
+#else
+  #error Either USE_QPP or USE_QICLIB needed.
+#endif
 
+#include "genetic.hpp"
 #include "include/commons.hpp"
 
 #ifdef FOURIER
-  #ifdef USE_QICLIB
-    #include "include/wrapper-fourier.hpp"
-  #else
-    #error Fourier problem is only implemented using QIClib.
-  #endif
+  #include "include/problem-fourier.hpp"
 #elif defined(SEARCH)
-  #ifdef USE_QICLIB
-    #include "include/wrapper-search.hpp"
-  #else
-    #error Search problem is only implemented using QIClib.
-  #endif
+  #include "include/problem-search.hpp"
 #else
-  #ifdef USE_QPP
-    #include "include/wrapper-qpp.hpp"
-  #elif defined USE_QICLIB
-    #include "include/wrapper-qiclib.hpp"
-  #else
-    #error Either USE_QPP or USE_QICLIB needed.
-  #endif
+  #include "include/problem-simple.hpp"
 #endif
 
 namespace Config {

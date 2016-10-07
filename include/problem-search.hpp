@@ -1,5 +1,8 @@
-#include "wrapper-common.hpp"
-#include "GeneBase.hpp"
+// allow only one problem
+#ifndef QGA_PROBLEM_HPP
+#define QGA_PROBLEM_HPP
+
+#include "XYZGene.hpp"
 
 namespace Wrapper {
 
@@ -172,3 +175,5 @@ void init() {
 }
 
 } // namespace Wrapper
+
+#endif // !defined QGA_PROBLEM_HPP

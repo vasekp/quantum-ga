@@ -22,6 +22,7 @@ namespace Config {
   extern const double pControl;
 }
 
+#include "GeneBase.hpp"
 #include "Fitness.hpp"
 #include "CandidateCounter.hpp"
 #include "CandidateBase.hpp"
