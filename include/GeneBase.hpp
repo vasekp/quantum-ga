@@ -141,6 +141,7 @@ public:
 }; // class Visitors<Gene, Last>
 
 
+#if 0
 /* This is the default Gene class. It can be used when the operations above
  * are sufficient and the gene polymorphism reduces to choosing a subset from
  * the existing Gene classes. A different class, however, must be defined when
@@ -155,5 +156,6 @@ public:
   static std::shared_ptr<Gene> getNew();
 
 }; // class Gene
+#endif
 
 } // namespace QGA
