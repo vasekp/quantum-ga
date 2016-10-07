@@ -167,15 +167,14 @@ public:
     unsigned tgt_, unsigned control_enc):
       op(op_), angle(angle_), gphase(phase_), tgt(tgt_), hw(0) {
     if(internal::gates[op].ctrl) {
+      std::vector<bool> bits{GeneBase::ctrlBitString(control_enc, tgt - 1)};
       std::vector<arma::uword> ixv;
       ixv.reserve(Config::nBit);
-      unsigned ctrl = GeneBase::ctrlBitString(control_enc, tgt - 1);
       for(unsigned i = 0; i < Config::nBit; i++) {
-        if(ctrl & 1) {
+        if(bits[i]) {
           ixv.push_back(i + 1);
           hw++;
         }
-        ctrl >>= 1;
       }
       ixs = ixv;
     } else
