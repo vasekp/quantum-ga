@@ -3,13 +3,18 @@
 
 namespace Wrapper {
 
+
 template<class GeneBase>
 class Oracle : public GeneBase {
 
+  using SP = std::shared_ptr<GeneBase>;
+
 public:
 
-  static GeneBase* getNew() {
-    return new Oracle();
+  Oracle() { }
+
+  static SP getNew() {
+    return std::make_shared<Oracle>();
   }
 
   State apply(const State&) const override {
@@ -30,17 +35,13 @@ public:
     return 1;
   }
 
-  bool invite(GeneBase* g) const override {
-    return g->visit(*this);
+  SP invite(const SP& g) const override {
+    return g->visit(g, *this);
   }
 
   std::ostream& write(std::ostream& os) const override {
     return os << "Oracle";
   }
-
-private:
-
-  NOINLINE Oracle() { }
 
 }; // class Oracle<GeneBase>
 
@@ -59,13 +60,12 @@ public:
     return apply(psi);
   }
 
-  static Gene* getNew() {
-    // distribution of being an oracle
+  static std::shared_ptr<Gene> getNew() {
     std::bernoulli_distribution dOracle{0.1};
     if(dOracle(gen::rng))
-      return Wrapper::Oracle<Gene>::getNew();
+      return Oracle<Gene>::getNew();
     else
-      return Wrapper::XYZGene<Gene>::getNew();
+      return XYZGene<Gene>::getNew();
   }
 
 }; // class GeneBase<Derived...>

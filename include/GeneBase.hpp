@@ -9,27 +9,29 @@ template<class Gene,
   template<class> class... Derived>
 class GeneBase : public Visitors<Gene, Derived...> {
 
+  using SP = std::shared_ptr<Gene>;
+
 public:
 
   virtual Wrapper::State apply(const Wrapper::State&) const = 0;
 
   virtual unsigned complexity() const = 0;
 
-  virtual bool invert() {
-    return false;
+  virtual SP invert(const SP& self) {
+    return self;
   }
 
-  virtual bool mutate() {
-    return false;
+  virtual SP mutate(const SP& self) {
+    return self;
   }
 
-  virtual bool simplify() {
-    return false;
+  virtual SP simplify(const SP& self) {
+    return self;
   }
 
   /* http://www.oodesign.com/visitor-pattern.html */
-  bool merge(const Gene* next) {
-    return next->invite(static_cast<Gene*>(this));
+  SP merge(const SP& self, const SP& other) {
+    return other.get()->invite(self);
   }
 
   friend std::ostream& operator<< (std::ostream& os, const GeneBase& g) {
@@ -38,7 +40,7 @@ public:
 
 protected:
 
-  virtual bool invite(Gene*) const = 0;
+  virtual SP invite(const SP&) const = 0;
 
   virtual std::ostream& write(std::ostream&) const = 0;
 
@@ -48,10 +50,12 @@ protected:
 template<class Gene, template<class> class Derived>
 class Visitor {
 
+  using SP = std::shared_ptr<Gene>;
+
 protected:
 
-  virtual bool visit(const Derived<Gene>&) {
-    return false;
+  virtual SP visit(const SP& self, const Derived<Gene>&) {
+    return self;
   }
 
 };
@@ -90,7 +94,7 @@ class Gene: public GeneBase<Gene<Derived...>, Derived...> {
 
 public:
 
-  static Gene* getNew();
+  static std::shared_ptr<Gene> getNew();
 
 };
 

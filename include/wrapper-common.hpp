@@ -69,9 +69,11 @@ class XYZGene : public GeneBase {
   arma::uvec ixs;
   arma::cx_mat22 mat;
 
+  using SP = std::shared_ptr<GeneBase>;
+
 public:
 
-  static XYZGene* getNew() {
+  static SP getNew() {
     // distribution of possible gates
     std::uniform_int_distribution<size_t> dOp{0, internal::gate_count - 1};
     // distribution of targets
@@ -80,8 +82,9 @@ public:
     std::uniform_int_distribution<unsigned> dCtrl{};
     // distribution of angle
     std::uniform_real_distribution<> dAng{-0.5*internal::pi, 0.5*internal::pi};
-    return new XYZGene(dOp(gen::rng), dAng(gen::rng), dAng(gen::rng),
-      dTgt(gen::rng), dCtrl(gen::rng));
+    return std::make_shared<XYZGene>(
+        dOp(gen::rng), dAng(gen::rng), dAng(gen::rng),
+        dTgt(gen::rng), dCtrl(gen::rng));
   }
 
   State apply(const State& psi) const override {
@@ -97,61 +100,53 @@ public:
     return hw * hw;
   }
 
-  double phase() const {
+  /*double phase() const {
     return gphase;
+  }*/
+
+  SP invert(const SP&) override {
+    return std::make_shared<XYZGene>(op, -angle, gphase, hw, tgt, ixs);
   }
 
-  bool invert() override {
-    angle = -angle;
-    update();
-    return true;
-  }
-
-  bool mutate() override {
+  SP mutate(const SP&) override {
     std::normal_distribution<> dAng{0.0, 0.1};
     std::bernoulli_distribution dWhich{};
-    (dWhich(gen::rng) ? angle : gphase) += dAng(gen::rng);
-    update();
-    return true;
+    bool modAngle = dWhich(gen::rng);
+    return std::make_shared<XYZGene>(
+        op,
+        modAngle ? angle + dAng(gen::rng) : angle,
+        modAngle ? gphase : gphase + dAng(gen::rng),
+        hw, tgt, ixs);
   }
 
-  bool invite(GeneBase* g) const override {
-    return g->visit(*this);
+  SP simplify(const SP&) override {
+    return std::make_shared<XYZGene>(op,
+        rationalize(std::fmod(angle / internal::pi, 2.0)) * internal::pi,
+        rationalize(std::fmod(gphase / internal::pi, 2.0)) * internal::pi,
+        hw, tgt, ixs);
   }
 
-  bool visit(const XYZGene& g) override {
+  SP invite(const SP& g) const override {
+    return g.get()->visit(g, *this);
+  }
+
+  SP visit(const SP& self, const XYZGene& g) override {
     if(angle == 0) {
       // op1 = (phase*)identity
-      op = g.op;
-      tgt = g.tgt;
-      ixs = g.ixs;
-      hw = g.hw;
-      angle = g.angle;
-      gphase += g.gphase;
-      update();
-      return true;
+      return std::make_shared<XYZGene>(
+          g.op, g.angle, g.gphase + gphase, g.hw, g.tgt, g.ixs);
     } else if(g.angle == 0) {
       // op2 = (phase*)identity
-      gphase += g.gphase;
-      update();
-      return true;
+      return std::make_shared<XYZGene>(
+          op, angle, gphase + g.gphase, hw, tgt, ixs);
     } else if(g.op == op
         && g.tgt == tgt
         && g.ixs.size() == ixs.size()
         && arma::all(g.ixs == ixs)) {
-      angle += g.angle;
-      gphase += g.gphase;
-      update();
-      return true;
+      return std::make_shared<XYZGene>(
+          op, angle + g.angle, gphase + g.gphase, hw, tgt, ixs);
     } else
-      return false;
-  }
-
-  bool simplify() override {
-    angle = rationalize(std::fmod(angle / internal::pi, 2.0)) * internal::pi;
-    gphase = rationalize(std::fmod(gphase / internal::pi, 2.0)) * internal::pi;
-    update();
-    return true;
+      return self;
   }
 
   std::ostream& write(std::ostream& os) const override {
@@ -166,7 +161,7 @@ public:
     return os;
   }
 
-private:
+// Should be private, but constructors are needed my std::make_shared().
 
   NOINLINE XYZGene(size_t op_, double angle_, double phase_,
     unsigned tgt_, unsigned control_enc):
@@ -185,8 +180,16 @@ private:
       ixs = ixv;
     } else
       ixs.clear();
-    update();
+    computeMat();
   }
+
+  NOINLINE XYZGene(size_t op_, double angle_, double phase_,
+    unsigned hw_, unsigned tgt_, arma::uvec ixs_):
+      op(op_), angle(angle_), gphase(phase_), tgt(tgt_), hw(hw_), ixs(ixs_) {
+    computeMat();
+  }
+
+private:
 
   double rationalize(double x) {
     double a = std::abs(x);
@@ -211,7 +214,7 @@ private:
     return x < 0 ? -a : a;
   }
 
-  void update() {
+  void computeMat() {
     if(op >= internal::gate_count)
       throw std::logic_error("gate must be between 0 and 2");
     mat = std::exp(gphase * internal::i) * internal::gates[op].fn(angle);

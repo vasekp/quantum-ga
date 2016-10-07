@@ -1,20 +1,21 @@
 #include "wrapper-common.hpp"
 #include "GeneBase.hpp"
 
-using Gene = QGA::Gene<Wrapper::XYZGene>;
-
-
 namespace QGA {
 
+using G = QGA::Gene<Wrapper::XYZGene>;
+
 template<>
-Gene<Wrapper::XYZGene>* Gene<Wrapper::XYZGene>::getNew() {
-  return Wrapper::XYZGene<Gene>::getNew();
+std::shared_ptr<G> G::getNew() {
+  return Wrapper::XYZGene<G>::getNew();
 }
 
 } // namespace QGA
 
 
 namespace Wrapper {
+
+using Gene = QGA::Gene<Wrapper::XYZGene>;
 
 class Candidate : public QGA::CandidateBase<Candidate, Gene> {
 
