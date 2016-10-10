@@ -79,11 +79,11 @@ public:
   }
 
   std::ostream& write(std::ostream& os) const override {
-    os << gates[op].name << tgt;
+    os << gates[op].name << tgt + 1;
     if(ixs.size()) {
       os << '[';
-      for(auto& ctrl : ixs)
-        os << ctrl;
+      for(auto& ctrl : ixs.as_vector())
+        os << ctrl + 1;
       os << ']';
     }
     return os;

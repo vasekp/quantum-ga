@@ -36,9 +36,7 @@ public:
     std::ostringstream os{};
     os.flags(ex.flags());
     os.precision(ex.precision());
-    for(const auto& p : sim())
-      os << p << ' ';
-    os << '\n';
+    os << sim() << '\n';
     return os.str();
   }
 

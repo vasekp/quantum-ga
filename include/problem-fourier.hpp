@@ -58,9 +58,11 @@ public:
     State psi{};
     for(unsigned i = 0; i < dim; i++) {
       psi.reset(0);
-      for(auto& p : sim(psi))
-        os << std::abs(p)*std::sqrt(dim) << "/√" << dim << "∠"
-          << std::showpos << std::arg(p)/internal::pi << "π " << std::noshowpos;
+      sim(psi);
+      for(unsigned j = 0; j < dim; j++)
+        os << std::abs(psi[j])*std::sqrt(dim) << "/√" << dim << "∠"
+          << std::showpos << std::arg(psi[j])/internal::pi << "π "
+          << std::noshowpos;
       os << '\n';
     }
     return os.str();

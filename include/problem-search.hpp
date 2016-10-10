@@ -147,9 +147,7 @@ public:
     for(unsigned mark = 0; mark < dim; mark++) {
       os << mark << ": ";
       psi.reset(0);
-      for(const auto& p : sim(psi, mark))
-        os << p << ' ';
-      os << '\n';
+      os << sim(psi, mark) << '\n';
     }
     return os.str();
   }

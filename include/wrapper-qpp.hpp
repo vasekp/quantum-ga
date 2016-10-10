@@ -6,189 +6,117 @@
 #define ARMA_DONT_USE_WRAPPER
 
 #include "qpp.h"
+#include <unsupported/Eigen/FFT>
 #include <string>
 #include <cmath>
 #include <sstream>
 
 namespace Wrapper {
 
+using Gate = qpp::cmat;
+
+
 namespace internal {
 
-struct Gate {
-  qpp::cmat op;
-  std::string name;
-  int inv;
-  int sq;
-};
+/* Useful constants and typedefs */
 
-std::vector<Gate> gates {
-  { qpp::gt.Id2, "I", 0, 0 },
-  { qpp::gt.H, "H", 0, -1 },
-/*{ qpp::gt.X, "X", 0, -2 },
-  { qpp::gt.Y, "Y", 0, -3 },
-  { qpp::gt.Z, "Z", 0, -4 },*/
-  { qpp::gt.T, "T", +1, 0/*+2*/ },
-  { qpp::gt.T.conjugate(), "Ti", -1, 0/*+2*/ },
-/*{ qpp::gt.S, "S", +1, -3 },
-  { qpp::gt.S.conjugate(), "Si", -1, -4 }*/
-};
+using cxd = std::complex<double>;
+const cxd i{0,1};
+const double pi = std::acos(-1);
 
-qpp::ket out{};
+const Gate I = qpp::gt.Id2;
+const Gate H = qpp::gt.H;
+const Gate X = qpp::gt.X;
+const Gate Y = qpp::gt.Y;
+const Gate Z = qpp::gt.Z;
+const Gate T = qpp::gt.T;
+const Gate Ti = qpp::gt.T.conjugate();
+const Gate S = qpp::gt.S;
+const Gate Si = qpp::gt.S.conjugate();
+
+
+class Controls : public std::vector<qpp::idx> {
+
+  using Base = std::vector<qpp::idx>;
+
+public:
+
+  Controls() = default;
+
+  Controls(const std::vector<bool>& bits): Base() {
+    for(unsigned i = 0; i < Config::nBit; i++)
+      if(bits[i])
+        Base::push_back(i);
+  }
+
+  std::vector<qpp::idx> as_vector() const {
+    return static_cast<const Base&>(*this);
+  }
+
+}; // class Controls
+
 
 } // namespace internal
 
 
-class Gene {
+class State : public qpp::ket {
 
-  size_t op;
-  unsigned tgt;
-  unsigned hw;
-  std::vector<qpp::idx> ixv{};
+  using Base = qpp::ket;
+  using Controls = internal::Controls;
 
 public:
 
-  static Gene getNew() {
-    /* Distributions: cheap and safer in MT environment this way */
-    // distribution of possible gates
-    std::uniform_int_distribution<size_t> dOp{1, internal::gates.size() - 1};
-    // distribution of targets
-    std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
-    // distribution of controls
-    std::uniform_int_distribution<unsigned> dCtrl{};
-    return {dOp(gen::rng), dTgt(gen::rng), dCtrl(gen::rng)};
+  State(const Base& base) : Base(base) { }
+
+  State(Base&& base) : Base(std::move(base)) { }
+
+  // initializes in a basis state
+  State(size_t index = 0) :
+    Base(qpp::mket(qpp::n2multiidx(index, dims()))) { }
+
+  // resets in a basis state
+  void reset(size_t index) {
+    *this = qpp::mket(qpp::n2multiidx(index, dims()));
   }
 
-  const std::vector<qpp::idx>& ix_vector() const {
-    return ixv;
+  static State fourier(const State& in) {
+    Eigen::VectorXcd ret{in.size()};
+    Eigen::FFT<double> fft;
+    ret.col(0) = fft.fwd(in.col(0));
+    return {ret};
   }
 
-  unsigned target() const {
-    return tgt;
+  static internal::cxd overlap(const State& lhs, const State& rhs) {
+    return rhs.rep().dot(lhs.rep());
   }
 
-  const internal::Gate& gate() const {
-    return internal::gates[op];
+  template<class Gene, class... Args>
+  void apply(const Gene& g, Args... args) {
+    g.applyTo(*this, args...);
   }
 
-  unsigned weight() const {
-    return hw;
+  void apply_ctrl(const Gate& mat, const Controls& ixs, unsigned tgt) {
+    *this = {qpp::applyCTRL(rep(), mat, ixs, {tgt})};
   }
 
-  bool invert() {
-    int dIx = gate().inv;
-    op += dIx;
-    return dIx ? true : false;
-  }
-
-  bool merge(const Gene& g) {
-    if(op == 0) {
-      // Identity * G = G
-      *this = g;
-      return true;
-    } else if(g.op == 0) {
-      // G * Identity = G
-      return true;
-    } else if(g.op == op
-        && g.tgt == tgt
-        && g.ixv == ixv
-        && internal::gates[op].sq != 0) {
-      // G * G = square(G) if also among our operations
-      op += internal::gates[op].sq;
-      return true;
-    } else return false;
-  }
-
-  void mutate() {
-    /* no-op */
-  }
-
-  bool simplify() {
-    /* no-op */
-    return false;
-  }
-
-  friend std::ostream& operator<< (std::ostream& os, const Gene& g) {
-    os << g.gate().name << g.target() + 1;
-    if(g.ixv.size()) {
-      os << '[';
-      for(auto ctrl : g.ixv)
-        os << ctrl + 1;
-      os << ']';
-    }
-    return os;
-  }
-
-private:
-
-  NOINLINE Gene(size_t op_, unsigned tgt_, unsigned control_enc):
-      op(op_), tgt(tgt_), hw(0) {
-    ixv.reserve(Config::nBit);
-    unsigned ctrl = QGA::GeneTools::ctrlBitString(control_enc, tgt);
-    for(unsigned i = 0; i < Config::nBit; i++) {
-      if(ctrl & 1) {
-        ixv.push_back(i);
-        hw++;
-      }
-      ctrl >>= 1;
-    }
-  }
-
-}; // class Gene
-
-
-class Candidate : public QGA::CandidateBase<Candidate, Gene> {
-
-  using Base = QGA::CandidateBase<Candidate, Gene>;
-
-public:
-
-  using Base::Base;
-
-  double error() const {
-    return 1 - std::abs(sim().dot(internal::out));
-  }
-
-  std::string dump(const std::ostream& ex) const {
-    std::ostringstream os{};
-    os.flags(ex.flags());
-    os.precision(ex.precision());
+  friend std::ostream& operator<< (std::ostream& os, const State& state) {
     Eigen::IOFormat fmt(Eigen::StreamPrecision, Eigen::DontAlignCols,
         " ", " "); // row, col separators
-    os << sim().format(fmt) << '\n';
-    return os.str();
+    return os << state.format(fmt);
   }
 
 private:
 
-  qpp::ket sim() const {
-    std::vector<qpp::idx> dims(Config::nBit, 2);
-    qpp::ket psi = qpp::mket(qpp::n2multiidx(0, dims));
-    for(const auto& g : gt) {
-      /* control-gate (QIClib) */
-      psi = qpp::applyCTRL(
-          psi,            // state
-          g.gate().op,    // operator
-          g.ix_vector(),  // vector<qpp::idx> of control systems
-          {g.target()});  // vector<qpp:idx> of target systems
-    }
-    return psi;
+  const Base& rep() const {
+    return static_cast<const Base&>(*this);
   }
 
-}; // class Candidate
+  std::vector<qpp::idx> dims() {
+    return std::vector<qpp::idx>(Config::nBit, 2);
+  }
 
+}; // class State
 
-const unsigned gate_cnt = internal::gates.size();
-
-
-std::string gate_name(unsigned ix) {
-  return internal::gates[ix].name;
-}
-
-
-void init() {
-  std::vector<qpp::idx> dims(Config::nBit, 2);
-  internal::out = qpp::mket(qpp::n2multiidx(3, dims));
-}
 
 } // namespace Wrapper
 

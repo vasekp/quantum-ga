@@ -28,7 +28,7 @@ $(filter %.d,$(TARGETS)): CXXFLAGS += -O1 -g
 $(filter qic%,$(TARGETS)): CXXFLAGS += -Iqiclib/include -lopenblas -DUSE_QICLIB
 $(filter fourier%,$(TARGETS)): CXXFLAGS += -Iqiclib/include -lopenblas -DUSE_QICLIB -DFOURIER
 $(filter search%,$(TARGETS)): CXXFLAGS += -Iqiclib/include -lopenblas -DUSE_QICLIB -DSEARCH
-$(filter qpp%,$(TARGETS)): CXXFLAGS += -isystem /usr/include/eigen3 -Iquantum++/include -DUSE_QPP
+$(filter qpp%,$(TARGETS)): CXXFLAGS += -isystem /usr/include/eigen3 -Iquantum++/include -fpermissive -DUSE_QPP
 qpp: CXXFLAGS += -DNODEBUG -DEIGEN_NO_DEBUG
 search fourier qic: CXXFLAGS += -DQICLIB_NO_DEBUG
 

@@ -167,6 +167,11 @@ public:
     *this = {qic::apply_ctrl(rep(), mat, ixs, {tgt + 1})};
   }
 
+  friend std::ostream& operator<< (std::ostream& os, const State& state) {
+    state.st().raw_print(os);
+    return os;
+  }
+
 private:
 
   const Base& rep() const {
