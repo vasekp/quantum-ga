@@ -18,7 +18,6 @@ class XYZGene : public GeneBase {
 
   size_t op;
   double angle;
-  double gphase;
   unsigned tgt;
   unsigned hw;
   Backend::Controls ixs;
@@ -38,8 +37,7 @@ public:
     // distribution of angle
     std::uniform_real_distribution<> dAng{-0.5*Const::pi, 0.5*Const::pi};
     return std::make_shared<XYZGene>(
-        dOp(gen::rng), dAng(gen::rng), dAng(gen::rng),
-        dTgt(gen::rng), dCtrl(gen::rng));
+        dOp(gen::rng), dAng(gen::rng), dTgt(gen::rng), dCtrl(gen::rng));
   }
 
   Backend::State applyTo(const Backend::State& psi) const override {
@@ -50,29 +48,18 @@ public:
     return hw * hw;
   }
 
-  /*double phase() const {
-    return gphase;
-  }*/
-
   SP invert(const SP&) override {
-    return std::make_shared<XYZGene>(op, -angle, -gphase, tgt, ixs, hw);
+    return std::make_shared<XYZGene>(op, -angle, tgt, ixs, hw);
   }
 
   SP mutate(const SP&) override {
     std::normal_distribution<> dAng{0.0, 0.1};
-    std::bernoulli_distribution dWhich{};
-    bool modAngle = dWhich(gen::rng);
-    return std::make_shared<XYZGene>(
-        op,
-        modAngle ? angle + dAng(gen::rng) : angle,
-        modAngle ? gphase : gphase + dAng(gen::rng),
-        tgt, ixs, hw);
+    return std::make_shared<XYZGene>(op, angle + dAng(gen::rng), tgt, ixs, hw);
   }
 
   SP simplify(const SP&) override {
     return std::make_shared<XYZGene>(op,
         rationalize(std::fmod(angle / Const::pi, 2.0)) * Const::pi,
-        rationalize(std::fmod(gphase / Const::pi, 2.0)) * Const::pi,
         tgt, ixs, hw);
   }
 
@@ -82,16 +69,13 @@ public:
 
   SP visit(const SP& self, const XYZGene& g) override {
     if(angle == 0) {
-      // op1 = (phase*)identity
-      return std::make_shared<XYZGene>(
-          g.op, g.angle, g.gphase + gphase, g.tgt, g.ixs, g.hw);
+      // op1 = identity
+      return std::make_shared<XYZGene>(g);
     } else if(g.angle == 0) {
-      // op2 = (phase*)identity
-      return std::make_shared<XYZGene>(
-          op, angle, gphase + g.gphase, tgt, ixs, hw);
+      // op2 = identity
+      return self;
     } else if(g.op == op && g.tgt == tgt && g.ixs == ixs) {
-      return std::make_shared<XYZGene>(
-          op, angle + g.angle, gphase + g.gphase, tgt, ixs, hw);
+      return std::make_shared<XYZGene>(op, angle + g.angle, tgt, ixs, hw);
     } else
       return self;
   }
@@ -110,21 +94,20 @@ public:
 
 // Should be private, but constructors are needed my std::make_shared().
 
-  NOINLINE XYZGene(size_t op_, double angle_, double phase_,
-    unsigned tgt_, unsigned control_enc):
-      op(op_), angle(angle_), gphase(phase_), tgt(tgt_), hw(0), ixs() {
+  NOINLINE XYZGene(size_t op_, double angle_, unsigned tgt_, unsigned ctrl_enc):
+      op(op_), angle(angle_), tgt(tgt_), hw(0), ixs() {
     if(gates[op].ctrl) {
-      std::vector<bool> bits{GeneBase::ctrlBitString(control_enc, tgt)};
+      std::vector<bool> bits{GeneBase::ctrlBitString(ctrl_enc, tgt)};
       ixs = Backend::Controls{bits};
       hw = ixs.size();
     }
-    computeMat();
+    mat = gates[op].fn(angle);
   }
 
-  NOINLINE XYZGene(size_t op_, double angle_, double phase_,
-    unsigned tgt_, const Backend::Controls& ixs_, unsigned hw_):
-      op(op_), angle(angle_), gphase(phase_), tgt(tgt_), hw(hw_), ixs(ixs_) {
-    computeMat();
+  NOINLINE XYZGene(size_t op_, double angle_, unsigned tgt_,
+      const Backend::Controls& ixs_, unsigned hw_):
+      op(op_), angle(angle_), tgt(tgt_), hw(hw_), ixs(ixs_) {
+    mat = gates[op].fn(angle);
   }
 
 private:
@@ -150,12 +133,6 @@ private:
     while(cut > 0)
       a = coeffs[--cut] + 1/a;
     return x < 0 ? -a : a;
-  }
-
-  void computeMat() {
-    if(op >= gates.size())
-      throw std::logic_error("gate must be between 0 and 2");
-    mat = std::exp(gphase * Const::i) * gates[op].fn(angle);
   }
 
 }; // class XYZGene
