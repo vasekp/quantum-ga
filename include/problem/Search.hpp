@@ -1,10 +1,10 @@
 // allow only one problem
-#ifndef QGA_PROBLEM_HPP
-#define QGA_PROBLEM_HPP
+#ifndef PROBLEM_HPP
+#define PROBLEM_HPP
 
-#include "XYZGene.hpp"
+#include "../XYZGene.hpp"
 
-namespace Wrapper {
+using QGA::Backend::State;
 
 
 template<class GeneBase>
@@ -20,12 +20,14 @@ public:
     return std::make_shared<Oracle>();
   }
 
-  void applyTo(State&) const override {
+  State applyTo(const State&) const override {
     throw std::logic_error("Oracle::applyTo called without mark");
   }
 
-  void applyTo(State& psi, unsigned mark) const override {
-    psi[mark] = -psi[mark];
+  State applyTo(const State& psi, unsigned mark) const override {
+    State ret{psi};
+    ret[mark] = -ret[mark];
+    return ret;
   }
 
   unsigned complexity() const override {
@@ -47,17 +49,17 @@ public:
 }; // class Oracle<GeneBase>
 
 
-class Gene : public QGA::GeneBase<Gene, Oracle, XYZGene> {
+class Gene : public QGA::GeneBase<Gene, Oracle, QGA::XYZGene> {
 
 public:
 
-  using QGA::GeneBase<Gene, Oracle, XYZGene>::applyTo;
+  using QGA::GeneBase<Gene, Oracle, QGA::XYZGene>::applyTo;
 
   virtual unsigned calls() const {
     return 0;
   }
 
-  virtual void applyTo(State& psi, unsigned) const {
+  virtual State applyTo(const State& psi, unsigned) const {
     return applyTo(psi);
   }
 
@@ -66,7 +68,7 @@ public:
     if(dOracle(gen::rng))
       return Oracle<Gene>::getNew();
     else
-      return XYZGene<Gene>::getNew();
+      return QGA::XYZGene<Gene>::getNew();
   }
 
 }; // class GeneBase<Derived...>
@@ -126,10 +128,9 @@ public:
       return INFINITY;
     double error{0};
     unsigned dim = 1 << Config::nBit;
-    State psi{}, out{};
+    State psi{0};
     for(unsigned mark = 0; mark < dim; mark++) {
-      psi.reset(0);
-      out.reset(mark);
+      State out{mark};
       error += std::max(1 -
           std::pow(std::abs(State::overlap(out, sim(psi, mark))), 2), 0.0);
     }
@@ -143,26 +144,23 @@ public:
     os.precision(ex.precision());
     os << '\n';
     unsigned dim = 1 << Config::nBit;
-    State psi{};
+    State psi{0};
     for(unsigned mark = 0; mark < dim; mark++) {
       os << mark << ": ";
-      psi.reset(0);
-      os << sim(psi, mark) << '\n';
+      os << sim(psi, mark);
     }
     return os.str();
   }
 
 private:
 
-  State sim(State& psi, unsigned mark) const {
+  State sim(const State& psi, unsigned mark) const {
+    State ret{psi};
     for(const auto& g : gt)
-      psi.apply(*g, mark);
-    return psi;
+      ret = ret.apply(*g, mark);
+    return ret;
   }
 
 }; // class Candidate
 
-
-} // namespace Wrapper
-
-#endif // !defined QGA_PROBLEM_HPP
+#endif // !defined PROBLEM_HPP

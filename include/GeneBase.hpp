@@ -1,17 +1,13 @@
-/* Forward declarations */
-namespace Wrapper {
-
-  class State;
-
-}
-/* End forward declarations */
-
-
 namespace QGA {
 
+/* Forward declarations */
+namespace Backend {
+  class State;
+}
 
 template<class, template<class> class, template<class> class...>
 class Visitors;
+/* End forward declarations */
 
 
 /* The base class for all genes. Defines methods derived classes have to
@@ -25,7 +21,7 @@ class GeneBase : public Visitors<Gene, Derived...> {
 public:
 
   // apply this gene to a state vector
-  virtual void applyTo(Wrapper::State&) const = 0;
+  virtual Backend::State applyTo(const Backend::State&) const = 0;
 
   // return an arbitrary notion of complexity of this operation (accumulative)
   virtual unsigned complexity() const = 0;

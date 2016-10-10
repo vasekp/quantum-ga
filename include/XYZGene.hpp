@@ -1,15 +1,15 @@
-namespace Wrapper {
+namespace QGA {
 
 struct gate_struct {
-  Wrapper::Gate(*fn)(double);
+  Backend::Gate(*fn)(double);
   std::string name;
   bool ctrl;
 };
 
 std::vector<gate_struct> gates {
-  {internal::xrot, "X", true},
-  {internal::yrot, "Y", true},
-  {internal::zrot, "Z", true}
+  {Backend::xrot, "X", true},
+  {Backend::yrot, "Y", true},
+  {Backend::zrot, "Z", true}
 };
 
 
@@ -21,8 +21,8 @@ class XYZGene : public GeneBase {
   double gphase;
   unsigned tgt;
   unsigned hw;
-  Wrapper::internal::Controls ixs;
-  Wrapper::Gate mat;
+  Backend::Controls ixs;
+  Backend::Gate mat;
 
   using SP = std::shared_ptr<GeneBase>;
 
@@ -36,14 +36,14 @@ public:
     // distribution of controls
     std::uniform_int_distribution<unsigned> dCtrl{};
     // distribution of angle
-    std::uniform_real_distribution<> dAng{-0.5*internal::pi, 0.5*internal::pi};
+    std::uniform_real_distribution<> dAng{-0.5*Const::pi, 0.5*Const::pi};
     return std::make_shared<XYZGene>(
         dOp(gen::rng), dAng(gen::rng), dAng(gen::rng),
         dTgt(gen::rng), dCtrl(gen::rng));
   }
 
-  void applyTo(State& psi) const override {
-    psi.apply_ctrl(mat, ixs, tgt);
+  Backend::State applyTo(const Backend::State& psi) const override {
+    return psi.apply_ctrl(mat, ixs, tgt);
   }
 
   unsigned complexity() const override {
@@ -71,8 +71,8 @@ public:
 
   SP simplify(const SP&) override {
     return std::make_shared<XYZGene>(op,
-        rationalize(std::fmod(angle / internal::pi, 2.0)) * internal::pi,
-        rationalize(std::fmod(gphase / internal::pi, 2.0)) * internal::pi,
+        rationalize(std::fmod(angle / Const::pi, 2.0)) * Const::pi,
+        rationalize(std::fmod(gphase / Const::pi, 2.0)) * Const::pi,
         tgt, ixs, hw);
   }
 
@@ -104,7 +104,7 @@ public:
         os << ctrl + 1;
       os << ']';
     }
-    os << '(' << angle / internal::pi << "π)";
+    os << '(' << angle / Const::pi << "π)";
     return os;
   }
 
@@ -115,14 +115,14 @@ public:
       op(op_), angle(angle_), gphase(phase_), tgt(tgt_), hw(0), ixs() {
     if(gates[op].ctrl) {
       std::vector<bool> bits{GeneBase::ctrlBitString(control_enc, tgt)};
-      ixs = internal::Controls{bits};
+      ixs = Backend::Controls{bits};
       hw = ixs.size();
     }
     computeMat();
   }
 
   NOINLINE XYZGene(size_t op_, double angle_, double phase_,
-    unsigned tgt_, const internal::Controls& ixs_, unsigned hw_):
+    unsigned tgt_, const Backend::Controls& ixs_, unsigned hw_):
       op(op_), angle(angle_), gphase(phase_), tgt(tgt_), hw(hw_), ixs(ixs_) {
     computeMat();
   }
@@ -155,9 +155,9 @@ private:
   void computeMat() {
     if(op >= gates.size())
       throw std::logic_error("gate must be between 0 and 2");
-    mat = std::exp(gphase * internal::i) * gates[op].fn(angle);
+    mat = std::exp(gphase * Const::i) * gates[op].fn(angle);
   }
 
 }; // class XYZGene
 
-} // namespace Wrapper
+} // namespace QGA

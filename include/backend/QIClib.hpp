@@ -6,67 +6,28 @@
 #define ARMA_DONT_USE_WRAPPER
 
 #include "QIClib"
-#include <string>
-#include <cmath>
-#include <sstream>
 
-namespace Wrapper {
+namespace QGA {
+
+namespace Backend {
 
 using Gate = arma::cx_mat22;
 
-
-namespace internal {
-
-
-/* Useful constants and typedefs */
-
-using cxd = arma::cx_double;
-
-const double pi = std::acos(-1);
-
-const cxd i{0,1};
-
-const double v12 = 1/std::sqrt(2);
-
+using QGA::Const::i;
+using QGA::Const::pi;
+using QGA::Const::v12;
 
 /* Fixed gates */
 
-Gate I {
-  1, 0, 0, 1
-};
-
-Gate H {
-  v12, v12, v12, -v12
-};
-
-Gate X {
-  0, 1, 1, 0
-};
-
-Gate Y {
-  0, -i, i, 0
-};
-
-Gate Z {
-  1, 0, 0, -1
-};
-
-Gate T {
-  1, 0, 0, std::exp(i*pi/4.)
-};
-
-Gate Ti {
-  1, 0, 0, std::exp(-i*pi/4.)
-};
-
-Gate S {
-  1, 0, 0, i
-};
-
-Gate Si {
-  1, 0, 0, -i
-};
-
+const Gate I { 1, 0, 0, 1 };
+const Gate H { v12, v12, v12, -v12 };
+const Gate X { 0, 1, 1, 0 };
+const Gate Y { 0, -i, i, 0 };
+const Gate Z { 1, 0, 0, -1 };
+const Gate T { 1, 0, 0, std::exp(i*pi/4.) };
+const Gate Ti { 1, 0, 0, std::exp(-i*pi/4.) };
+const Gate S { 1, 0, 0, i };
+const Gate Si { 1, 0, 0, -i };
 
 /* Parametric gates */
 
@@ -125,13 +86,9 @@ private:
 }; // class Controls
 
 
-} // namespace internal
-
-
 class State : public arma::cx_vec {
 
   using Base = arma::cx_vec;
-  using Controls = internal::Controls;
 
 public:
 
@@ -154,17 +111,17 @@ public:
     return {arma::fft(in.rep()) / sqrt(dim())};
   }
 
-  static internal::cxd overlap(const State& lhs, const State& rhs) {
+  static std::complex<double> overlap(const State& lhs, const State& rhs) {
     return arma::cdot(lhs.rep(), rhs.rep());
   }
 
   template<class Gene, class... Args>
-  void apply(const Gene& g, Args... args) {
-    g.applyTo(*this, args...);
+  State apply(const Gene& g, Args... args) {
+    return g.applyTo(*this, args...);
   }
 
-  void apply_ctrl(const Gate& mat, const Controls& ixs, unsigned tgt) {
-    *this = {qic::apply_ctrl(rep(), mat, ixs, {tgt + 1})};
+  State apply_ctrl(const Gate& mat, const Controls& ixs, unsigned tgt) const {
+    return {qic::apply_ctrl(rep(), mat, ixs, {tgt + 1})};
   }
 
   friend std::ostream& operator<< (std::ostream& os, const State& state) {
@@ -184,6 +141,8 @@ private:
 
 }; // class State
 
-} // namespace Wrapper
+} // namespace Backend
+
+} // namespace QGA
 
 #endif // !defined QGA_WRAPPER_HPP

@@ -2,27 +2,19 @@
 #ifndef QGA_WRAPPER_HPP
 #define QGA_WRAPPER_HPP
 
-#define QICLIB_DONT_USE_NLOPT
-#define ARMA_DONT_USE_WRAPPER
-
 #include "qpp.h"
-#include <unsupported/Eigen/FFT>
-#include <string>
-#include <cmath>
-#include <sstream>
+//#include <unsupported/Eigen/FFT>
 
-namespace Wrapper {
+namespace QGA {
+
+namespace Backend {
 
 using Gate = qpp::cmat;
 
+using QGA::Const::i;
+using QGA::Const::pi;
 
-namespace internal {
-
-/* Useful constants and typedefs */
-
-using cxd = std::complex<double>;
-const cxd i{0,1};
-const double pi = std::acos(-1);
+/* Fixed gates */
 
 const Gate I = qpp::gt.Id2;
 const Gate H = qpp::gt.H;
@@ -33,6 +25,8 @@ const Gate T = qpp::gt.T;
 const Gate Ti = qpp::gt.T.conjugate();
 const Gate S = qpp::gt.S;
 const Gate Si = qpp::gt.S.conjugate();
+
+/* Parametric gates */
 
 Gate xrot(double a) {
   Gate ret{2, 2};
@@ -74,20 +68,16 @@ public:
         Base::push_back(i);
   }
 
-  std::vector<qpp::idx> as_vector() const {
+  const Base& as_vector() const {
     return static_cast<const Base&>(*this);
   }
 
 }; // class Controls
 
 
-} // namespace internal
-
-
 class State : public qpp::ket {
 
   using Base = qpp::ket;
-  using Controls = internal::Controls;
 
 public:
 
@@ -114,30 +104,26 @@ public:
     return {ret};
   }*/
 
-  static internal::cxd overlap(const State& lhs, const State& rhs) {
-    return rhs.rep().dot(lhs.rep());
+  static std::complex<double> overlap(const State& lhs, const State& rhs) {
+    return rhs.dot(lhs);
   }
 
   template<class Gene, class... Args>
-  void apply(const Gene& g, Args... args) {
-    g.applyTo(*this, args...);
+  State apply(const Gene& g, Args... args) {
+    return g.applyTo(*this, args...);
   }
 
-  void apply_ctrl(const Gate& mat, const Controls& ixs, unsigned tgt) {
-    *this = {qpp::applyCTRL(rep(), mat, ixs, {tgt})};
+  State apply_ctrl(const Gate& mat, const Controls& ixs, unsigned tgt) const {
+    return {qpp::applyCTRL(*this, mat, ixs, {tgt})};
   }
 
   friend std::ostream& operator<< (std::ostream& os, const State& state) {
     Eigen::IOFormat fmt(Eigen::StreamPrecision, Eigen::DontAlignCols,
         " ", " "); // row, col separators
-    return os << state.format(fmt);
+    return os << state.format(fmt) << '\n';
   }
 
 private:
-
-  const Base& rep() const {
-    return static_cast<const Base&>(*this);
-  }
 
   std::vector<qpp::idx> dims() {
     return std::vector<qpp::idx>(Config::nBit, 2);
@@ -145,7 +131,8 @@ private:
 
 }; // class State
 
+} // namespace Backend
 
-} // namespace Wrapper
+} // namespace QGA
 
 #endif // !defined QGA_WRAPPER_HPP

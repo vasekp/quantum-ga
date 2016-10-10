@@ -5,22 +5,22 @@
 #include "include/commons.hpp"
 
 #ifdef USE_QPP
-  #include "include/wrapper-qpp.hpp"
+  #include "include/backend/QPP.hpp"
 #elif defined USE_QICLIB
-  #include "include/wrapper-qiclib.hpp"
+  #include "include/backend/QIClib.hpp"
 #else
   #error Either USE_QPP or USE_QICLIB needed.
 #endif
 
 #ifdef FOURIER
-  #include "include/problem-fourier.hpp"
+  #include "include/problem/Fourier.hpp"
   #ifdef USE_QPP
     #error FFT implementation is currently broken in Eigen3, used by Quantum++.
   #endif
 #elif defined(SEARCH)
-  #include "include/problem-search.hpp"
+  #include "include/problem/Search.hpp"
 #else
-  #include "include/problem-simple.hpp"
+  #include "include/problem/Simple.hpp"
 #endif
 
 namespace Config {
@@ -90,7 +90,7 @@ namespace SigComm {
 } // namespace SigComm
 
 
-using Candidate = Wrapper::Candidate;
+/* Candidate defined in PROBLEM_HPP */
 using Population = gen::NSGAPopulation<Candidate>;
 using GenCandidate = gen::Candidate<Candidate>;
 using CandidateFactory = QGA::CandidateFactory<Candidate>;

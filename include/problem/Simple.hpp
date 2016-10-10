@@ -2,19 +2,19 @@
 #ifndef QGA_PROBLEM_HPP
 #define QGA_PROBLEM_HPP
 
-#include "FixedGene.hpp"
+#include "../FixedGene.hpp"
 
-namespace Wrapper {
+using QGA::Backend::State;
 
-Wrapper::State out{3};
+const State out{3};
 
 
-class Gene : public QGA::GeneBase<Gene, FixedGene> {
+class Gene : public QGA::GeneBase<Gene, QGA::FixedGene> {
 
 public:
 
   static std::shared_ptr<Gene> getNew() {
-    return Wrapper::FixedGene<Gene>::getNew();
+    return QGA::FixedGene<Gene>::getNew();
   }
 
 }; // class Gene
@@ -36,7 +36,7 @@ public:
     std::ostringstream os{};
     os.flags(ex.flags());
     os.precision(ex.precision());
-    os << sim() << '\n';
+    os << sim();
     return os.str();
   }
 
@@ -45,12 +45,10 @@ private:
   State sim() const {
     State psi{0};
     for(const auto& g : gt)
-      psi.apply(*g);
+      psi = psi.apply(*g);
     return psi;
   }
 
 }; // class Candidate
-
-} // namespace Wrapper
 
 #endif // !defined QGA_PROBLEM_HPP

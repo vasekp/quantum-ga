@@ -1,22 +1,22 @@
-namespace Wrapper {
+namespace QGA {
 
 struct gate_struct {
-  Gate op;
+  Backend::Gate op;
   std::string name;
   int inv;
   int sq;
 };
 
 std::vector<gate_struct> gates {
-  { internal::I, "I", 0, 0 },
-  { internal::H, "H", 0, -1 },
-/*{ internal::X, "X", 0, -2 },
-  { internal::Y, "Y", 0, -3 },
-  { internal::Z, "Z", 0, -4 },*/
-  { internal::T, "T", +1, 0/*+2*/ },
-  { internal::Ti, "Ti", -1, 0/*+2*/ },
-/*{ internal::S, "S", +1, -3 },
-  { internal::Si, "Si", -1, -4 }*/
+  { Backend::I, "I", 0, 0 },
+  { Backend::H, "H", 0, -1 },
+/*{ Backend::X, "X", 0, -2 },
+  { Backend::Y, "Y", 0, -3 },
+  { Backend::Z, "Z", 0, -4 },*/
+  { Backend::T, "T", +1, 0/*+2*/ },
+  { Backend::Ti, "Ti", -1, 0/*+2*/ },
+/*{ Backend::S, "S", +1, -3 },
+  { Backend::Si, "Si", -1, -4 }*/
 };
 
 
@@ -26,7 +26,7 @@ class FixedGene : public GeneBase {
   size_t op;
   unsigned tgt;
   unsigned hw;
-  internal::Controls ixs;
+  Backend::Controls ixs;
 
   using SP = std::shared_ptr<GeneBase>;
 
@@ -44,7 +44,7 @@ public:
         dOp(gen::rng), dTgt(gen::rng), dCtrl(gen::rng));
   }
 
-  void applyTo(State& psi) const override {
+  Backend::State applyTo(const Backend::State& psi) const override {
     return psi.apply_ctrl(gates[op].op, ixs, tgt);
   }
 
@@ -92,14 +92,14 @@ public:
   NOINLINE FixedGene(size_t op_, unsigned tgt_, unsigned control_enc):
       op(op_), tgt(tgt_), hw(0) {
     std::vector<bool> bits{GeneBase::ctrlBitString(control_enc, tgt)};
-    ixs = internal::Controls{bits};
+    ixs = Backend::Controls{bits};
     hw = ixs.size();
   }
 
   FixedGene(size_t op_, unsigned tgt_, unsigned hw_,
-      const internal::Controls& ixs_):
+      const Backend::Controls& ixs_):
     op(op_), tgt(tgt_), hw(hw_), ixs(ixs_) { }
 
 }; // class Gene
 
-} // namespace Wrapper
+} // namespace QGA

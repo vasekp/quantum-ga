@@ -5,6 +5,10 @@
 #include <string>
 #include <iomanip>
 #include <cstddef>
+#include <complex>
+#include <string>
+#include <cmath>
+#include <sstream>
 
 using std::size_t;
 
@@ -22,12 +26,21 @@ namespace Config {
   extern const double pControl;
 }
 
+/* Useful constants and typedefs */
+namespace QGA {
+  namespace Const {
+    const std::complex<double> i{0, 1};
+    const double pi = std::acos(-1);
+    const double v12 = 1/std::sqrt(2);
+  }
+}
+
 #include "GeneBase.hpp"
 #include "Fitness.hpp"
 #include "CandidateCounter.hpp"
 #include "CandidateBase.hpp"
 #include "CandidateFactory.hpp"
 
-#include "colours.hpp"
+#include "Colours.hpp"
 
 #endif // !defined QGA_COMMONS_HPP

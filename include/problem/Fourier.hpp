@@ -1,17 +1,18 @@
 // allow only one problem
-#ifndef QGA_PROBLEM_HPP
-#define QGA_PROBLEM_HPP
+#ifndef PROBLEM_HPP
+#define PROBLEM_HPP
 
-#include "XYZGene.hpp"
+#include "../XYZGene.hpp"
 
-namespace Wrapper {
+using QGA::Backend::State;
 
-class Gene : public QGA::GeneBase<Gene, XYZGene> {
+
+class Gene : public QGA::GeneBase<Gene, QGA::XYZGene> {
 
 public:
 
   static std::shared_ptr<Gene> getNew() {
-    return Wrapper::XYZGene<Gene>::getNew();
+    return QGA::XYZGene<Gene>::getNew();
   }
 
 }; // class Gene
@@ -57,11 +58,11 @@ public:
     unsigned dim = 1 << Config::nBit;
     State psi{};
     for(unsigned i = 0; i < dim; i++) {
-      psi.reset(0);
-      sim(psi);
+      psi.reset(i);
+      State out = sim(psi);
       for(unsigned j = 0; j < dim; j++)
-        os << std::abs(psi[j])*std::sqrt(dim) << "/√" << dim << "∠"
-          << std::showpos << std::arg(psi[j])/internal::pi << "π "
+        os << std::abs(out[j])*std::sqrt(dim) << "/√" << dim << "∠"
+          << std::showpos << std::arg(out[j]) / QGA::Const::pi << "π "
           << std::noshowpos;
       os << '\n';
     }
@@ -70,15 +71,13 @@ public:
 
 private:
 
-  State sim(State& psi) const {
+  State sim(const State& psi) const {
+    State ret{psi};
     for(const auto& g : gt)
-      psi.apply(*g);
-    return psi;
+      ret = ret.apply(*g);
+    return ret;
   }
 
 }; // class Candidate
 
-
-} // namespace Wrapper
-
-#endif // !defined QGA_PROBLEM_HPP
+#endif // !defined PROBLEM_HPP
