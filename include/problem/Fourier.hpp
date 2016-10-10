@@ -1,0 +1,83 @@
+// allow only one problem
+#ifndef PROBLEM_HPP
+#define PROBLEM_HPP
+
+#include "../XYZGene.hpp"
+
+using QGA::Backend::State;
+
+
+class Gene : public QGA::GeneBase<Gene, QGA::XYZGene> {
+
+public:
+
+  static std::shared_ptr<Gene> getNew() {
+    return QGA::XYZGene<Gene>::getNew();
+  }
+
+}; // class Gene
+
+
+class Candidate : public QGA::CandidateBase<Candidate, Gene> {
+
+  using Base = QGA::CandidateBase<Candidate, Gene>;
+
+public:
+
+  using Base::Base;
+
+  double error() const {
+    if(gt.size() > 1000)
+      return INFINITY;
+    double error{0};
+    unsigned dim = 1 << Config::nBit;
+    State psi{};
+    for(unsigned i = 0; i < dim; i++) {
+      psi.reset(i);
+      State out = State::fourier(psi);
+      error += std::max(1 - std::real(State::overlap(out, sim(psi))), 0.0);
+    }
+    error /= dim;
+    return error < 1E-8 ? 0 : error;
+  }
+
+  /*friend std::ostream& operator<< (std::ostream& os, const Candidate& c) {
+    os << (Base&)c;
+    double phase = 0;
+    for(auto& g : c.gt)
+      phase += g.phase();
+    os << "φ " << phase / internal::pi << "π";
+    return os;
+  }*/
+
+  std::string dump(const std::ostream& ex) const {
+    std::ostringstream os{};
+    os.flags(ex.flags());
+    os.precision(ex.precision());
+    os << '\n';
+    unsigned dim = 1 << Config::nBit;
+    State psi{};
+    for(unsigned i = 0; i < dim; i++) {
+      psi.reset(i);
+      State out = sim(psi);
+      for(unsigned j = 0; j < dim; j++)
+        os << std::abs(out[j])*std::sqrt(dim) << "/√" << dim << "∠"
+          << std::showpos << std::arg(out[j]) / QGA::Const::pi << "π "
+          << std::noshowpos;
+      os << '\n';
+    }
+    return os.str();
+  }
+
+private:
+
+  State sim(const State& psi) const {
+    State ret{psi};
+    for(const auto& g : gt)
+      ret = ret.apply(*g);
+    return ret;
+  }
+
+}; // class Candidate
+
+#endif // !defined PROBLEM_HPP

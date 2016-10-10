@@ -2,29 +2,25 @@
 #include <csignal>
 
 #include "genetic.hpp"
-
 #include "include/commons.hpp"
 
+#ifdef USE_QPP
+  #include "include/backend/QPP.hpp"
+#elif defined USE_QICLIB
+  #include "include/backend/QIClib.hpp"
+#else
+  #error Either USE_QPP or USE_QICLIB needed.
+#endif
+
 #ifdef FOURIER
-  #ifdef USE_QICLIB
-    #include "include/wrapper-fourier.hpp"
-  #else
-    #error Fourier problem is only implemented using QIClib.
+  #include "include/problem/Fourier.hpp"
+  #ifdef USE_QPP
+    #error FFT implementation is currently broken in Eigen3, used by Quantum++.
   #endif
 #elif defined(SEARCH)
-  #ifdef USE_QICLIB
-    #include "include/wrapper-search.hpp"
-  #else
-    #error Search problem is only implemented using QIClib.
-  #endif
+  #include "include/problem/Search.hpp"
 #else
-  #ifdef USE_QPP
-    #include "include/wrapper-qpp.hpp"
-  #elif defined USE_QICLIB
-    #include "include/wrapper-qiclib.hpp"
-  #else
-    #error Either USE_QPP or USE_QICLIB needed.
-  #endif
+  #include "include/problem/Simple.hpp"
 #endif
 
 namespace Config {
@@ -94,7 +90,7 @@ namespace SigComm {
 } // namespace SigComm
 
 
-using Candidate = Wrapper::Candidate;
+/* Candidate defined in PROBLEM_HPP */
 using Population = gen::NSGAPopulation<Candidate>;
 using GenCandidate = gen::Candidate<Candidate>;
 using CandidateFactory = QGA::CandidateFactory<Candidate>;
@@ -119,7 +115,6 @@ int main() {
 #endif
 
   Colours::use = isatty(1);
-  Wrapper::init();
 
   std::signal(SIGINT, int_handler);
 

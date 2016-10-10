@@ -1,7 +1,10 @@
-#include "wrapper-common.hpp"
-#include "GeneBase.hpp"
+// allow only one problem
+#ifndef PROBLEM_HPP
+#define PROBLEM_HPP
 
-namespace Wrapper {
+#include "../XYZGene.hpp"
+
+using QGA::Backend::State;
 
 
 template<class GeneBase>
@@ -17,11 +20,11 @@ public:
     return std::make_shared<Oracle>();
   }
 
-  State apply(const State&) const override {
-    throw std::logic_error("Oracle::apply called without mark");
+  State applyTo(const State&) const override {
+    throw std::logic_error("Oracle::applyTo called without mark");
   }
 
-  State apply(const State& psi, unsigned mark) const override {
+  State applyTo(const State& psi, unsigned mark) const override {
     State ret{psi};
     ret[mark] = -ret[mark];
     return ret;
@@ -46,18 +49,18 @@ public:
 }; // class Oracle<GeneBase>
 
 
-class Gene : public QGA::GeneBase<Gene, Oracle, XYZGene> {
+class Gene : public QGA::GeneBase<Gene, Oracle, QGA::XYZGene> {
 
 public:
 
-  using QGA::GeneBase<Gene, Oracle, XYZGene>::apply;
+  using QGA::GeneBase<Gene, Oracle, QGA::XYZGene>::applyTo;
 
   virtual unsigned calls() const {
     return 0;
   }
 
-  virtual State apply(const State& psi, unsigned) const {
-    return apply(psi);
+  virtual State applyTo(const State& psi, unsigned) const {
+    return applyTo(psi);
   }
 
   static std::shared_ptr<Gene> getNew() {
@@ -65,7 +68,7 @@ public:
     if(dOracle(gen::rng))
       return Oracle<Gene>::getNew();
     else
-      return XYZGene<Gene>::getNew();
+      return QGA::XYZGene<Gene>::getNew();
   }
 
 }; // class GeneBase<Derived...>
@@ -124,16 +127,12 @@ public:
     if(gt.size() > 1000)
       return INFINITY;
     double error{0};
-    arma::uword dim = arma::uword(1) << Config::nBit;
-    arma::cx_vec psi(dim), in, out(dim);
+    unsigned dim = 1 << Config::nBit;
+    State psi{0};
     for(unsigned mark = 0; mark < dim; mark++) {
-      psi.fill(0);
-      psi[0] = 1;
-      in = psi;
-      out.fill(0);
-      out[mark] = 1;
+      State out{mark};
       error += std::max(1 -
-          std::pow(std::abs(arma::cdot(out, sim(psi, mark))), 2), 0.0);
+          std::pow(std::abs(State::overlap(out, sim(psi, mark))), 2), 0.0);
     }
     error /= dim;
     return (unsigned long)(error * (1UL<<24)) / (double)(1UL<<24);
@@ -144,31 +143,24 @@ public:
     os.flags(ex.flags());
     os.precision(ex.precision());
     os << '\n';
-    arma::uword dim = arma::uword(1) << Config::nBit;
-    arma::cx_vec psi(dim);
-    for(arma::uword mark = 0; mark < dim; mark++) {
+    unsigned dim = 1 << Config::nBit;
+    State psi{0};
+    for(unsigned mark = 0; mark < dim; mark++) {
       os << mark << ": ";
-      psi.fill(0);
-      psi[0] = 1;
-      for(auto& p : sim(psi, mark))
-        os << p << ' ';
-      os << '\n';
+      os << sim(psi, mark);
     }
     return os.str();
   }
 
 private:
 
-  State sim(State& psi, unsigned mark) const {
-    for(auto& g : gt)
-      psi = g->apply(psi, mark);
-    return psi;
+  State sim(const State& psi, unsigned mark) const {
+    State ret{psi};
+    for(const auto& g : gt)
+      ret = ret.apply(*g, mark);
+    return ret;
   }
 
 }; // class Candidate
 
-
-void init() {
-}
-
-} // namespace Wrapper
+#endif // !defined PROBLEM_HPP

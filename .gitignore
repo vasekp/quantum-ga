@@ -1,4 +1,7 @@
 hist/
-quantum
 *.res
 *.sed
+.*
+search
+fourier
+simple
