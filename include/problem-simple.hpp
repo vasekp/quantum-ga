@@ -6,11 +6,7 @@
 
 namespace Wrapper {
 
-Wrapper::State out{};
-
-void init() {
-  out = qic::mket({3}, {arma::uword(1) << Config::nBit});
-}
+Wrapper::State out{3};
 
 
 class Gene : public QGA::GeneBase<Gene, FixedGene> {
@@ -33,23 +29,25 @@ public:
   using Base::Base;
 
   double error() const {
-    return 1 - std::abs(arma::cdot(out, sim()));
+    return 1 - std::abs(State::overlap(out, sim()));
   }
 
   std::string dump(const std::ostream& ex) const {
     std::ostringstream os{};
     os.flags(ex.flags());
     os.precision(ex.precision());
-    sim().st().raw_print(os);
+    for(const auto& p : sim())
+      os << p << ' ';
+    os << '\n';
     return os.str();
   }
 
 private:
 
-  arma::cx_vec sim() const {
-    arma::cx_vec psi = qic::mket({0}, {arma::uword(1) << Config::nBit});
+  State sim() const {
+    State psi{0};
     for(const auto& g : gt)
-      psi = g->apply(psi);
+      psi.apply(*g);
     return psi;
   }
 

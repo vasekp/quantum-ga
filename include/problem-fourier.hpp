@@ -29,14 +29,12 @@ public:
     if(gt.size() > 1000)
       return INFINITY;
     double error{0};
-    arma::uword dim = arma::uword(1) << Config::nBit;
-    arma::cx_vec psi(dim), in, out;
-    for(arma::uword i = 0; i < dim; i++) {
-      psi.fill(0);
-      psi[i] = 1;
-      in = psi;
-      out = arma::fft(psi) / sqrt(dim);
-      error += std::max(1 - std::real(arma::cdot(out, sim(psi))), 0.0);
+    unsigned dim = 1 << Config::nBit;
+    State psi{};
+    for(unsigned i = 0; i < dim; i++) {
+      psi.reset(i);
+      State out = State::fourier(psi);
+      error += std::max(1 - std::real(State::overlap(out, sim(psi))), 0.0);
     }
     error /= dim;
     return error < 1E-8 ? 0 : error;
@@ -56,11 +54,10 @@ public:
     os.flags(ex.flags());
     os.precision(ex.precision());
     os << '\n';
-    arma::uword dim = arma::uword(1) << Config::nBit;
-    arma::cx_vec psi(dim);
-    for(arma::uword i = 0; i < dim; i++) {
-      psi.fill(0);
-      psi[i] = 1;
+    unsigned dim = 1 << Config::nBit;
+    State psi{};
+    for(unsigned i = 0; i < dim; i++) {
+      psi.reset(0);
       for(auto& p : sim(psi))
         os << std::abs(p)*std::sqrt(dim) << "/√" << dim << "∠"
           << std::showpos << std::arg(p)/internal::pi << "π " << std::noshowpos;
@@ -71,17 +68,14 @@ public:
 
 private:
 
-  arma::cx_vec sim(arma::cx_vec& psi) const {
-    for(auto& g : gt)
-      psi = g->apply(psi);
+  State sim(State& psi) const {
+    for(const auto& g : gt)
+      psi.apply(*g);
     return psi;
   }
 
 }; // class Candidate
 
-
-void init() {
-}
 
 } // namespace Wrapper
 

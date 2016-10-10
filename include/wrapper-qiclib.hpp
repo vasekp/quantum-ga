@@ -12,7 +12,6 @@
 
 namespace Wrapper {
 
-using State = arma::cx_vec;
 using Gate = arma::cx_mat22;
 
 
@@ -88,7 +87,97 @@ Gate phase(double a) {
   return { 1, 0, 0, std::exp(i*a) };
 }
 
+
+class Controls : public arma::uvec {
+
+public:
+
+  Controls() = default;
+
+  Controls(const std::vector<bool>& bits) : arma::uvec(ix_vector(bits)) { }
+
+  friend bool operator== (const Controls& lhs, const Controls& rhs) {
+    return lhs.size() == rhs.size() && arma::all(lhs.rep() == rhs.rep());
+  }
+
+  std::vector<unsigned> as_vector() const {
+    std::vector<unsigned> ret{};
+    ret.reserve(size());
+    for(auto ix : *this)
+      ret.push_back(ix - 1);
+    return ret;
+  }
+
+private:
+
+  const arma::uvec& rep() const {
+    return static_cast<const arma::uvec&>(*this);
+  }
+
+  static std::vector<arma::uword> ix_vector(const std::vector<bool>& bits) {
+    std::vector<arma::uword> ret{};
+    for(unsigned i = 0; i < Config::nBit; i++)
+      if(bits[i])
+        ret.push_back(i + 1);
+    return ret;
+  }
+
+}; // class Controls
+
+
 } // namespace internal
+
+
+class State : public arma::cx_vec {
+
+  using Base = arma::cx_vec;
+  using Controls = internal::Controls;
+
+public:
+
+  State(const Base& base) : Base(base) { }
+
+  State(Base&& base) : Base(std::move(base)) { }
+
+  // initializes in a basis state
+  State(size_t index = 0) : Base(dim(), arma::fill::zeros) {
+    this->operator[](index) = 1;
+  }
+
+  // resets in a basis state
+  void reset(size_t index) {
+    this->fill(0);
+    this->operator[](index) = 1;
+  }
+
+  static State fourier(const State& in) {
+    return {arma::fft(in.rep()) / sqrt(dim())};
+  }
+
+  static internal::cxd overlap(const State& lhs, const State& rhs) {
+    return arma::cdot(lhs.rep(), rhs.rep());
+  }
+
+  template<class Gene, class... Args>
+  void apply(const Gene& g, Args... args) {
+    g.applyTo(*this, args...);
+  }
+
+  void apply_ctrl(const Gate& mat, const Controls& ixs, unsigned tgt) {
+    *this = {qic::apply_ctrl(rep(), mat, ixs, {tgt + 1})};
+  }
+
+private:
+
+  const Base& rep() const {
+    return static_cast<const Base&>(*this);
+  }
+
+  static arma::uword dim() {
+    return arma::uword(1) << Config::nBit;
+  }
+
+}; // class State
 
 } // namespace Wrapper
 

@@ -1,3 +1,12 @@
+/* Forward declarations */
+namespace Wrapper {
+
+  class State;
+
+}
+/* End forward declarations */
+
+
 namespace QGA {
 
 
@@ -16,7 +25,7 @@ class GeneBase : public Visitors<Gene, Derived...> {
 public:
 
   // apply this gene to a state vector
-  virtual Wrapper::State apply(const Wrapper::State&) const = 0;
+  virtual void applyTo(Wrapper::State&) const = 0;
 
   // return an arbitrary notion of complexity of this operation (accumulative)
   virtual unsigned complexity() const = 0;

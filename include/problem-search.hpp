@@ -20,14 +20,12 @@ public:
     return std::make_shared<Oracle>();
   }
 
-  State apply(const State&) const override {
-    throw std::logic_error("Oracle::apply called without mark");
+  void applyTo(State&) const override {
+    throw std::logic_error("Oracle::applyTo called without mark");
   }
 
-  State apply(const State& psi, unsigned mark) const override {
-    State ret{psi};
-    ret[mark] = -ret[mark];
-    return ret;
+  void applyTo(State& psi, unsigned mark) const override {
+    psi[mark] = -psi[mark];
   }
 
   unsigned complexity() const override {
@@ -53,14 +51,14 @@ class Gene : public QGA::GeneBase<Gene, Oracle, XYZGene> {
 
 public:
 
-  using QGA::GeneBase<Gene, Oracle, XYZGene>::apply;
+  using QGA::GeneBase<Gene, Oracle, XYZGene>::applyTo;
 
   virtual unsigned calls() const {
     return 0;
   }
 
-  virtual State apply(const State& psi, unsigned) const {
-    return apply(psi);
+  virtual void applyTo(State& psi, unsigned) const {
+    return applyTo(psi);
   }
 
   static std::shared_ptr<Gene> getNew() {
@@ -127,16 +125,13 @@ public:
     if(gt.size() > 1000)
       return INFINITY;
     double error{0};
-    arma::uword dim = arma::uword(1) << Config::nBit;
-    arma::cx_vec psi(dim), in, out(dim);
+    unsigned dim = 1 << Config::nBit;
+    State psi{}, out{};
     for(unsigned mark = 0; mark < dim; mark++) {
-      psi.fill(0);
-      psi[0] = 1;
-      in = psi;
-      out.fill(0);
-      out[mark] = 1;
+      psi.reset(0);
+      out.reset(mark);
       error += std::max(1 -
-          std::pow(std::abs(arma::cdot(out, sim(psi, mark))), 2), 0.0);
+          std::pow(std::abs(State::overlap(out, sim(psi, mark))), 2), 0.0);
     }
     error /= dim;
     return (unsigned long)(error * (1UL<<24)) / (double)(1UL<<24);
@@ -147,13 +142,12 @@ public:
     os.flags(ex.flags());
     os.precision(ex.precision());
     os << '\n';
-    arma::uword dim = arma::uword(1) << Config::nBit;
-    arma::cx_vec psi(dim);
-    for(arma::uword mark = 0; mark < dim; mark++) {
+    unsigned dim = 1 << Config::nBit;
+    State psi{};
+    for(unsigned mark = 0; mark < dim; mark++) {
       os << mark << ": ";
-      psi.fill(0);
-      psi[0] = 1;
-      for(auto& p : sim(psi, mark))
+      psi.reset(0);
+      for(const auto& p : sim(psi, mark))
         os << p << ' ';
       os << '\n';
     }
@@ -163,16 +157,13 @@ public:
 private:
 
   State sim(State& psi, unsigned mark) const {
-    for(auto& g : gt)
-      psi = g->apply(psi, mark);
+    for(const auto& g : gt)
+      psi.apply(*g, mark);
     return psi;
   }
 
 }; // class Candidate
 
-
-void init() {
-}
 
 } // namespace Wrapper
 

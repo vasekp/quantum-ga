@@ -1,6 +1,9 @@
 #include <iostream>
 #include <csignal>
 
+#include "genetic.hpp"
+#include "include/commons.hpp"
+
 #ifdef USE_QPP
   #include "include/wrapper-qpp.hpp"
 #elif defined USE_QICLIB
@@ -8,9 +11,6 @@
 #else
   #error Either USE_QPP or USE_QICLIB needed.
 #endif
-
-#include "genetic.hpp"
-#include "include/commons.hpp"
 
 #ifdef FOURIER
   #include "include/problem-fourier.hpp"
@@ -112,7 +112,6 @@ int main() {
 #endif
 
   Colours::use = isatty(1);
-  Wrapper::init();
 
   std::signal(SIGINT, int_handler);
 

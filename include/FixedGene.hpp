@@ -26,7 +26,7 @@ class FixedGene : public GeneBase {
   size_t op;
   unsigned tgt;
   unsigned hw;
-  arma::uvec ixs;
+  internal::Controls ixs;
 
   using SP = std::shared_ptr<GeneBase>;
 
@@ -34,22 +34,18 @@ public:
 
   static SP getNew() {
     /* Distributions: cheap and safer in MT environment this way */
-    // distribution of possible gates
+    // distribution of possible gates (except of identity)
     std::uniform_int_distribution<size_t> dOp{1, gates.size() - 1};
     // distribution of targets
-    std::uniform_int_distribution<unsigned> dTgt{1, Config::nBit};
+    std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
     // distribution of controls
     std::uniform_int_distribution<unsigned> dCtrl{};
     return std::make_shared<FixedGene>(
         dOp(gen::rng), dTgt(gen::rng), dCtrl(gen::rng));
   }
 
-  State apply(const State& psi) const override {
-    return qic::apply_ctrl(
-        psi,
-        gates[op].op,
-        ixs,
-        {tgt});
+  void applyTo(State& psi) const override {
+    return psi.apply_ctrl(gates[op].op, ixs, tgt);
   }
 
   unsigned complexity() const override {
@@ -75,11 +71,7 @@ public:
     } else if(g.op == 0) {
       // G * Identity = G
       return self;
-    } else if(g.op == op
-        && g.tgt == tgt
-        && g.ixs.size() == ixs.size()
-        && arma::all(g.ixs == ixs)
-        && gates[op].sq != 0) {
+    } else if(g.op == op && g.tgt == tgt && g.ixs == ixs && gates[op].sq != 0) {
       // G * G = square(G) if also among our operations
       return std::make_shared<FixedGene>(op + gates[op].sq, tgt, hw, ixs);
     } else
@@ -99,19 +91,13 @@ public:
 
   NOINLINE FixedGene(size_t op_, unsigned tgt_, unsigned control_enc):
       op(op_), tgt(tgt_), hw(0) {
-    std::vector<bool> bits{GeneBase::ctrlBitString(control_enc, tgt - 1)};
-    std::vector<arma::uword> ixv;
-    ixv.reserve(Config::nBit);
-    for(unsigned i = 0; i < Config::nBit; i++) {
-      if(bits[i]) {
-        ixv.push_back(i + 1);
-        hw++;
-      }
-    }
-    ixs = ixv;
+    std::vector<bool> bits{GeneBase::ctrlBitString(control_enc, tgt)};
+    ixs = internal::Controls{bits};
+    hw = ixs.size();
   }
 
-  FixedGene(size_t op_, unsigned tgt_, unsigned hw_, arma::uvec ixs_):
+  FixedGene(size_t op_, unsigned tgt_, unsigned hw_,
+      const internal::Controls& ixs_):
     op(op_), tgt(tgt_), hw(hw_), ixs(ixs_) { }
 
 }; // class Gene

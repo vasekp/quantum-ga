@@ -21,7 +21,7 @@ class XYZGene : public GeneBase {
   double gphase;
   unsigned tgt;
   unsigned hw;
-  arma::uvec ixs;
+  Wrapper::internal::Controls ixs;
   Wrapper::Gate mat;
 
   using SP = std::shared_ptr<GeneBase>;
@@ -32,7 +32,7 @@ public:
     // distribution of possible gates
     std::uniform_int_distribution<size_t> dOp{0, gates.size() - 1};
     // distribution of targets
-    std::uniform_int_distribution<unsigned> dTgt{1, Config::nBit};
+    std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
     // distribution of controls
     std::uniform_int_distribution<unsigned> dCtrl{};
     // distribution of angle
@@ -42,13 +42,8 @@ public:
         dTgt(gen::rng), dCtrl(gen::rng));
   }
 
-  State apply(const State& psi) const override {
-    // control-gate (QIClib)
-    return qic::apply_ctrl(
-        psi,    // state
-        mat,    // operator
-        ixs,    // arma::uvec of control systems
-        {tgt}); // arma::uvec of target systems
+  void applyTo(State& psi) const override {
+    psi.apply_ctrl(mat, ixs, tgt);
   }
 
   unsigned complexity() const override {
@@ -94,10 +89,7 @@ public:
       // op2 = (phase*)identity
       return std::make_shared<XYZGene>(
           op, angle, gphase + g.gphase, tgt, ixs, hw);
-    } else if(g.op == op
-        && g.tgt == tgt
-        && g.ixs.size() == ixs.size()
-        && arma::all(g.ixs == ixs)) {
+    } else if(g.op == op && g.tgt == tgt && g.ixs == ixs) {
       return std::make_shared<XYZGene>(
           op, angle + g.angle, gphase + g.gphase, tgt, ixs, hw);
     } else
@@ -105,11 +97,11 @@ public:
   }
 
   std::ostream& write(std::ostream& os) const override {
-    os << gates[op].name << tgt;
+    os << gates[op].name << tgt + 1;
     if(ixs.size()) {
       os << '[';
-      for(auto ctrl : ixs)
-        os << ctrl;
+      for(auto ctrl : ixs.as_vector())
+        os << ctrl + 1;
       os << ']';
     }
     os << '(' << angle / internal::pi << "π)";
@@ -120,25 +112,17 @@ public:
 
   NOINLINE XYZGene(size_t op_, double angle_, double phase_,
     unsigned tgt_, unsigned control_enc):
-      op(op_), angle(angle_), gphase(phase_), tgt(tgt_), hw(0) {
+      op(op_), angle(angle_), gphase(phase_), tgt(tgt_), hw(0), ixs() {
     if(gates[op].ctrl) {
-      std::vector<bool> bits{GeneBase::ctrlBitString(control_enc, tgt - 1)};
-      std::vector<arma::uword> ixv;
-      ixv.reserve(Config::nBit);
-      for(unsigned i = 0; i < Config::nBit; i++) {
-        if(bits[i]) {
-          ixv.push_back(i + 1);
-          hw++;
-        }
-      }
-      ixs = ixv;
-    } else
-      ixs.clear();
+      std::vector<bool> bits{GeneBase::ctrlBitString(control_enc, tgt)};
+      ixs = internal::Controls{bits};
+      hw = ixs.size();
+    }
     computeMat();
   }
 
   NOINLINE XYZGene(size_t op_, double angle_, double phase_,
-    unsigned tgt_, arma::uvec ixs_, unsigned hw_):
+    unsigned tgt_, const internal::Controls& ixs_, unsigned hw_):
       op(op_), angle(angle_), gphase(phase_), tgt(tgt_), hw(hw_), ixs(ixs_) {
     computeMat();
   }
