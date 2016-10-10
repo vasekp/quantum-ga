@@ -34,6 +34,31 @@ const Gate Ti = qpp::gt.T.conjugate();
 const Gate S = qpp::gt.S;
 const Gate Si = qpp::gt.S.conjugate();
 
+Gate xrot(double a) {
+  Gate ret{2, 2};
+  ret << std::cos(a), i*std::sin(a), i*std::sin(a), std::cos(a);
+  return ret;
+}
+
+Gate yrot(double a) {
+  Gate ret{2, 2};
+  ret << std::cos(a), std::sin(a), -std::sin(a), std::cos(a);
+  return ret;
+}
+
+Gate zrot(double a) {
+  Gate ret{2, 2};
+  ret << std::exp(i*a), 0, 0, std::exp(-i*a);
+  return ret;
+}
+
+// An assymetric version of zrot
+Gate phase(double a) {
+  Gate ret{2, 2};
+  ret << 1, 0, 0, std::exp(i*a);
+  return ret;
+}
+
 
 class Controls : public std::vector<qpp::idx> {
 
@@ -79,12 +104,15 @@ public:
     *this = qpp::mket(qpp::n2multiidx(index, dims()));
   }
 
+  /* BROKEN in Eigen 3.2.9: fft expects DenseCoeffsBase::operator[] to return
+   * by reference but it returns by value. Won't work in any modification!
+
   static State fourier(const State& in) {
     Eigen::VectorXcd ret{in.size()};
     Eigen::FFT<double> fft;
-    ret.col(0) = fft.fwd(in.col(0));
+    fft.fwd(ret, in.col(0));
     return {ret};
-  }
+  }*/
 
   static internal::cxd overlap(const State& lhs, const State& rhs) {
     return rhs.rep().dot(lhs.rep());

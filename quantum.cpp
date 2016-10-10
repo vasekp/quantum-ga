@@ -14,6 +14,9 @@
 
 #ifdef FOURIER
   #include "include/problem-fourier.hpp"
+  #ifdef USE_QPP
+    #error FFT implementation is currently broken in Eigen3, used by Quantum++.
+  #endif
 #elif defined(SEARCH)
   #include "include/problem-search.hpp"
 #else
