@@ -5,7 +5,7 @@ class CandidateBase {
 
 protected:
 
-  std::vector<Gene> gt{};
+  std::vector<std::shared_ptr<Gene>> gt{};
 
 private:
 
@@ -20,37 +20,35 @@ public:
 
   using GeneType = Gene;
 
-  CandidateBase(std::vector<Gene>&) = delete;
-
-  CandidateBase(std::vector<Gene>&& gt_): gt(std::move(gt_)) {
+  CandidateBase(std::vector<std::shared_ptr<Gene>>&& gt_):
+      gt(std::move(gt_)) {
     if(gt.size() == 0)
       return;
     auto end = gt.end();
-    for(auto last = gt.begin(), cur = last + 1; cur != end; cur++)
+    for(auto last = gt.begin(), cur = last + 1; cur != end; cur++) {
       // Can be merged: done, go to next cur
-      // Can not: put *cur after *last and increase last
-      if(!last->merge(*cur))
+      // Can not (new = original): put *cur after *last and increase last
+      std::shared_ptr<Gene> sp = (*last)->merge(*last, *cur);
+      if(sp == *last)
         std::swap(*++last, *cur);
+    }
   }
 
   NOINLINE Fitness fitness() const {
-    /* Complexity = square sum of numbers of control bits per gate */
-    unsigned cplx = 0;
-    for(const auto& g : gt) {
-      unsigned h = g.weight();
-      cplx += h*h;
-    }
+    unsigned cplx{0};
+    for(const auto& g : gt)
+      cplx += g->complexity();
     counter.hit();
-    return {derived().error(), gt.size(), cplx};
+    return {trimError(derived().error()), gt.size(), cplx};
   }
 
   friend std::ostream& operator<< (std::ostream& os, const CandidateBase& c) {
     for(const auto& g : c.gt)
-      os << g << ' ';
+      os << *g << ' ';
     return os;
   }
 
-  const std::vector<Gene>& genotype() const {
+  const std::vector<std::shared_ptr<Gene>>& genotype() const {
     return gt;
   }
 
@@ -76,6 +74,13 @@ public:
 
   template<class, class>
   friend class CandidateFactory;
+
+protected:
+
+  static double trimError(double error) {
+    // Ignore deviations of roughly 10^-7
+    return (unsigned long)(error * (1UL<<24)) / (double)(1UL<<24);
+  }
 
 }; // class CandidateBase
 

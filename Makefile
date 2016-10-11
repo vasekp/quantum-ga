@@ -1,43 +1,45 @@
-PROGS = quantum
-HEADERS = include/*.hpp
-
-# Targets can be specified as:
-# make qic - use QIClib (default)
-# make qpp - use Quantum++
-# make qic.d - use QIClib, turn on debug
-# make qpp.d - use Quantum++ with debug
+# To compile against Quantum++ (default is QIClib) use:
+# make BACKEND=QPP target
 #
-# Note that all ultimately lead to "quantum" so Make may decide it's not worth 
-# recompiling the target. If the platform or debug flag is the only change 
-# made, use -B to force a remake.
+# To make a debug version:
+# make DEBUG=1 target
+#
+# To force remake a target (with different defines):
+# make -B target
 
-TARGETS := qpp qic fourier search
-TARGETS += $(addsuffix .d,$(TARGETS))
+SOURCES = quantum.cpp
+HEADERS = include/*.hpp include/*/*.hpp
 
+TARGETS := simple fourier search
 default: search
-
-qpp qic qpp.d qic.d: $(PROGS) $(HEADERS)
 
 CXXFLAGS += -std=c++11 -march=native
 CXXFLAGS += -pedantic -Wall -Wextra #-Weffc++
 CXXFLAGS += -fno-diagnostics-show-caret -fopenmp
 CXXFLAGS += -Iframework/include
 
-$(filter-out %.d,$(TARGETS)): CXXFLAGS += -O3
-$(filter %.d,$(TARGETS)): CXXFLAGS += -O1 -g
-$(filter qic%,$(TARGETS)): CXXFLAGS += -Iqiclib/include -lopenblas -DUSE_QICLIB
-$(filter fourier%,$(TARGETS)): CXXFLAGS += -Iqiclib/include -lopenblas -DUSE_QICLIB -DFOURIER
-$(filter search%,$(TARGETS)): CXXFLAGS += -Iqiclib/include -lopenblas -DUSE_QICLIB -DSEARCH
-$(filter qpp%,$(TARGETS)): CXXFLAGS += -isystem /usr/include/eigen3 -Iquantum++/include -DUSE_QPP
-qpp: CXXFLAGS += -DNODEBUG -DEIGEN_NO_DEBUG
-search fourier qic: CXXFLAGS += -DQICLIB_NO_DEBUG
+ifdef DEBUG
+	CXXFLAGS += -O0 -g
+else
+	CXXFLAGS += -O3 -DNODEBUG -DEIGEN_NO_DEBUG -DQICLIB_NO_DEBUG
+endif
 
-$(TARGETS): $(PROGS)
+ifeq ($(BACKEND), QPP)
+	CXXFLAGS += -isystem /usr/include/eigen3 -Iquantum++/include -DUSE_QPP
+else
+	# QIClib is the default
+	CXXFLAGS += -Iqiclib/include -lopenblas -DUSE_QICLIB
+endif
+
+fourier: CXXFLAGS += -DFOURIER
+
+search:	CXXFLAGS += -DSEARCH
+
+$(TARGETS): $(SOURCES) $(HEADERS)
+	$(CXX) $(CXXFLAGS) $(SOURCES) -o $@
 
 clean:
-	rm $(PROGS)
+	-rm $(TARGETS)
 
-.PHONY: $(TARGETS) clean
+.PHONY: clean
 
-$(PROGS): %: %.cpp $(HEADERS)
-	$(CXX) $(CXXFLAGS) $@.cpp -o $@
