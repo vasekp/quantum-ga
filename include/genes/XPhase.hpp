@@ -90,7 +90,20 @@ public:
     QGA::controls_distribution dCtrl{Config::nBit, Config::pControl, tgt_};
     // distribution of angle
     std::uniform_real_distribution<> dAng{-0.5*Const::pi, 0.5*Const::pi};
-    return std::make_shared<CPhase>(tgt_, dAng(gen::rng), dCtrl(gen::rng));
+    // Convert P2[13] to P1[23]: mathematically identical and more easily
+    // mergeable
+    std::vector<bool> ctrl = dCtrl(gen::rng);
+    ctrl[tgt_] = true;
+    {
+      unsigned i;
+      for(i = 0; i < Config::nBit; i++)
+        if(ctrl[i])
+          break;
+      // i guaranteed to be < nBit now (at least one bit is set)
+      tgt_ = i;
+    }
+    ctrl[tgt_] = false;
+    return std::make_shared<CPhase>(tgt_, dAng(gen::rng), ctrl);
   }
 
   Backend::State applyTo(const Backend::State& psi) const override {
@@ -134,14 +147,10 @@ public:
   }
 
   std::ostream& write(std::ostream& os) const override {
-    os << 'P' << tgt + 1;
-    if(ixs.size()) {
-      os << '[';
-      for(auto ctrl : ixs.as_vector())
-        os << ctrl + 1;
-      os << ']';
-    }
-    os << '(' << angle / Const::pi << "π)";
+    os << "P[" << tgt + 1;
+    for(auto ctrl : ixs.as_vector())
+      os << ctrl + 1;
+    os << "](" << angle / Const::pi << "π)";
     return os;
   }
 
