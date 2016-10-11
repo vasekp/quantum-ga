@@ -65,26 +65,6 @@ protected:
 
   virtual std::ostream& write(std::ostream&) const = 0;
 
-  /* Convert an unsigned between 0 and UINT_MAX to a bit string where the
-   * probability of 1 in each position is given by Config::pControl. A value
-   * less than 0.5 means that plain NOTs and C-NOTs will be generated more
-   * often than CC-NOTs and higher. The bit at position target is left off. */
-  static std::vector<bool> ctrlBitString(unsigned rand, unsigned target) {
-    std::vector<bool> bits(Config::nBit, false);
-    double c = (double)rand / std::numeric_limits<unsigned>::max();
-    for(unsigned i = 0; i < Config::nBit; i++) {
-      if(i == target)
-        continue;
-      if(c < Config::pControl) {
-        bits[i] = true;
-        c /= Config::pControl;
-      } else {
-        c = (c - Config::pControl)/(1 - Config::pControl);
-      }
-    }
-    return bits;
-  }
-
   /* Convert a floating-point number to a rational approximation. This is done
    * by finding a continued fraction expression, trimming it at a random point
    * with probability proportional to the magnitude of the corresponding term,
@@ -187,5 +167,64 @@ public:
 
 }; // class Gene
 #endif
+
+
+/* A distribution generating bit strings of length nBit where the probability
+ * of 1 in each position is given by pTrue. The bit at position nSkip is left
+ * off. The provided uniform RNG is invoked only the minimum necessary number
+ * of times. */
+class controls_distribution {
+
+  const unsigned nBit;
+  const double pTrue;
+  const unsigned iSkip;
+
+  // entropy decrease per true result
+  const double dSTrue;
+  // entropy decrease per false result
+  const double dSFalse;
+  // entropy minimum left for reliable generation
+  const double Smin;
+
+public:
+
+  controls_distribution(unsigned nBit_, double pTrue_,
+      unsigned iSkip_ = (unsigned)(~0)):
+    nBit(nBit_), pTrue(pTrue_), iSkip(iSkip_),
+    dSTrue(-std::log(pTrue) / std::log(2.0)),
+    dSFalse(-std::log(1 - pTrue) / std::log(2.0)),
+    Smin(std::max(dSTrue, dSFalse)) { }
+
+  template<class URNG>
+  std::vector<bool> operator() (URNG& rng) {
+    std::vector<bool> bits(nBit, false);
+    std::uniform_real_distribution<> dist;
+    double c = dist(rng);
+    // available entropy per call to dist
+    constexpr double S0 =
+      std::numeric_limits<typename URNG::result_type>::digits;
+    // current entropy
+    double S = S0;
+
+    for(unsigned i = 0; i < nBit; i++) {
+      if(i == iSkip)
+        continue;
+      if(c < pTrue) {
+        bits[i] = true;
+        c /= pTrue;
+        S -= dSTrue;
+      } else {
+        c = (c - pTrue)/(1 - pTrue);
+        S -= dSFalse;
+      }
+      if(S < Smin) {
+        c = dist(rng);
+        S = S0; // NB can still be < Smin but there's not much more we can do
+      }
+    }
+    return bits;
+  }
+
+}; // class controls_distribution
 
 } // namespace QGA

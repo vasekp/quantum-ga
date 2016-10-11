@@ -33,11 +33,12 @@ public:
     // distribution of targets
     std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
     // distribution of controls
-    std::uniform_int_distribution<unsigned> dCtrl{};
+    unsigned tgt_ = dTgt(gen::rng);
+    QGA::controls_distribution dCtrl{Config::nBit, Config::pControl, tgt_};
     // distribution of angle
     std::uniform_real_distribution<> dAng{-0.5*Const::pi, 0.5*Const::pi};
     return std::make_shared<XYZGene>(
-        dOp(gen::rng), dAng(gen::rng), dTgt(gen::rng), dCtrl(gen::rng));
+        dOp(gen::rng), dAng(gen::rng), tgt_, dCtrl(gen::rng));
   }
 
   Backend::State applyTo(const Backend::State& psi) const override {
@@ -94,13 +95,13 @@ public:
 
 // Should be private, but constructors are needed my std::make_shared().
 
-  NOINLINE XYZGene(size_t op_, double angle_, unsigned tgt_, unsigned ctrl_enc):
-      op(op_), angle(angle_), tgt(tgt_), hw(0), ixs() {
-    if(gates[op].ctrl) {
-      std::vector<bool> bits{GeneBase::ctrlBitString(ctrl_enc, tgt)};
-      ixs = Backend::Controls{bits};
+  NOINLINE XYZGene(size_t op_, double angle_, unsigned tgt_,
+      std::vector<bool> ctrl):
+      op(op_), angle(angle_), tgt(tgt_), hw(0), ixs(ctrl) {
+    if(gates[op].ctrl)
       hw = ixs.size();
-    }
+    else
+      ixs.clear();
     mat = gates[op].fn(angle);
   }
 

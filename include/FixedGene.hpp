@@ -39,9 +39,10 @@ public:
     // distribution of targets
     std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
     // distribution of controls
-    std::uniform_int_distribution<unsigned> dCtrl{};
+    unsigned tgt_ = dTgt(gen::rng);
+    QGA::controls_distribution dCtrl{Config::nBit, Config::pControl, tgt_};
     return std::make_shared<FixedGene>(
-        dOp(gen::rng), dTgt(gen::rng), dCtrl(gen::rng));
+        dOp(gen::rng), tgt_, dCtrl(gen::rng));
   }
 
   Backend::State applyTo(const Backend::State& psi) const override {
@@ -89,10 +90,8 @@ public:
     return os;
   }
 
-  NOINLINE FixedGene(size_t op_, unsigned tgt_, unsigned control_enc):
-      op(op_), tgt(tgt_), hw(0) {
-    std::vector<bool> bits{GeneBase::ctrlBitString(control_enc, tgt)};
-    ixs = Backend::Controls{bits};
+  NOINLINE FixedGene(size_t op_, unsigned tgt_, std::vector<bool> ctrl):
+      op(op_), tgt(tgt_), ixs(ctrl) {
     hw = ixs.size();
   }
 
