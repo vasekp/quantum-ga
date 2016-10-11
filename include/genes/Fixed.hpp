@@ -25,7 +25,6 @@ class Fixed : public GeneBase {
 
   size_t op;
   unsigned tgt;
-  unsigned hw;
   Backend::Controls ixs;
 
   using SP = std::shared_ptr<GeneBase>;
@@ -50,13 +49,13 @@ public:
   }
 
   unsigned complexity() const override {
-    return hw * hw;
+    return ixs.size() * ixs.size();
   }
 
   SP invert(const SP& orig) override {
     int dIx = gates[op].inv;
     if(dIx)
-      return std::make_shared<Fixed>(op + dIx, tgt, hw, ixs);
+      return std::make_shared<Fixed>(op + dIx, tgt, ixs);
     else
       return orig;
   }
@@ -74,7 +73,7 @@ public:
       return self;
     } else if(g.op == op && g.tgt == tgt && g.ixs == ixs && gates[op].sq != 0) {
       // G * G = square(G) if also among our operations
-      return std::make_shared<Fixed>(op + gates[op].sq, tgt, hw, ixs);
+      return std::make_shared<Fixed>(op + gates[op].sq, tgt, ixs);
     } else
       return self;
   }
@@ -91,13 +90,10 @@ public:
   }
 
   NOINLINE Fixed(size_t op_, unsigned tgt_, std::vector<bool> ctrl):
-      op(op_), tgt(tgt_), ixs(ctrl) {
-    hw = ixs.size();
-  }
+      op(op_), tgt(tgt_), ixs(ctrl) { }
 
-  Fixed(size_t op_, unsigned tgt_, unsigned hw_,
-      const Backend::Controls& ixs_):
-    op(op_), tgt(tgt_), hw(hw_), ixs(ixs_) { }
+  Fixed(size_t op_, unsigned tgt_, const Backend::Controls& ixs_):
+    op(op_), tgt(tgt_), ixs(ixs_) { }
 
 }; // class Gene
 

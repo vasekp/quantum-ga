@@ -76,7 +76,6 @@ class CPhase : public GeneBase {
   unsigned tgt;
   double angle;
   Backend::Controls ixs;
-  unsigned hw;
   Backend::Gate mat;
 
   using SP = std::shared_ptr<GeneBase>;
@@ -99,22 +98,22 @@ public:
   }
 
   unsigned complexity() const override {
-    return hw * hw;
+    return ixs.size() * ixs.size();
   }
 
   SP invert(const SP&) override {
-    return std::make_shared<CPhase>(tgt, -angle, ixs, hw);
+    return std::make_shared<CPhase>(tgt, -angle, ixs);
   }
 
   SP mutate(const SP&) override {
     std::normal_distribution<> dAng{0.0, 0.1};
-    return std::make_shared<CPhase>(tgt, angle + dAng(gen::rng), ixs, hw);
+    return std::make_shared<CPhase>(tgt, angle + dAng(gen::rng), ixs);
   }
 
   SP simplify(const SP&) override {
     return std::make_shared<CPhase>(tgt,
         GeneBase::rationalize(std::fmod(angle / Const::pi, 2.0)) * Const::pi,
-        ixs, hw);
+        ixs);
   }
 
   SP invite(const SP& g) const override {
@@ -129,7 +128,7 @@ public:
       // op2 = identity
       return self;
     } else if(g.tgt == tgt && g.ixs == ixs) {
-      return std::make_shared<CPhase>(tgt, angle + g.angle, ixs, hw);
+      return std::make_shared<CPhase>(tgt, angle + g.angle, ixs);
     } else
       return self;
   }
@@ -147,13 +146,12 @@ public:
   }
 
   NOINLINE CPhase(unsigned tgt_, double angle_, std::vector<bool> ctrl):
-      tgt(tgt_), angle(angle_), ixs(ctrl), hw(ixs.size()) {
+      tgt(tgt_), angle(angle_), ixs(ctrl) {
     mat = Backend::zrot(angle);
   }
 
-  NOINLINE CPhase(unsigned tgt_, double angle_,
-      const Backend::Controls& ixs_, unsigned hw_):
-      tgt(tgt_), angle(angle_), ixs(ixs_), hw(hw_) {
+  NOINLINE CPhase(unsigned tgt_, double angle_, const Backend::Controls& ixs_):
+      tgt(tgt_), angle(angle_), ixs(ixs_) {
     mat = Backend::zrot(angle);
   }
 

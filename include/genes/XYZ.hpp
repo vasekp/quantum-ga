@@ -19,7 +19,6 @@ class XYZ : public GeneBase {
   double angle;
   unsigned tgt;
   Backend::Controls ixs;
-  unsigned hw;
   Backend::Gate mat;
 
   using SP = std::shared_ptr<GeneBase>;
@@ -45,22 +44,22 @@ public:
   }
 
   unsigned complexity() const override {
-    return hw * hw;
+    return ixs.size() * ixs.size();
   }
 
   SP invert(const SP&) override {
-    return std::make_shared<XYZ>(op, -angle, tgt, ixs, hw);
+    return std::make_shared<XYZ>(op, -angle, tgt, ixs);
   }
 
   SP mutate(const SP&) override {
     std::normal_distribution<> dAng{0.0, 0.1};
-    return std::make_shared<XYZ>(op, angle + dAng(gen::rng), tgt, ixs, hw);
+    return std::make_shared<XYZ>(op, angle + dAng(gen::rng), tgt, ixs);
   }
 
   SP simplify(const SP&) override {
     return std::make_shared<XYZ>(op,
         GeneBase::rationalize(std::fmod(angle / Const::pi, 2.0)) * Const::pi,
-        tgt, ixs, hw);
+        tgt, ixs);
   }
 
   SP invite(const SP& g) const override {
@@ -75,7 +74,7 @@ public:
       // op2 = identity
       return self;
     } else if(g.op == op && g.tgt == tgt && g.ixs == ixs) {
-      return std::make_shared<XYZ>(op, angle + g.angle, tgt, ixs, hw);
+      return std::make_shared<XYZ>(op, angle + g.angle, tgt, ixs);
     } else
       return self;
   }
@@ -94,13 +93,13 @@ public:
 
   NOINLINE XYZ(size_t op_, double angle_, unsigned tgt_,
       std::vector<bool> ctrl):
-      op(op_), angle(angle_), tgt(tgt_), ixs(ctrl), hw(ixs.size()) {
+      op(op_), angle(angle_), tgt(tgt_), ixs(ctrl) {
     mat = gates[op].fn(angle);
   }
 
   NOINLINE XYZ(size_t op_, double angle_, unsigned tgt_,
-      const Backend::Controls& ixs_, unsigned hw_):
-      op(op_), angle(angle_), tgt(tgt_), ixs(ixs_), hw(hw_) {
+      const Backend::Controls& ixs_):
+      op(op_), angle(angle_), tgt(tgt_), ixs(ixs_) {
     mat = gates[op].fn(angle);
   }
 
