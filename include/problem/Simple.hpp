@@ -2,11 +2,11 @@
 #ifndef QGA_PROBLEM_HPP
 #define QGA_PROBLEM_HPP
 
-#include "../FixedGene.hpp"
+#include "../genes/Fixed.hpp"
 
 using QGA::Backend::State;
 
-using Gene = QGA::Gene<QGA::FixedGene>;
+using Gene = QGA::Gene<QGA::Fixed>;
 
 const State out{3};
 

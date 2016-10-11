@@ -21,7 +21,7 @@ std::vector<gate_struct> gates {
 
 
 template<class GeneBase>
-class FixedGene : public GeneBase {
+class Fixed : public GeneBase {
 
   size_t op;
   unsigned tgt;
@@ -41,7 +41,7 @@ public:
     // distribution of controls
     unsigned tgt_ = dTgt(gen::rng);
     QGA::controls_distribution dCtrl{Config::nBit, Config::pControl, tgt_};
-    return std::make_shared<FixedGene>(
+    return std::make_shared<Fixed>(
         dOp(gen::rng), tgt_, dCtrl(gen::rng));
   }
 
@@ -56,7 +56,7 @@ public:
   SP invert(const SP& orig) override {
     int dIx = gates[op].inv;
     if(dIx)
-      return std::make_shared<FixedGene>(op + dIx, tgt, hw, ixs);
+      return std::make_shared<Fixed>(op + dIx, tgt, hw, ixs);
     else
       return orig;
   }
@@ -65,16 +65,16 @@ public:
     return g.get()->visit(g, *this);
   }
 
-  SP visit(const SP& self, const FixedGene& g) override {
+  SP visit(const SP& self, const Fixed& g) override {
     if(op == 0) {
       // Identity * G = G
-      return std::make_shared<FixedGene>(g);
+      return std::make_shared<Fixed>(g);
     } else if(g.op == 0) {
       // G * Identity = G
       return self;
     } else if(g.op == op && g.tgt == tgt && g.ixs == ixs && gates[op].sq != 0) {
       // G * G = square(G) if also among our operations
-      return std::make_shared<FixedGene>(op + gates[op].sq, tgt, hw, ixs);
+      return std::make_shared<Fixed>(op + gates[op].sq, tgt, hw, ixs);
     } else
       return self;
   }
@@ -90,12 +90,12 @@ public:
     return os;
   }
 
-  NOINLINE FixedGene(size_t op_, unsigned tgt_, std::vector<bool> ctrl):
+  NOINLINE Fixed(size_t op_, unsigned tgt_, std::vector<bool> ctrl):
       op(op_), tgt(tgt_), ixs(ctrl) {
     hw = ixs.size();
   }
 
-  FixedGene(size_t op_, unsigned tgt_, unsigned hw_,
+  Fixed(size_t op_, unsigned tgt_, unsigned hw_,
       const Backend::Controls& ixs_):
     op(op_), tgt(tgt_), hw(hw_), ixs(ixs_) { }
 

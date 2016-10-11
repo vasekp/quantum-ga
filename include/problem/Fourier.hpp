@@ -2,11 +2,11 @@
 #ifndef PROBLEM_HPP
 #define PROBLEM_HPP
 
-#include "../XYZGene.hpp"
+#include "../genes/XYZ.hpp"
 
 using QGA::Backend::State;
 
-using Gene = QGA::Gene<QGA::XYZGene>;
+using Gene = QGA::Gene<QGA::XYZ>;
 
 
 class Candidate : public QGA::CandidateBase<Candidate, Gene> {
