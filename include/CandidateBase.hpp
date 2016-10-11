@@ -28,8 +28,8 @@ public:
     for(auto last = gt.begin(), cur = last + 1; cur != end; cur++) {
       // Can be merged: done, go to next cur
       // Can not (new = original): put *cur after *last and increase last
-      std::shared_ptr<Gene> sp = (*last)->merge(*last, *cur);
-      if(sp == *last)
+      bool consumed = (*last)->merge(*last, *cur);
+      if(!consumed)
         std::swap(*++last, *cur);
     }
   }

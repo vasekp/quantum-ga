@@ -49,36 +49,38 @@ public:
     return hw * hw;
   }
 
-  SP invert(const SP&) override {
-    return std::make_shared<XYZ>(op, -angle, tgt, ixs, hw);
+  void invert(SP& self) override {
+    self = std::make_shared<XYZ>(op, -angle, tgt, ixs, hw);
   }
 
-  SP mutate(const SP&) override {
+  void mutate(SP& self) override {
     std::normal_distribution<> dAng{0.0, 0.1};
-    return std::make_shared<XYZ>(op, angle + dAng(gen::rng), tgt, ixs, hw);
+    self = std::make_shared<XYZ>(op, angle + dAng(gen::rng), tgt, ixs, hw);
   }
 
-  SP simplify(const SP&) override {
-    return std::make_shared<XYZ>(op,
+  void simplify(SP& self) override {
+    self = std::make_shared<XYZ>(op,
         GeneBase::rationalize(std::fmod(angle / Const::pi, 2.0)) * Const::pi,
         tgt, ixs, hw);
   }
 
-  SP invite(const SP& g) const override {
-    return g.get()->visit(g, *this);
+  bool invite(SP& first, SP& second) const override {
+    return first->visit(first, second, *this);
   }
 
-  SP visit(const SP& self, const XYZ& g) override {
+  bool visit(SP& first, SP& second, const XYZ& g) override {
     if(angle == 0) {
-      // op1 = identity
-      return std::make_shared<XYZ>(g);
+      // op1 = identity: replace by second and consume
+      first = second;
+      return true;
     } else if(g.angle == 0) {
-      // op2 = identity
-      return self;
+      // op2 = identity: consume
+      return true;
     } else if(g.op == op && g.tgt == tgt && g.ixs == ixs) {
-      return std::make_shared<XYZ>(op, angle + g.angle, tgt, ixs, hw);
+      first = std::make_shared<XYZ>(op, angle + g.angle, tgt, ixs, hw);
+      return true;
     } else
-      return self;
+      return false;
   }
 
   std::ostream& write(std::ostream& os) const override {

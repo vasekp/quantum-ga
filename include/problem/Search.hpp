@@ -60,8 +60,8 @@ public:
     return 1;
   }
 
-  SP invite(const SP& g) const override {
-    return g->visit(g, *this);
+  bool invite(SP& first, SP& second) const override {
+    return first->visit(first, second, *this);
   }
 
   std::ostream& write(std::ostream& os) const override {
