@@ -14,7 +14,7 @@ std::vector<gate_struct> gates {
 
 
 template<class GeneBase>
-class XYZGene : public GeneBase {
+class XYZ : public GeneBase {
 
   size_t op;
   double angle;
@@ -37,7 +37,7 @@ public:
     QGA::controls_distribution dCtrl{Config::nBit, Config::pControl, tgt_};
     // distribution of angle
     std::uniform_real_distribution<> dAng{-0.5*Const::pi, 0.5*Const::pi};
-    return std::make_shared<XYZGene>(
+    return std::make_shared<XYZ>(
         dOp(gen::rng), dAng(gen::rng), tgt_, dCtrl(gen::rng));
   }
 
@@ -50,16 +50,16 @@ public:
   }
 
   SP invert(const SP&) override {
-    return std::make_shared<XYZGene>(op, -angle, tgt, ixs, hw);
+    return std::make_shared<XYZ>(op, -angle, tgt, ixs, hw);
   }
 
   SP mutate(const SP&) override {
     std::normal_distribution<> dAng{0.0, 0.1};
-    return std::make_shared<XYZGene>(op, angle + dAng(gen::rng), tgt, ixs, hw);
+    return std::make_shared<XYZ>(op, angle + dAng(gen::rng), tgt, ixs, hw);
   }
 
   SP simplify(const SP&) override {
-    return std::make_shared<XYZGene>(op,
+    return std::make_shared<XYZ>(op,
         GeneBase::rationalize(std::fmod(angle / Const::pi, 2.0)) * Const::pi,
         tgt, ixs, hw);
   }
@@ -68,15 +68,15 @@ public:
     return g.get()->visit(g, *this);
   }
 
-  SP visit(const SP& self, const XYZGene& g) override {
+  SP visit(const SP& self, const XYZ& g) override {
     if(angle == 0) {
       // op1 = identity
-      return std::make_shared<XYZGene>(g);
+      return std::make_shared<XYZ>(g);
     } else if(g.angle == 0) {
       // op2 = identity
       return self;
     } else if(g.op == op && g.tgt == tgt && g.ixs == ixs) {
-      return std::make_shared<XYZGene>(op, angle + g.angle, tgt, ixs, hw);
+      return std::make_shared<XYZ>(op, angle + g.angle, tgt, ixs, hw);
     } else
       return self;
   }
@@ -95,7 +95,7 @@ public:
 
 // Should be private, but constructors are needed my std::make_shared().
 
-  NOINLINE XYZGene(size_t op_, double angle_, unsigned tgt_,
+  NOINLINE XYZ(size_t op_, double angle_, unsigned tgt_,
       std::vector<bool> ctrl):
       op(op_), angle(angle_), tgt(tgt_), hw(0), ixs(ctrl) {
     if(gates[op].ctrl)
@@ -105,12 +105,12 @@ public:
     mat = gates[op].fn(angle);
   }
 
-  NOINLINE XYZGene(size_t op_, double angle_, unsigned tgt_,
+  NOINLINE XYZ(size_t op_, double angle_, unsigned tgt_,
       const Backend::Controls& ixs_, unsigned hw_):
       op(op_), angle(angle_), tgt(tgt_), hw(hw_), ixs(ixs_) {
     mat = gates[op].fn(angle);
   }
 
-}; // class XYZGene
+}; // class XYZ
 
 } // namespace QGA

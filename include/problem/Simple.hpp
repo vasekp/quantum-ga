@@ -2,22 +2,13 @@
 #ifndef QGA_PROBLEM_HPP
 #define QGA_PROBLEM_HPP
 
-#include "../FixedGene.hpp"
+#include "../genes/Fixed.hpp"
 
 using QGA::Backend::State;
 
+using Gene = QGA::Gene<QGA::Fixed>;
+
 const State out{3};
-
-
-class Gene : public QGA::GeneBase<Gene, QGA::FixedGene> {
-
-public:
-
-  static std::shared_ptr<Gene> getNew() {
-    return QGA::FixedGene<Gene>::getNew();
-  }
-
-}; // class Gene
 
 
 class Candidate : public QGA::CandidateBase<Candidate, Gene> {

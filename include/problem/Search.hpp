@@ -2,10 +2,32 @@
 #ifndef PROBLEM_HPP
 #define PROBLEM_HPP
 
-#include "../XYZGene.hpp"
+#include "../genes/XYZ.hpp"
 
 using QGA::Backend::State;
 
+/* An extension of QGA::GeneBase allowing us to count oracle calls and pass
+ * an additional parameter to applyTo(). */
+
+template<class GB, template<class> class... Genes>
+class NewBase : public QGA::GeneBase<GB, Genes...> {
+
+  using QGA::GeneBase<GB, Genes...>::applyTo;
+
+public:
+
+  virtual unsigned calls() const {
+    return 0;
+  }
+
+  virtual State applyTo(const State& psi, unsigned) const {
+    return this->applyTo(psi);
+  }
+
+};
+
+
+/* The oracle gene template. */
 
 template<class GeneBase>
 class Oracle : public GeneBase {
@@ -49,29 +71,10 @@ public:
 }; // class Oracle<GeneBase>
 
 
-class Gene : public QGA::GeneBase<Gene, Oracle, QGA::XYZGene> {
+/* Our Gene type will randomly choose between XYZ and Oracle and will support
+ * Gene::calls(). */
 
-public:
-
-  using QGA::GeneBase<Gene, Oracle, QGA::XYZGene>::applyTo;
-
-  virtual unsigned calls() const {
-    return 0;
-  }
-
-  virtual State applyTo(const State& psi, unsigned) const {
-    return applyTo(psi);
-  }
-
-  static std::shared_ptr<Gene> getNew() {
-    std::bernoulli_distribution dOracle{0.1};
-    if(dOracle(gen::rng))
-      return Oracle<Gene>::getNew();
-    else
-      return QGA::XYZGene<Gene>::getNew();
-  }
-
-}; // class GeneBase<Derived...>
+using Gene = QGA::CustomGene<NewBase, QGA::XYZ, Oracle>;
 
 
 struct Fitness {
