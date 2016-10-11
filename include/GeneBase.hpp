@@ -65,13 +65,13 @@ protected:
 
   virtual std::ostream& write(std::ostream&) const = 0;
 
+  /* Convert an unsigned between 0 and UINT_MAX to a bit string where the
+   * probability of 1 in each position is given by Config::pControl. A value
+   * less than 0.5 means that plain NOTs and C-NOTs will be generated more
+   * often than CC-NOTs and higher. The bit at position target is left off. */
   static std::vector<bool> ctrlBitString(unsigned rand, unsigned target) {
     std::vector<bool> bits(Config::nBit, false);
     double c = (double)rand / std::numeric_limits<unsigned>::max();
-    /* Convert an unsigned between 0 and UINT_MAX to a bit string where the
-     * probability of 1 in each position is given by Config::pControl. A value
-     * less than 0.5 means that plain NOTs and C-NOTs will be generated more
-     * often than CC-NOTs and higher. The bit at position target is left off. */
     for(unsigned i = 0; i < Config::nBit; i++) {
       if(i == target)
         continue;
@@ -83,6 +83,35 @@ protected:
       }
     }
     return bits;
+  }
+
+  /* Convert a floating-point number to a rational approximation. This is done
+   * by finding a continued fraction expression, trimming it at a random point
+   * with probability proportional to the magnitude of the corresponding term,
+   * and converting back. If the number is precisely rational or almost
+   * rational, almost-infinite terms are capped so it can still be trimmed
+   * earlier to an even shorter rational (just with a small probability). */
+  static double rationalize(double x) {
+    double a = std::abs(x);
+    constexpr unsigned N = 8;
+    double coeffs[N];
+    unsigned t;
+    for(t = 0; t < N; t++) {
+      coeffs[t] = std::floor(a);
+      if(coeffs[t] > 100) {
+        coeffs[t++] = 100;
+        break;
+      }
+      a = 1/(a - coeffs[t]);
+    }
+    std::discrete_distribution<unsigned> dStop(&coeffs[1], &coeffs[t]);
+    unsigned cut = dStop(gen::rng) + 1;
+    if(cut == t)
+      return x;
+    a = coeffs[--cut];
+    while(cut > 0)
+      a = coeffs[--cut] + 1/a;
+    return x < 0 ? -a : a;
   }
 
 }; // virtual class GeneBase<Gene, Derived...>

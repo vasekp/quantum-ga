@@ -59,7 +59,7 @@ public:
 
   SP simplify(const SP&) override {
     return std::make_shared<XYZGene>(op,
-        rationalize(std::fmod(angle / Const::pi, 2.0)) * Const::pi,
+        GeneBase::rationalize(std::fmod(angle / Const::pi, 2.0)) * Const::pi,
         tgt, ixs, hw);
   }
 
@@ -108,31 +108,6 @@ public:
       const Backend::Controls& ixs_, unsigned hw_):
       op(op_), angle(angle_), tgt(tgt_), hw(hw_), ixs(ixs_) {
     mat = gates[op].fn(angle);
-  }
-
-private:
-
-  double rationalize(double x) {
-    double a = std::abs(x);
-    constexpr unsigned N = 8;
-    double coeffs[N];
-    unsigned t;
-    for(t = 0; t < N; t++) {
-      coeffs[t] = std::floor(a);
-      if(coeffs[t] > 100) {
-        coeffs[t++] = 100;
-        break;
-      }
-      a = 1/(a - coeffs[t]);
-    }
-    std::discrete_distribution<unsigned> dStop(&coeffs[1], &coeffs[t]);
-    unsigned cut = dStop(gen::rng) + 1;
-    if(cut == t)
-      return x;
-    a = coeffs[--cut];
-    while(cut > 0)
-      a = coeffs[--cut] + 1/a;
-    return x < 0 ? -a : a;
   }
 
 }; // class XYZGene
