@@ -2,20 +2,11 @@
 #ifndef PROBLEM_HPP
 #define PROBLEM_HPP
 
-#include "../XYZGene.hpp"
+#include "../genes/XYZ.hpp"
 
 using QGA::Backend::State;
 
-
-class Gene : public QGA::GeneBase<Gene, QGA::XYZGene> {
-
-public:
-
-  static std::shared_ptr<Gene> getNew() {
-    return QGA::XYZGene<Gene>::getNew();
-  }
-
-}; // class Gene
+using Gene = QGA::Gene<QGA::XYZ>;
 
 
 class Candidate : public QGA::CandidateBase<Candidate, Gene> {
