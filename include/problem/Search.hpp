@@ -74,7 +74,7 @@ public:
 /* Our Gene type will randomly choose between XPhase and Oracle and will support
  * Gene::calls(). */
 
-using Gene = QGA::CustomGene<NewBase, QGA::XPhase, Oracle>;
+using Gene = QGA::CustomGene<NewBase, QGA::X, QGA::CPhase, Oracle>;
 
 
 struct Fitness {
