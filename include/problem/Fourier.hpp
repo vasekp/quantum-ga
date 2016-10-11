@@ -29,26 +29,18 @@ public:
   double error() const {
     if(gt.size() > 1000)
       return INFINITY;
-    double error{0};
+    std::complex<double> avg_overlap{0};
     unsigned dim = 1 << Config::nBit;
     State psi{};
     for(unsigned i = 0; i < dim; i++) {
       psi.reset(i);
       State out = State::fourier(psi);
-      error += std::max(1 - std::real(State::overlap(out, sim(psi))), 0.0);
+      avg_overlap += State::overlap(out, sim(psi));
     }
-    error /= dim;
+    avg_overlap /= dim;
+    double error = std::max(1.0 - std::abs(avg_overlap), 0.0);
     return error < 1E-8 ? 0 : error;
   }
-
-  /*friend std::ostream& operator<< (std::ostream& os, const Candidate& c) {
-    os << (Base&)c;
-    double phase = 0;
-    for(auto& g : c.gt)
-      phase += g.phase();
-    os << "φ " << phase / internal::pi << "π";
-    return os;
-  }*/
 
   std::string dump(const std::ostream& ex) const {
     std::ostringstream os{};

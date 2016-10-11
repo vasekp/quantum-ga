@@ -120,7 +120,7 @@ public:
     for(const auto& g : gt)
       ocalls += g->calls();
     QGA::counter.hit();
-    return {error(), gt.size(), ocalls};
+    return {trimError(error()), gt.size(), ocalls};
   }
 
   double error() const {
@@ -134,8 +134,7 @@ public:
       error += std::max(1 -
           std::pow(std::abs(State::overlap(out, sim(psi, mark))), 2), 0.0);
     }
-    error /= dim;
-    return (unsigned long)(error * (1UL<<24)) / (double)(1UL<<24);
+    return error / dim;
   }
 
   std::string dump(const std::ostream& ex) const {

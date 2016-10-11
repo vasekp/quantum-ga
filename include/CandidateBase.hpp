@@ -39,7 +39,7 @@ public:
     for(const auto& g : gt)
       cplx += g->complexity();
     counter.hit();
-    return {derived().error(), gt.size(), cplx};
+    return {trimError(derived().error()), gt.size(), cplx};
   }
 
   friend std::ostream& operator<< (std::ostream& os, const CandidateBase& c) {
@@ -74,6 +74,13 @@ public:
 
   template<class, class>
   friend class CandidateFactory;
+
+protected:
+
+  static double trimError(double error) {
+    // Ignore deviations of roughly 10^-7
+    return (unsigned long)(error * (1UL<<24)) / (double)(1UL<<24);
+  }
 
 }; // class CandidateBase
 
