@@ -151,24 +151,6 @@ public:
 }; // class Visitors<Gene, Last>
 
 
-#if 0
-/* This is the default Gene class. It can be used when the operations above
- * are sufficient and the gene polymorphism reduces to choosing a subset from
- * the existing Gene classes. A different class, however, must be defined when
- * additional functionality is required in the base (see wrapper-search for an
- * example). */
-
-template<template<class> class... Derived>
-class Gene: public GeneBase<Gene<Derived...>, Derived...> {
-
-public:
-
-  static std::shared_ptr<Gene> getNew();
-
-}; // class Gene
-#endif
-
-
 /* A distribution generating bit strings of length nBit where the probability
  * of 1 in each position is given by pTrue. The bit at position nSkip is left
  * off. The provided uniform RNG is invoked only the minimum necessary number
