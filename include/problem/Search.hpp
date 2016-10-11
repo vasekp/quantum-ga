@@ -2,7 +2,7 @@
 #ifndef PROBLEM_HPP
 #define PROBLEM_HPP
 
-#include "../genes/XYZ.hpp"
+#include "../genes/XPhase.hpp"
 
 using QGA::Backend::State;
 
@@ -71,10 +71,10 @@ public:
 }; // class Oracle<GeneBase>
 
 
-/* Our Gene type will randomly choose between XYZ and Oracle and will support
+/* Our Gene type will randomly choose between XPhase and Oracle and will support
  * Gene::calls(). */
 
-using Gene = QGA::CustomGene<NewBase, QGA::XYZ, Oracle>;
+using Gene = QGA::CustomGene<NewBase, QGA::XPhase, Oracle>;
 
 
 struct Fitness {
