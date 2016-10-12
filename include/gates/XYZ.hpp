@@ -12,8 +12,8 @@ std::vector<gate_struct> gates {
 };
 
 
-template<class GeneBase>
-class XYZ : public GeneBase {
+template<class GateBase>
+class XYZ : public GateBase {
 
   size_t op;
   double angle;
@@ -21,7 +21,7 @@ class XYZ : public GeneBase {
   Backend::Controls ixs;
   Backend::Gate mat;
 
-  using SP = std::shared_ptr<GeneBase>;
+  using SP = std::shared_ptr<GateBase>;
 
 public:
 

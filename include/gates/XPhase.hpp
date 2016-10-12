@@ -1,14 +1,14 @@
 namespace QGA {
 
 
-template<class GeneBase>
-class X : public GeneBase {
+template<class GateBase>
+class X : public GateBase {
 
   unsigned tgt;
   double angle;
   Backend::Gate mat;
 
-  using SP = std::shared_ptr<GeneBase>;
+  using SP = std::shared_ptr<GateBase>;
 
 public:
 
@@ -68,15 +68,15 @@ public:
 }; // class X
 
 
-template<class GeneBase>
-class CPhase : public GeneBase {
+template<class GateBase>
+class CPhase : public GateBase {
 
   unsigned tgt;
   double angle;
   Backend::Controls ixs;
   Backend::Gate mat;
 
-  using SP = std::shared_ptr<GeneBase>;
+  using SP = std::shared_ptr<GateBase>;
 
 public:
 

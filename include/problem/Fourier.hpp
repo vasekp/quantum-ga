@@ -2,7 +2,7 @@
 #ifndef PROBLEM_HPP
 #define PROBLEM_HPP
 
-#include "../genes/XYZ.hpp"
+#include "../gates/XYZ.hpp"
 
 using QGA::Backend::State;
 

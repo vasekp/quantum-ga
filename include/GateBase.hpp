@@ -14,11 +14,11 @@ namespace internal {
 
 /* The base class for all genes. Defines methods derived classes have to
  * implement, and provides default (no-op) definition for some of them. */
-template<class Gene,
+template<class Base,
   template<class> class... Derived>
-class GeneBase : public internal::Visitors<Gene, Derived...> {
+class GateBase : public internal::Visitors<Base, Derived...> {
 
-  using SP = std::shared_ptr<Gene>;
+  using SP = std::shared_ptr<Base>;
 
 public:
 
@@ -80,9 +80,9 @@ public:
       return second->invite(first, second);
   }
 
-  using internal::Visitors<Gene, Derived...>::merge;
+  using internal::Visitors<Base, Derived...>::merge;
 
-  friend std::ostream& operator<< (std::ostream& os, const GeneBase& g) {
+  friend std::ostream& operator<< (std::ostream& os, const GateBase& g) {
     return g.write(os);
   }
 
@@ -97,7 +97,7 @@ protected:
    *
    * This can't be done here because *this only refers to the derived class
    * itself in its own context. We need to call a particular visitor for a
-   * specific class so it can't be a const GeneBase&. See the description of
+   * specific class so it can't be a const GateBase&. See the description of
    * merge() above.
    *
    * The derived class (gene template) needs to define this function even if
@@ -107,7 +107,7 @@ protected:
 
   virtual std::ostream& write(std::ostream&) const = 0;
 
-}; // virtual class GeneBase<Gene, Derived...>
+}; // virtual class GateBase<Base, Derived...>
 
 
 namespace internal {
@@ -128,14 +128,14 @@ namespace internal {
  * if it actually modifies first and second but does not combine them into a
  * single gene. */
 
-template<class Gene, template<class> class Derived>
+template<class GateBase, template<class> class Derived>
 class Visitor {
 
-  using SP = std::shared_ptr<Gene>;
+  using SP = std::shared_ptr<GateBase>;
 
 protected:
 
-  virtual bool merge(SP& /*first*/, SP& /*second*/, const Derived<Gene>&) {
+  virtual bool merge(SP& /*first*/, SP& /*second*/, const Derived<GateBase>&) {
     return false;
   }
 
@@ -145,32 +145,32 @@ protected:
 /* Chain template dependency is used to generate the merge() methods one for
  * each of a list of derived classes. */
 
-template<class Gene,
+template<class GateBase,
   template<class> class Head,
   template<class> class... Tail>
 class Visitors :
-  public Visitor<Gene, Head>,
-  public Visitors<Gene, Tail...>
+  public Visitor<GateBase, Head>,
+  public Visitors<GateBase, Tail...>
 {
 
 public:
 
-  using Visitor<Gene, Head>::merge;
-  using Visitors<Gene, Tail...>::merge;
+  using Visitor<GateBase, Head>::merge;
+  using Visitors<GateBase, Tail...>::merge;
 
 }; // class Visitors
 
-template<class Gene,
+template<class GateBase,
   template<class> class Last>
-class Visitors<Gene, Last> :
-  public Visitor<Gene, Last>
+class Visitors<GateBase, Last> :
+  public Visitor<GateBase, Last>
 {
 
 public:
 
-  using Visitor<Gene, Last>::merge;
+  using Visitor<GateBase, Last>::merge;
 
-}; // class Visitors<Gene, Last>
+}; // class Visitors<GateBase, Last>
 
 } // namespace internal
 

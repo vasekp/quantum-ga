@@ -2,17 +2,17 @@
 #ifndef PROBLEM_HPP
 #define PROBLEM_HPP
 
-#include "../genes/XPhase.hpp"
+#include "../gates/XPhase.hpp"
 
 using QGA::Backend::State;
 
-/* An extension of QGA::GeneBase allowing us to count oracle calls and pass
+/* An extension of QGA::GateBase allowing us to count oracle calls and pass
  * an additional parameter to applyTo(). */
 
 template<class GB, template<class> class... Genes>
-class NewBase : public QGA::GeneBase<GB, Genes...> {
+class NewBase : public QGA::GateBase<GB, Genes...> {
 
-  using QGA::GeneBase<GB, Genes...>::applyTo;
+  using QGA::GateBase<GB, Genes...>::applyTo;
 
 public:
 
@@ -29,10 +29,10 @@ public:
 
 /* The oracle gene template. */
 
-template<class GeneBase>
-class Oracle : public GeneBase {
+template<class GateBase>
+class Oracle : public GateBase {
 
-  using SP = std::shared_ptr<GeneBase>;
+  using SP = std::shared_ptr<GateBase>;
   bool odd;  // parity of the power
 
 public:
@@ -81,7 +81,7 @@ public:
 
   Oracle(bool odd_ = true): odd(odd_) { }
 
-}; // class Oracle<GeneBase>
+}; // class Oracle<GateBase>
 
 
 /* Our Gene type will randomly choose between XPhase and Oracle and will support

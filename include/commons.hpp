@@ -35,7 +35,7 @@ namespace QGA {
   }
 }
 
-#include "GeneBase.hpp"
+#include "GateBase.hpp"
 #include "Gene.hpp"
 #include "Fitness.hpp"
 #include "CandidateCounter.hpp"

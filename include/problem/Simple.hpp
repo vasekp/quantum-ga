@@ -2,7 +2,7 @@
 #ifndef QGA_PROBLEM_HPP
 #define QGA_PROBLEM_HPP
 
-#include "../genes/Fixed.hpp"
+#include "../gates/Fixed.hpp"
 
 using QGA::Backend::State;
 

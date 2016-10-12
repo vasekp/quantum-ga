@@ -20,14 +20,14 @@ std::vector<gate_struct> gates {
 };
 
 
-template<class GeneBase>
-class Fixed : public GeneBase {
+template<class GateBase>
+class Fixed : public GateBase {
 
   size_t op;
   unsigned tgt;
   Backend::Controls ixs;
 
-  using SP = std::shared_ptr<GeneBase>;
+  using SP = std::shared_ptr<const GateBase>;
 
 public:
 
@@ -92,6 +92,6 @@ public:
   Fixed(size_t op_, unsigned tgt_, const Backend::Controls& ixs_):
     op(op_), tgt(tgt_), ixs(ixs_) { }
 
-}; // class Gene
+}; // class Fixed
 
 } // namespace QGA
