@@ -8,11 +8,11 @@ class X : public GateBase {
   double angle;
   Backend::Gate mat;
 
-  using SP = std::shared_ptr<GateBase>;
+  using typename GateBase::Pointer;
 
 public:
 
-  static SP getNew() {
+  static Pointer getNew() {
     // distribution of targets
     std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
     // distribution of angle
@@ -32,24 +32,24 @@ public:
     return 0;
   }
 
-  void invert(SP& self) override {
+  void invert(Pointer& self) override {
     self = std::make_shared<X>(tgt, -angle);
   }
 
-  void mutate(SP& self) override {
+  void mutate(Pointer& self) override {
     std::normal_distribution<> dAng{0.0, 0.1};
     self = std::make_shared<X>(tgt, angle + dAng(gen::rng));
   }
 
-  void simplify(SP& self) override {
+  void simplify(Pointer& self) override {
     self = std::make_shared<X>(tgt, Tools::rationalize_angle(angle));
   }
 
-  bool invite(SP& first, SP& second) const override {
+  bool invite(Pointer& first, Pointer& second) const override {
     return first->merge(first, second, *this);
   }
 
-  bool merge(SP& first, SP& /*second*/, const X& g) override {
+  bool merge(Pointer& first, Pointer& /*second*/, const X& g) override {
     if(g.tgt == tgt) {
       first = std::make_shared<X>(tgt, angle + g.angle);
       return true;
@@ -76,11 +76,11 @@ class CPhase : public GateBase {
   Backend::Controls ixs;
   Backend::Gate mat;
 
-  using SP = std::shared_ptr<GateBase>;
+  using typename GateBase::Pointer;
 
 public:
 
-  static SP getNew() {
+  static Pointer getNew() {
     // distribution of targets
     std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
     // distribution of controls
@@ -112,24 +112,24 @@ public:
     return ixs.size() * ixs.size();
   }
 
-  void invert(SP& self) override {
+  void invert(Pointer& self) override {
     self = std::make_shared<CPhase>(tgt, -angle, ixs);
   }
 
-  void mutate(SP& self) override {
+  void mutate(Pointer& self) override {
     std::normal_distribution<> dAng{0.0, 0.1};
     self = std::make_shared<CPhase>(tgt, angle + dAng(gen::rng), ixs);
   }
 
-  void simplify(SP& self) override {
+  void simplify(Pointer& self) override {
     self = std::make_shared<CPhase>(tgt, Tools::rationalize_angle(angle), ixs);
   }
 
-  bool invite(SP& first, SP& second) const override {
+  bool invite(Pointer& first, Pointer& second) const override {
     return first->merge(first, second, *this);
   }
 
-  bool merge(SP& first, SP& /*second*/, const CPhase& g) override {
+  bool merge(Pointer& first, Pointer& /*second*/, const CPhase& g) override {
     if(g.tgt == tgt && g.ixs == ixs) {
       first = std::make_shared<CPhase>(tgt, angle + g.angle, ixs);
       return true;

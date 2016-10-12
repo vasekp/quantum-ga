@@ -21,11 +21,11 @@ class XYZ : public GateBase {
   Backend::Controls ixs;
   Backend::Gate mat;
 
-  using SP = std::shared_ptr<GateBase>;
+  using typename GateBase::Pointer;
 
 public:
 
-  static SP getNew() {
+  static Pointer getNew() {
     // distribution of possible gates
     std::uniform_int_distribution<size_t> dOp{0, gates.size() - 1};
     // distribution of targets
@@ -51,24 +51,24 @@ public:
     return ixs.size() * ixs.size();
   }
 
-  void invert(SP& self) override {
+  void invert(Pointer& self) override {
     self = std::make_shared<XYZ>(op, -angle, tgt, ixs);
   }
 
-  void mutate(SP& self) override {
+  void mutate(Pointer& self) override {
     std::normal_distribution<> dAng{0.0, 0.1};
     self = std::make_shared<XYZ>(op, angle + dAng(gen::rng), tgt, ixs);
   }
 
-  void simplify(SP& self) override {
+  void simplify(Pointer& self) override {
     self = std::make_shared<XYZ>(op, Tools::rationalize_angle(angle), tgt, ixs);
   }
 
-  bool invite(SP& first, SP& second) const override {
+  bool invite(Pointer& first, Pointer& second) const override {
     return first->merge(first, second, *this);
   }
 
-  bool merge(SP& first, SP& /*second*/, const XYZ& g) override {
+  bool merge(Pointer& first, Pointer& /*second*/, const XYZ& g) override {
     if(g.op == op && g.tgt == tgt && g.ixs == ixs) {
       first = std::make_shared<XYZ>(op, angle + g.angle, tgt, ixs);
       return true;

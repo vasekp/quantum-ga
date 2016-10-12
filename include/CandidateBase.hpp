@@ -5,7 +5,7 @@ class CandidateBase {
 
 protected:
 
-  std::vector<std::shared_ptr<Gene>> gt{};
+  std::vector<Gene> gt{};
 
 private:
 
@@ -20,7 +20,7 @@ public:
 
   using GeneType = Gene;
 
-  CandidateBase(std::vector<std::shared_ptr<Gene>>&& gt_):
+  CandidateBase(std::vector<Gene>&& gt_):
       gt(std::move(gt_)) {
     if(gt.size() == 0)
       return;
@@ -49,7 +49,7 @@ public:
     return os;
   }
 
-  const std::vector<std::shared_ptr<Gene>>& genotype() const {
+  const std::vector<Gene>& genotype() const {
     return gt;
   }
 

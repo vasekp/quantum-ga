@@ -27,11 +27,11 @@ class Fixed : public GateBase {
   unsigned tgt;
   Backend::Controls ixs;
 
-  using SP = std::shared_ptr<const GateBase>;
+  using typename GateBase::Pointer;
 
 public:
 
-  static SP getNew() {
+  static Pointer getNew() {
     /* Distributions: cheap and safer in MT environment this way */
     // distribution of possible gates (except of identity)
     std::uniform_int_distribution<size_t> dOp{1, gates.size() - 1};
@@ -56,17 +56,17 @@ public:
     return ixs.size() * ixs.size();
   }
 
-  void invert(SP& self) override {
+  void invert(Pointer& self) override {
     int dIx = gates[op].inv;
     if(dIx != 0)
       self = std::make_shared<Fixed>(op + dIx, tgt, ixs);
   }
 
-  bool invite(SP& first, SP& second) const override {
+  bool invite(Pointer& first, Pointer& second) const override {
     return first->merge(first, second, *this);
   }
 
-  bool merge(SP& first, SP& /*second*/, const Fixed& g) override {
+  bool merge(Pointer& first, Pointer& /*second*/, const Fixed& g) override {
     // G * G = square(G) if also among our operations
     if(g.op == op && g.tgt == tgt && g.ixs == ixs && gates[op].sq != 0) {
       first = std::make_shared<Fixed>(op + gates[op].sq, tgt, ixs);

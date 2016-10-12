@@ -32,12 +32,12 @@ public:
 template<class GateBase>
 class Oracle : public GateBase {
 
-  using SP = std::shared_ptr<GateBase>;
+  using typename GateBase::Pointer;
   bool odd;  // parity of the power
 
 public:
 
-  static SP getNew() {
+  static Pointer getNew() {
     return std::make_shared<Oracle>();
   }
 
@@ -65,11 +65,11 @@ public:
     return 1;
   }
 
-  bool invite(SP& first, SP& second) const override {
+  bool invite(Pointer& first, Pointer& second) const override {
     return first->merge(first, second, *this);
   }
 
-  bool merge(SP& first, SP& /*second*/, const Oracle& g) override {
+  bool merge(Pointer& first, Pointer& /*second*/, const Oracle& g) override {
     // oracle * oracle = oracle^2 → true ^ true = false
     first = std::make_shared<Oracle>(odd ^ g.odd);
     return true;

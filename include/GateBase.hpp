@@ -14,13 +14,13 @@ namespace internal {
 
 /* The base class for all genes. Defines methods derived classes have to
  * implement, and provides default (no-op) definition for some of them. */
-template<class Base,
-  template<class> class... Derived>
-class GateBase : public internal::Visitors<Base, Derived...> {
-
-  using SP = std::shared_ptr<Base>;
+template<class RealBase,
+  template<class> class... Gates>
+class GateBase : public internal::Visitors<RealBase, Gates...> {
 
 public:
+
+  using Pointer = std::shared_ptr<RealBase>;
 
   // apply this gene to a state vector
   virtual Backend::State applyTo(const Backend::State&) const = 0;
@@ -45,11 +45,11 @@ public:
    * deletion of this. Keep a local copy of the shared pointer on stack if
    * that is anything than the very last command. */
 
-  virtual void invert(SP& /*self*/) { }
+  virtual void invert(Pointer& /*self*/) { }
 
-  virtual void mutate(SP& /*self*/) { }
+  virtual void mutate(Pointer& /*self*/) { }
 
-  virtual void simplify(SP& /*self*/) { }
+  virtual void simplify(Pointer& /*self*/) { }
 
   /* Merge needs to be implemented using double dispatch, because only
    * genes of the same class can typically be merged (albeit this is not a
@@ -68,7 +68,7 @@ public:
    *
    * See: http://www.oodesign.com/visitor-pattern.html */
 
-  bool merge(SP& first, SP& second) {
+  bool merge(Pointer& first, Pointer& second) {
     if(first->isTrivial()) {
       // op1 = identity: replace by second and consume
       first = second;
@@ -80,7 +80,7 @@ public:
       return second->invite(first, second);
   }
 
-  using internal::Visitors<Base, Derived...>::merge;
+  using internal::Visitors<RealBase, Gates...>::merge;
 
   friend std::ostream& operator<< (std::ostream& os, const GateBase& g) {
     return g.write(os);
@@ -91,7 +91,7 @@ protected:
   /* Every derived class must implement this function with exactly the
    * following definition:
    *
-   *   bool invite(SP& first, SP& second) const override {
+   *   bool invite(Pointer& first, Pointer& second) const override {
    *     return first->merge(first, second, *this);
    *   }
    *
@@ -103,11 +103,11 @@ protected:
    * The derived class (gene template) needs to define this function even if
    * it does not allow merging with any other genes. */
 
-  virtual bool invite(SP& first, SP& second) const = 0;
+  virtual bool invite(Pointer& first, Pointer& second) const = 0;
 
   virtual std::ostream& write(std::ostream&) const = 0;
 
-}; // virtual class GateBase<Base, Derived...>
+}; // virtual class GateBase<RealBase, Gates...>
 
 
 namespace internal {
@@ -118,9 +118,9 @@ namespace internal {
  * possible visitee, but we don't know what the derived classes are yet. (This
  * is supplied in Gene.hpp.)
  *
- * Subclasses can override merge(SP&, SP&, const X&) for some particular
- * values of X (presumably themselves) to allow merging with instances of
- * class X.
+ * Subclasses can override merge(Pointer&, Pointer&, const X&) for some
+ * particular values of X (presumably themselves) to allow merging with
+ * instances of class X.
  *
  * The default implementation returns false, indicating that no merge
  * happened. A return value of true means that one of the pair of genes has
@@ -128,14 +128,14 @@ namespace internal {
  * if it actually modifies first and second but does not combine them into a
  * single gene. */
 
-template<class GateBase, template<class> class Derived>
+template<class GateBase, template<class> class Gate>
 class Visitor {
 
   using SP = std::shared_ptr<GateBase>;
 
 protected:
 
-  virtual bool merge(SP& /*first*/, SP& /*second*/, const Derived<GateBase>&) {
+  virtual bool merge(SP& /*first*/, SP& /*second*/, const Gate<GateBase>&) {
     return false;
   }
 
