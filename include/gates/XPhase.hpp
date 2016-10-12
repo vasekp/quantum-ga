@@ -148,10 +148,10 @@ public:
   }
 
   CPhase(unsigned tgt_, double angle_, std::vector<bool> ctrl):
-      tgt(tgt_), angle(angle_), ixs(ctrl), mat(Backend::zrot(angle)) { }
+      tgt(tgt_), angle(angle_), ixs(ctrl), mat(Backend::phase(angle)) { }
 
   CPhase(unsigned tgt_, double angle_, const Backend::Controls& ixs_):
-      tgt(tgt_), angle(angle_), ixs(ixs_), mat(Backend::zrot(angle)) { }
+      tgt(tgt_), angle(angle_), ixs(ixs_), mat(Backend::phase(angle)) { }
 
 }; // class CPhase
 
