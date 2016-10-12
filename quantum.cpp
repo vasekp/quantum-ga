@@ -1,5 +1,7 @@
 #include <iostream>
 #include <csignal>
+#include <cstdlib>
+#include <chrono>
 
 #include "genetic.hpp"
 #include "include/commons.hpp"
