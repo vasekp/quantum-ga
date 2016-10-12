@@ -2,7 +2,7 @@
 #ifndef QGA_PROBLEM_HPP
 #define QGA_PROBLEM_HPP
 
-#include "../genes/Fixed.hpp"
+#include "../gates/Fixed.hpp"
 
 using QGA::Backend::State;
 
@@ -36,7 +36,7 @@ private:
   State sim() const {
     State psi{0};
     for(const auto& g : gt)
-      psi = psi.apply(*g);
+      psi = psi.apply(g);
     return psi;
   }
 

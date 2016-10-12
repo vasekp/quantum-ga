@@ -1,18 +1,18 @@
 namespace QGA {
 
 
-template<class GeneBase>
-class X : public GeneBase {
+template<class GateBase>
+class X : public GateBase {
 
   unsigned tgt;
   double angle;
   Backend::Gate mat;
 
-  using SP = std::shared_ptr<GeneBase>;
+  using typename GateBase::Pointer;
 
 public:
 
-  static SP getNew() {
+  static Pointer getNew() {
     // distribution of targets
     std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
     // distribution of angle
@@ -24,7 +24,7 @@ public:
     return psi.apply_ctrl(mat, {}, tgt);
   }
 
-  bool isTrivial() override {
+  bool isTrivial() const override {
     return angle == 0;
   }
 
@@ -32,24 +32,24 @@ public:
     return 0;
   }
 
-  void invert(SP& self) override {
+  void invert(Pointer& self) const override {
     self = std::make_shared<X>(tgt, -angle);
   }
 
-  void mutate(SP& self) override {
+  void mutate(Pointer& self) const override {
     std::normal_distribution<> dAng{0.0, 0.1};
     self = std::make_shared<X>(tgt, angle + dAng(gen::rng));
   }
 
-  void simplify(SP& self) override {
+  void simplify(Pointer& self) const override {
     self = std::make_shared<X>(tgt, Tools::rationalize_angle(angle));
   }
 
-  bool invite(SP& first, SP& second) const override {
+  bool invite(Pointer& first, Pointer& second) const override {
     return first->merge(first, second, *this);
   }
 
-  bool merge(SP& first, SP& /*second*/, const X& g) override {
+  bool merge(Pointer& first, Pointer&, const X& g) const override {
     if(g.tgt == tgt) {
       first = std::make_shared<X>(tgt, angle + g.angle);
       return true;
@@ -68,19 +68,19 @@ public:
 }; // class X
 
 
-template<class GeneBase>
-class CPhase : public GeneBase {
+template<class GateBase>
+class CPhase : public GateBase {
 
   unsigned tgt;
   double angle;
   Backend::Controls ixs;
   Backend::Gate mat;
 
-  using SP = std::shared_ptr<GeneBase>;
+  using typename GateBase::Pointer;
 
 public:
 
-  static SP getNew() {
+  static Pointer getNew() {
     // distribution of targets
     std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
     // distribution of controls
@@ -112,24 +112,24 @@ public:
     return ixs.size() * ixs.size();
   }
 
-  void invert(SP& self) override {
+  void invert(Pointer& self) const override {
     self = std::make_shared<CPhase>(tgt, -angle, ixs);
   }
 
-  void mutate(SP& self) override {
+  void mutate(Pointer& self) const override {
     std::normal_distribution<> dAng{0.0, 0.1};
     self = std::make_shared<CPhase>(tgt, angle + dAng(gen::rng), ixs);
   }
 
-  void simplify(SP& self) override {
+  void simplify(Pointer& self) const override {
     self = std::make_shared<CPhase>(tgt, Tools::rationalize_angle(angle), ixs);
   }
 
-  bool invite(SP& first, SP& second) const override {
+  bool invite(Pointer& first, Pointer& second) const override {
     return first->merge(first, second, *this);
   }
 
-  bool merge(SP& first, SP& /*second*/, const CPhase& g) override {
+  bool merge(Pointer& first, Pointer&, const CPhase& g) const override {
     if(g.tgt == tgt && g.ixs == ixs) {
       first = std::make_shared<CPhase>(tgt, angle + g.angle, ixs);
       return true;

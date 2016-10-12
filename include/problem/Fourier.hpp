@@ -2,7 +2,7 @@
 #ifndef PROBLEM_HPP
 #define PROBLEM_HPP
 
-#include "../genes/XYZ.hpp"
+#include "../gates/XYZ.hpp"
 
 using QGA::Backend::State;
 
@@ -57,7 +57,7 @@ private:
   State sim(const State& psi) const {
     State ret{psi};
     for(const auto& g : gt)
-      ret = ret.apply(*g);
+      ret = ret.apply(g);
     return ret;
   }
 

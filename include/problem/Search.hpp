@@ -2,17 +2,17 @@
 #ifndef PROBLEM_HPP
 #define PROBLEM_HPP
 
-#include "../genes/XPhase.hpp"
+#include "../gates/XPhase.hpp"
 
 using QGA::Backend::State;
 
-/* An extension of QGA::GeneBase allowing us to count oracle calls and pass
+/* An extension of QGA::GateBase allowing us to count oracle calls and pass
  * an additional parameter to applyTo(). */
 
-template<class GB, template<class> class... Genes>
-class NewBase : public QGA::GeneBase<GB, Genes...> {
+template<class GateBase, template<class> class... Gates>
+class NewBase : public QGA::GateBase<GateBase, Gates...> {
 
-  using QGA::GeneBase<GB, Genes...>::applyTo;
+  using QGA::GateBase<GateBase, Gates...>::applyTo;
 
 public:
 
@@ -29,15 +29,15 @@ public:
 
 /* The oracle gene template. */
 
-template<class GeneBase>
-class Oracle : public GeneBase {
+template<class GateBase>
+class Oracle : public GateBase {
 
-  using SP = std::shared_ptr<GeneBase>;
+  using typename GateBase::Pointer;
   bool odd;  // parity of the power
 
 public:
 
-  static SP getNew() {
+  static Pointer getNew() {
     return std::make_shared<Oracle>();
   }
 
@@ -52,7 +52,7 @@ public:
     return ret;
   }
 
-  bool isTrivial() override {
+  bool isTrivial() const override {
     // oracle^(2k) = oracle^0 = identity
     return !odd;
   }
@@ -65,11 +65,11 @@ public:
     return 1;
   }
 
-  bool invite(SP& first, SP& second) const override {
+  bool invite(Pointer& first, Pointer& second) const override {
     return first->merge(first, second, *this);
   }
 
-  bool merge(SP& first, SP& /*second*/, const Oracle& g) override {
+  bool merge(Pointer& first, Pointer&, const Oracle& g) const override {
     // oracle * oracle = oracle^2 → true ^ true = false
     first = std::make_shared<Oracle>(odd ^ g.odd);
     return true;
@@ -81,7 +81,7 @@ public:
 
   Oracle(bool odd_ = true): odd(odd_) { }
 
-}; // class Oracle<GeneBase>
+}; // class Oracle<GateBase>
 
 
 /* Our Gene type will randomly choose between XPhase and Oracle and will support
@@ -172,7 +172,7 @@ private:
   State sim(const State& psi, unsigned mark) const {
     State ret{psi};
     for(const auto& g : gt)
-      ret = ret.apply(*g, mark);
+      ret = ret.apply(g, mark);
     return ret;
   }
 

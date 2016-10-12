@@ -117,7 +117,7 @@ public:
 
   template<class Gene, class... Args>
   State apply(const Gene& g, Args... args) {
-    return g.applyTo(*this, args...);
+    return g->applyTo(*this, args...);
   }
 
   State apply_ctrl(const Gate& mat, const Controls& ixs, unsigned tgt) const {
