@@ -5,8 +5,10 @@ namespace Backend {
   class State;
 }
 
-template<class, template<class> class, template<class> class...>
-class Visitors;
+namespace internal {
+  template<class, template<class> class, template<class> class...>
+  class Visitors;
+}
 /* End forward declarations */
 
 
@@ -14,7 +16,7 @@ class Visitors;
  * implement, and provides default (no-op) definition for some of them. */
 template<class Gene,
   template<class> class... Derived>
-class GeneBase : public Visitors<Gene, Derived...> {
+class GeneBase : public internal::Visitors<Gene, Derived...> {
 
   using SP = std::shared_ptr<Gene>;
 
@@ -78,7 +80,7 @@ public:
       return second->invite(first, second);
   }
 
-  using Visitors<Gene, Derived...>::merge;
+  using internal::Visitors<Gene, Derived...>::merge;
 
   friend std::ostream& operator<< (std::ostream& os, const GeneBase& g) {
     return g.write(os);
@@ -107,6 +109,8 @@ protected:
 
 }; // virtual class GeneBase<Gene, Derived...>
 
+
+namespace internal {
 
 /* The purpose of this helper class is to inject a virtual method for calling
  * a particular gene class, for the purposes of the merge() call pattern. Note
@@ -168,5 +172,6 @@ public:
 
 }; // class Visitors<Gene, Last>
 
+} // namespace internal
 
 } // namespace QGA
