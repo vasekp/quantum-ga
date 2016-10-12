@@ -2,14 +2,13 @@ namespace QGA {
 
 struct gate_struct {
   Backend::Gate(*fn)(double);
-  std::string name;
-  bool ctrl;
+  char name;
 };
 
 std::vector<gate_struct> gates {
-  {Backend::xrot, "X", true},
-  {Backend::yrot, "Y", true},
-  {Backend::zrot, "Z", true}
+  {Backend::xrot, 'X'},
+  {Backend::yrot, 'Y'},
+  {Backend::zrot, 'Z'}
 };
 
 
@@ -19,7 +18,6 @@ class XYZ : public GeneBase {
   size_t op;
   double angle;
   unsigned tgt;
-  unsigned hw;
   Backend::Controls ixs;
   Backend::Gate mat;
 
@@ -34,7 +32,7 @@ public:
     std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
     // distribution of controls
     unsigned tgt_ = dTgt(gen::rng);
-    QGA::controls_distribution dCtrl{Config::nBit, Config::pControl, tgt_};
+    Tools::controls_distribution dCtrl{Config::nBit, Config::pControl, tgt_};
     // distribution of angle
     std::uniform_real_distribution<> dAng{-0.5*Const::pi, 0.5*Const::pi};
     return std::make_shared<XYZ>(
@@ -45,40 +43,37 @@ public:
     return psi.apply_ctrl(mat, ixs, tgt);
   }
 
+  bool isTrivial() override {
+    return angle == 0;
+  }
+
   unsigned complexity() const override {
-    return hw * hw;
+    return ixs.size() * ixs.size();
   }
 
-  SP invert(const SP&) override {
-    return std::make_shared<XYZ>(op, -angle, tgt, ixs, hw);
+  void invert(SP& self) override {
+    self = std::make_shared<XYZ>(op, -angle, tgt, ixs);
   }
 
-  SP mutate(const SP&) override {
+  void mutate(SP& self) override {
     std::normal_distribution<> dAng{0.0, 0.1};
-    return std::make_shared<XYZ>(op, angle + dAng(gen::rng), tgt, ixs, hw);
+    self = std::make_shared<XYZ>(op, angle + dAng(gen::rng), tgt, ixs);
   }
 
-  SP simplify(const SP&) override {
-    return std::make_shared<XYZ>(op,
-        GeneBase::rationalize(std::fmod(angle / Const::pi, 2.0)) * Const::pi,
-        tgt, ixs, hw);
+  void simplify(SP& self) override {
+    self = std::make_shared<XYZ>(op, Tools::rationalize_angle(angle), tgt, ixs);
   }
 
-  SP invite(const SP& g) const override {
-    return g.get()->visit(g, *this);
+  bool invite(SP& first, SP& second) const override {
+    return first->merge(first, second, *this);
   }
 
-  SP visit(const SP& self, const XYZ& g) override {
-    if(angle == 0) {
-      // op1 = identity
-      return std::make_shared<XYZ>(g);
-    } else if(g.angle == 0) {
-      // op2 = identity
-      return self;
-    } else if(g.op == op && g.tgt == tgt && g.ixs == ixs) {
-      return std::make_shared<XYZ>(op, angle + g.angle, tgt, ixs, hw);
+  bool merge(SP& first, SP& /*second*/, const XYZ& g) override {
+    if(g.op == op && g.tgt == tgt && g.ixs == ixs) {
+      first = std::make_shared<XYZ>(op, angle + g.angle, tgt, ixs);
+      return true;
     } else
-      return self;
+      return false;
   }
 
   std::ostream& write(std::ostream& os) const override {
@@ -93,21 +88,15 @@ public:
     return os;
   }
 
-// Should be private, but constructors are needed my std::make_shared().
-
   NOINLINE XYZ(size_t op_, double angle_, unsigned tgt_,
       std::vector<bool> ctrl):
-      op(op_), angle(angle_), tgt(tgt_), hw(0), ixs(ctrl) {
-    if(gates[op].ctrl)
-      hw = ixs.size();
-    else
-      ixs.clear();
+      op(op_), angle(angle_), tgt(tgt_), ixs(ctrl) {
     mat = gates[op].fn(angle);
   }
 
   NOINLINE XYZ(size_t op_, double angle_, unsigned tgt_,
-      const Backend::Controls& ixs_, unsigned hw_):
-      op(op_), angle(angle_), tgt(tgt_), hw(hw_), ixs(ixs_) {
+      const Backend::Controls& ixs_):
+      op(op_), angle(angle_), tgt(tgt_), ixs(ixs_) {
     mat = gates[op].fn(angle);
   }
 
