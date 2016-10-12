@@ -2,19 +2,40 @@
 #ifndef PROBLEM_HPP
 #define PROBLEM_HPP
 
-#include "../XYZGene.hpp"
+#include "../genes/XPhase.hpp"
 
 using QGA::Backend::State;
 
+/* An extension of QGA::GeneBase allowing us to count oracle calls and pass
+ * an additional parameter to applyTo(). */
+
+template<class GB, template<class> class... Genes>
+class NewBase : public QGA::GeneBase<GB, Genes...> {
+
+  using QGA::GeneBase<GB, Genes...>::applyTo;
+
+public:
+
+  virtual unsigned calls() const {
+    return 0;
+  }
+
+  virtual State applyTo(const State& psi, unsigned) const {
+    return this->applyTo(psi);
+  }
+
+};
+
+
+/* The oracle gene template. */
 
 template<class GeneBase>
 class Oracle : public GeneBase {
 
   using SP = std::shared_ptr<GeneBase>;
+  bool odd;  // parity of the power
 
 public:
-
-  Oracle() { }
 
   static SP getNew() {
     return std::make_shared<Oracle>();
@@ -26,8 +47,14 @@ public:
 
   State applyTo(const State& psi, unsigned mark) const override {
     State ret{psi};
-    ret[mark] = -ret[mark];
+    if(odd)
+      ret[mark] = -ret[mark];
     return ret;
+  }
+
+  bool isTrivial() override {
+    // oracle^(2k) = oracle^0 = identity
+    return !odd;
   }
 
   unsigned complexity() const override {
@@ -38,40 +65,29 @@ public:
     return 1;
   }
 
-  SP invite(const SP& g) const override {
-    return g->visit(g, *this);
+  bool invite(SP& first, SP& second) const override {
+    return first->merge(first, second, *this);
+  }
+
+  bool merge(SP& first, SP& /*second*/, const Oracle& g) override {
+    // oracle * oracle = oracle^2 → true ^ true = false
+    first = std::make_shared<Oracle>(odd ^ g.odd);
+    return true;
   }
 
   std::ostream& write(std::ostream& os) const override {
-    return os << "Oracle";
+    return os << (odd ? "Oracle" : "[Id]");
   }
+
+  Oracle(bool odd_ = true): odd(odd_) { }
 
 }; // class Oracle<GeneBase>
 
 
-class Gene : public QGA::GeneBase<Gene, Oracle, QGA::XYZGene> {
+/* Our Gene type will randomly choose between XPhase and Oracle and will support
+ * Gene::calls(). */
 
-public:
-
-  using QGA::GeneBase<Gene, Oracle, QGA::XYZGene>::applyTo;
-
-  virtual unsigned calls() const {
-    return 0;
-  }
-
-  virtual State applyTo(const State& psi, unsigned) const {
-    return applyTo(psi);
-  }
-
-  static std::shared_ptr<Gene> getNew() {
-    std::bernoulli_distribution dOracle{0.1};
-    if(dOracle(gen::rng))
-      return Oracle<Gene>::getNew();
-    else
-      return QGA::XYZGene<Gene>::getNew();
-  }
-
-}; // class GeneBase<Derived...>
+using Gene = QGA::CustomGene<NewBase, QGA::X, QGA::CPhase, Oracle>;
 
 
 struct Fitness {

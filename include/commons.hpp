@@ -36,11 +36,13 @@ namespace QGA {
 }
 
 #include "GeneBase.hpp"
+#include "Gene.hpp"
 #include "Fitness.hpp"
 #include "CandidateCounter.hpp"
 #include "CandidateBase.hpp"
 #include "CandidateFactory.hpp"
 
 #include "Colours.hpp"
+#include "Tools.hpp"
 
 #endif // !defined QGA_COMMONS_HPP
