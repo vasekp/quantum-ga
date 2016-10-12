@@ -1,3 +1,6 @@
+#ifndef GATE_XPHASE_HPP
+#define GATE_XPHASE_HPP
+
 namespace QGA {
 
 
@@ -158,3 +161,5 @@ public:
 }; // class CPhase
 
 } // namespace QGA
+
+#endif // !defined GATE_XPHASE_HPP

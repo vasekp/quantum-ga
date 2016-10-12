@@ -1,6 +1,6 @@
 // allow only one problem
-#ifndef PROBLEM_HPP
-#define PROBLEM_HPP
+#ifndef QGA_PROBLEM_HPP
+#define QGA_PROBLEM_HPP
 
 #include "../gates/XPhase.hpp"
 
@@ -178,4 +178,4 @@ private:
 
 }; // class Candidate
 
-#endif // !defined PROBLEM_HPP
+#endif // !defined QGA_PROBLEM_HPP

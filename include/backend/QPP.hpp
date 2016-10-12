@@ -1,6 +1,6 @@
-// allow only one wrapper
-#ifndef QGA_WRAPPER_HPP
-#define QGA_WRAPPER_HPP
+// allow only one backend
+#ifndef QGA_BACKEND_HPP
+#define QGA_BACKEND_HPP
 
 #include "qpp.h"
 //#include <unsupported/Eigen/FFT>
@@ -135,4 +135,4 @@ private:
 
 } // namespace QGA
 
-#endif // !defined QGA_WRAPPER_HPP
+#endif // !defined QGA_BACKEND_HPP

@@ -1,3 +1,6 @@
+#ifndef GATE_FIXED_HPP
+#define GATE_FIXED_HPP
+
 namespace QGA {
 
 struct gate_struct {
@@ -95,3 +98,5 @@ public:
 }; // class Fixed
 
 } // namespace QGA
+
+#endif // !defined GATE_FIXED_HPP

@@ -1,6 +1,6 @@
-// allow only one wrapper
-#ifndef QGA_WRAPPER_HPP
-#define QGA_WRAPPER_HPP
+// allow only one backend
+#ifndef QGA_BACKEND_HPP
+#define QGA_BACKEND_HPP
 
 #define QICLIB_DONT_USE_NLOPT
 #define ARMA_DONT_USE_WRAPPER
@@ -145,4 +145,4 @@ private:
 
 } // namespace QGA
 
-#endif // !defined QGA_WRAPPER_HPP
+#endif // !defined QGA_BACKEND_HPP

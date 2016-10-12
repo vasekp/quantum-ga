@@ -1,3 +1,6 @@
+#ifndef GATE_XYZ_HPP
+#define GATE_XYZ_HPP
+
 namespace QGA {
 
 struct gate_struct {
@@ -103,3 +106,5 @@ public:
 }; // class XYZ
 
 } // namespace QGA
+
+#endif // !defined GATE_XYZ_HPP
