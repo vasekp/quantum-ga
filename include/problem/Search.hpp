@@ -9,10 +9,10 @@ using QGA::Backend::State;
 /* An extension of QGA::GateBase allowing us to count oracle calls and pass
  * an additional parameter to applyTo(). */
 
-template<class GB, template<class> class... Genes>
-class NewBase : public QGA::GateBase<GB, Genes...> {
+template<class GateBase, template<class> class... Gates>
+class NewBase : public QGA::GateBase<GateBase, Gates...> {
 
-  using QGA::GateBase<GB, Genes...>::applyTo;
+  using QGA::GateBase<GateBase, Gates...>::applyTo;
 
 public:
 
