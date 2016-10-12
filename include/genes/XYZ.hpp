@@ -43,40 +43,39 @@ public:
     return psi.apply_ctrl(mat, ixs, tgt);
   }
 
+  bool isTrivial() override {
+    return angle == 0;
+  }
+
   unsigned complexity() const override {
     return ixs.size() * ixs.size();
   }
 
-  SP invert(const SP&) override {
-    return std::make_shared<XYZ>(op, -angle, tgt, ixs);
+  void invert(SP& self) override {
+    self = std::make_shared<XYZ>(op, -angle, tgt, ixs);
   }
 
-  SP mutate(const SP&) override {
+  void mutate(SP& self) override {
     std::normal_distribution<> dAng{0.0, 0.1};
-    return std::make_shared<XYZ>(op, angle + dAng(gen::rng), tgt, ixs);
+    self = std::make_shared<XYZ>(op, angle + dAng(gen::rng), tgt, ixs);
   }
 
-  SP simplify(const SP&) override {
-    return std::make_shared<XYZ>(op,
+  void simplify(SP& self) override {
+    self = std::make_shared<XYZ>(op,
         GeneBase::rationalize(std::fmod(angle / Const::pi, 2.0)) * Const::pi,
         tgt, ixs);
   }
 
-  SP invite(const SP& g) const override {
-    return g.get()->visit(g, *this);
+  bool invite(SP& first, SP& second) const override {
+    return first->merge(first, second, *this);
   }
 
-  SP visit(const SP& self, const XYZ& g) override {
-    if(angle == 0) {
-      // op1 = identity
-      return std::make_shared<XYZ>(g);
-    } else if(g.angle == 0) {
-      // op2 = identity
-      return self;
-    } else if(g.op == op && g.tgt == tgt && g.ixs == ixs) {
-      return std::make_shared<XYZ>(op, angle + g.angle, tgt, ixs);
+  bool merge(SP& first, SP& /*second*/, const XYZ& g) override {
+    if(g.op == op && g.tgt == tgt && g.ixs == ixs) {
+      first = std::make_shared<XYZ>(op, angle + g.angle, tgt, ixs);
+      return true;
     } else
-      return self;
+      return false;
   }
 
   std::ostream& write(std::ostream& os) const override {

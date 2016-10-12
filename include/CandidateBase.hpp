@@ -24,14 +24,15 @@ public:
       gt(std::move(gt_)) {
     if(gt.size() == 0)
       return;
-    auto end = gt.end();
-    for(auto last = gt.begin(), cur = last + 1; cur != end; cur++) {
+    auto end = gt.end(), last = gt.begin();
+    for(auto cur = last + 1; cur != end; cur++) {
       // Can be merged: done, go to next cur
-      // Can not (new = original): put *cur after *last and increase last
-      std::shared_ptr<Gene> sp = (*last)->merge(*last, *cur);
-      if(sp == *last)
+      // Can not: put *cur after *last and increase both
+      bool consumed = (*last)->merge(*last, *cur);
+      if(!consumed)
         std::swap(*++last, *cur);
     }
+    gt.erase(++last, gt.end());
   }
 
   NOINLINE Fitness fitness() const {

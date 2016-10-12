@@ -48,34 +48,31 @@ public:
     return psi.apply_ctrl(gates[op].op, ixs, tgt);
   }
 
+  bool isTrivial() override {
+    return op == 0;
+  }
+
   unsigned complexity() const override {
     return ixs.size() * ixs.size();
   }
 
-  SP invert(const SP& orig) override {
+  void invert(SP& self) override {
     int dIx = gates[op].inv;
-    if(dIx)
-      return std::make_shared<Fixed>(op + dIx, tgt, ixs);
-    else
-      return orig;
+    if(dIx != 0)
+      self = std::make_shared<Fixed>(op + dIx, tgt, ixs);
   }
 
-  SP invite(const SP& g) const override {
-    return g.get()->visit(g, *this);
+  bool invite(SP& first, SP& second) const override {
+    return first->merge(first, second, *this);
   }
 
-  SP visit(const SP& self, const Fixed& g) override {
-    if(op == 0) {
-      // Identity * G = G
-      return std::make_shared<Fixed>(g);
-    } else if(g.op == 0) {
-      // G * Identity = G
-      return self;
-    } else if(g.op == op && g.tgt == tgt && g.ixs == ixs && gates[op].sq != 0) {
-      // G * G = square(G) if also among our operations
-      return std::make_shared<Fixed>(op + gates[op].sq, tgt, ixs);
+  bool merge(SP& first, SP& second, const Fixed& g) override {
+    // G * G = square(G) if also among our operations
+    if(g.op == op && g.tgt == tgt && g.ixs == ixs && gates[op].sq != 0) {
+      first = std::make_shared<Fixed>(op + gates[op].sq, tgt, ixs);
+      return true;
     } else
-      return self;
+      return false;
   }
 
   std::ostream& write(std::ostream& os) const override {

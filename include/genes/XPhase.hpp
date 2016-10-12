@@ -24,39 +24,38 @@ public:
     return psi.apply_ctrl(mat, {}, tgt);
   }
 
+  bool isTrivial() override {
+    return angle == 0;
+  }
+
   unsigned complexity() const override {
     return 0;
   }
 
-  SP invert(const SP&) override {
-    return std::make_shared<X>(tgt, -angle);
+  void invert(SP& self) override {
+    self = std::make_shared<X>(tgt, -angle);
   }
 
-  SP mutate(const SP&) override {
+  void mutate(SP& self) override {
     std::normal_distribution<> dAng{0.0, 0.1};
-    return std::make_shared<X>(tgt, angle + dAng(gen::rng));
+    self = std::make_shared<X>(tgt, angle + dAng(gen::rng));
   }
 
-  SP simplify(const SP&) override {
-    return std::make_shared<X>(tgt,
+  void simplify(SP& self) override {
+    self = std::make_shared<X>(tgt,
         GeneBase::rationalize(std::fmod(angle / Const::pi, 2.0)) * Const::pi);
   }
 
-  SP invite(const SP& g) const override {
-    return g.get()->visit(g, *this);
+  bool invite(SP& first, SP& second) const override {
+    return first->merge(first, second, *this);
   }
 
-  SP visit(const SP& self, const X& g) override {
-    if(angle == 0) {
-      // op1 = identity
-      return std::make_shared<X>(g);
-    } else if(g.angle == 0) {
-      // op2 = identity
-      return self;
-    } else if(g.tgt == tgt) {
-      return std::make_shared<X>(tgt, angle + g.angle);
+  bool merge(SP& first, SP& /*second*/, const X& g) override {
+    if(g.tgt == tgt) {
+      first = std::make_shared<X>(tgt, angle + g.angle);
+      return true;
     } else
-      return self;
+      return false;
   }
 
   std::ostream& write(std::ostream& os) const override {
@@ -114,36 +113,31 @@ public:
     return ixs.size() * ixs.size();
   }
 
-  SP invert(const SP&) override {
-    return std::make_shared<CPhase>(tgt, -angle, ixs);
+  void invert(SP& self) override {
+    self = std::make_shared<CPhase>(tgt, -angle, ixs);
   }
 
-  SP mutate(const SP&) override {
+  void mutate(SP& self) override {
     std::normal_distribution<> dAng{0.0, 0.1};
-    return std::make_shared<CPhase>(tgt, angle + dAng(gen::rng), ixs);
+    self = std::make_shared<CPhase>(tgt, angle + dAng(gen::rng), ixs);
   }
 
-  SP simplify(const SP&) override {
-    return std::make_shared<CPhase>(tgt,
+  void simplify(SP& self) override {
+    self = std::make_shared<CPhase>(tgt,
         GeneBase::rationalize(std::fmod(angle / Const::pi, 2.0)) * Const::pi,
         ixs);
   }
 
-  SP invite(const SP& g) const override {
-    return g.get()->visit(g, *this);
+  bool invite(SP& first, SP& second) const override {
+    return first->merge(first, second, *this);
   }
 
-  SP visit(const SP& self, const CPhase& g) override {
-    if(angle == 0) {
-      // op1 = identity
-      return std::make_shared<CPhase>(g);
-    } else if(g.angle == 0) {
-      // op2 = identity
-      return self;
-    } else if(g.tgt == tgt && g.ixs == ixs) {
-      return std::make_shared<CPhase>(tgt, angle + g.angle, ixs);
+  bool merge(SP& first, SP& /*second*/, const CPhase& g) override {
+    if(g.tgt == tgt && g.ixs == ixs) {
+      first = std::make_shared<CPhase>(tgt, angle + g.angle, ixs);
+      return true;
     } else
-      return self;
+      return false;
   }
 
   std::ostream& write(std::ostream& os) const override {

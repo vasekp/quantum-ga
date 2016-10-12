@@ -26,34 +26,59 @@ public:
   // return an arbitrary notion of complexity of this operation (accumulative)
   virtual unsigned complexity() const = 0;
 
-  /* In the following functions, self is a std::shared_ptr (SP) to this (so it
-   * holds that self.get() == this). This means the same information is passed
-   * to the function twice, but the SP could not be retrieved from this alone.
-   * If the function did not modify the state it is required to return self,
-   * otherwise a shared pointer to a new instance. */
-
-  virtual SP invert(const SP& self) {
-    return self;
+  // return whether this gate has degenerated to the identity (e.g., by means
+  // of simplification or merge)
+  virtual bool isTrivial() {
+    return false;
   }
 
-  virtual SP mutate(const SP& self) {
-    return self;
-  }
+  /* The following functions pass a std::shared_ptr (SP) pointing to this
+   * along with this. If a gene allows a given operation, it can use this
+   * parameter to actually rewrite the shared pointer by a new
+   * std::make_shared<>(...). If it does not, it can return with a no-op.
+   * The internals of SP guarantee that in either case all reference counts
+   * are updated properly and no memory is leaked.
+   *
+   * IMPORTANT: reassigning self from within the functions can result in a
+   * deletion of this. Keep a local copy of the shared pointer on stack if
+   * that is anything than the very last command. */
 
-  virtual SP simplify(const SP& self) {
-    return self;
-  }
+  virtual void invert(SP& /*self*/) { }
+
+  virtual void mutate(SP& /*self*/) { }
+
+  virtual void simplify(SP& /*self*/) { }
 
   /* Merge needs to be implemented using double dispatch, because only
    * genes of the same class can typically be merged (albeit this is not a
    * restriction) but all we know at compile time is a pointer to the base
    * class.
    *
+   * Let first is a shared pointer to Derived1 and second is a shared pointer
+   * to Derived2. Both classes override their invite() and 3-argument merge()
+   * methods. The call pattern goes as following:
+   *   first->merge(first, second)
+   *   -> second->invite(first, second) [vtable lookup in Derived2]
+   *   -> first->merge(first, second, Derived2&) [vtable lookup in Derived1]
+   * Now the override Derived1::merge() is called in an overload with its
+   * third parameter being a (const) Derived2&. This allows to react properly
+   * to any possible combination of the two derived classes.
+   *
    * See: http://www.oodesign.com/visitor-pattern.html */
 
-  SP merge(const SP& self, const SP& other) {
-    return other.get()->invite(self);
+  bool merge(SP& first, SP& second) {
+    if(first->isTrivial()) {
+      // op1 = identity: replace by second and consume
+      first = second;
+      return true;
+    } else if(second->isTrivial()) {
+      // op2 = identity: consume
+      return true;
+    } else
+      return second->invite(first, second);
   }
+
+  using Visitors<Gene, Derived...>::merge;
 
   friend std::ostream& operator<< (std::ostream& os, const GeneBase& g) {
     return g.write(os);
@@ -61,7 +86,22 @@ public:
 
 protected:
 
-  virtual SP invite(const SP&) const = 0;
+  /* Every derived class must implement this function with exactly the
+   * following definition:
+   *
+   *   bool invite(SP& first, SP& second) const override {
+   *     return first->merge(first, second, *this);
+   *   }
+   *
+   * This can't be done here because *this only refers to the derived class
+   * itself in its own context. We need to call a particular visitor for a
+   * specific class so it can't be a const GeneBase&. See the description of
+   * merge() above.
+   *
+   * The derived class (gene template) needs to define this function even if
+   * it does not allow merging with any other genes. */
+
+  virtual bool invite(SP& first, SP& second) const = 0;
 
   virtual std::ostream& write(std::ostream&) const = 0;
 
@@ -71,6 +111,7 @@ protected:
    * and converting back. If the number is precisely rational or almost
    * rational, almost-infinite terms are capped so it can still be trimmed
    * earlier to an even shorter rational (just with a small probability). */
+
   static double rationalize(double x) {
     double a = std::abs(x);
     constexpr unsigned N = 8;
@@ -97,14 +138,21 @@ protected:
 }; // virtual class GeneBase<Gene, Derived...>
 
 
-/* The purpose of this class is to inject a virtual method for calling a
- * particular gene class. Note that for the visitor design pattern, we need
- * one method like this for each possible visitee.
+/* The purpose of this helper class is to inject a virtual method for calling
+ * a particular gene class, for the purposes of the merge() call pattern. Note
+ * that for the visitor design pattern, we need one method like this for each
+ * possible visitee, but we don't know what the derived classes are yet. (This
+ * is supplied in Gene.hpp.)
  *
- * This is for the purposes of merge(). The default implementation returns
- * self, meaning the two genes could not be merged. Subclasses can override
- * SP visit(const SP&, const X<Gene>&) for some X (presumably themselves) to
- * allow merging. */
+ * Subclasses can override merge(SP&, SP&, const X&) for some particular
+ * values of X (presumably themselves) to allow merging with instances of
+ * class X.
+ *
+ * The default implementation returns false, indicating that no merge
+ * happened. A return value of true means that one of the pair of genes has
+ * been consumed. Note that a particular implementation can also return false
+ * if it actually modifies first and second but does not combine them into a
+ * single gene. */
 
 template<class Gene, template<class> class Derived>
 class Visitor {
@@ -113,14 +161,14 @@ class Visitor {
 
 protected:
 
-  virtual SP visit(const SP& self, const Derived<Gene>&) {
-    return self;
+  virtual bool merge(SP& /*first*/, SP& /*second*/, const Derived<Gene>&) {
+    return false;
   }
 
 }; // class Visitor
 
 
-/* Chain template dependency is used to generate the visit() methods one for
+/* Chain template dependency is used to generate the merge() methods one for
  * each of a list of derived classes. */
 
 template<class Gene,
@@ -133,8 +181,8 @@ class Visitors :
 
 public:
 
-  using Visitor<Gene, Head>::visit;
-  using Visitors<Gene, Tail...>::visit;
+  using Visitor<Gene, Head>::merge;
+  using Visitors<Gene, Tail...>::merge;
 
 }; // class Visitors
 
@@ -146,7 +194,7 @@ class Visitors<Gene, Last> :
 
 public:
 
-  using Visitor<Gene, Last>::visit;
+  using Visitor<Gene, Last>::merge;
 
 }; // class Visitors<Gene, Last>
 
