@@ -205,15 +205,6 @@ int main() {
 void dumpResults(Population& pop, CandidateFactory::Selector& sel,
     std::chrono::time_point<std::chrono::steady_clock> start,
     unsigned long gen) {
-  /* Timing information */
-  std::chrono::time_point<std::chrono::steady_clock>
-    now{std::chrono::steady_clock::now()};
-  std::chrono::duration<double> dur = now - start - SigComm::timeOut;
-  std::cout << "\nRun took " << dur.count() << " s ("
-    << Colours::blue() << dur.count()/gen
-    << " s/gen " << Colours::reset() << "avg), "
-    << Colours::blue() << QGA::counter.total() << Colours::reset()
-    << " candidates tested\n";
 
   /* List results */
   auto nondom = pop.front();
@@ -234,6 +225,16 @@ void dumpResults(Population& pop, CandidateFactory::Selector& sel,
   /* Dump the heuristic distribution */
   std::cout << "\nGenetic operator distribution:\n";
   sel.dump(std::cout);
+
+  /* Timing information */
+  std::chrono::time_point<std::chrono::steady_clock>
+    now{std::chrono::steady_clock::now()};
+  std::chrono::duration<double> dur = now - start - SigComm::timeOut;
+  std::cout << "\nRun took " << dur.count() << " s ("
+    << Colours::blue() << dur.count()/gen
+    << " s/gen " << Colours::reset() << "avg), "
+    << Colours::blue() << QGA::counter.total() << Colours::reset()
+    << " candidates tested\n";
 }
 
 
