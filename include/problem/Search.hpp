@@ -52,7 +52,7 @@ public:
     return ret;
   }
 
-  bool isTrivial() override {
+  bool isTrivial() const override {
     // oracle^(2k) = oracle^0 = identity
     return !odd;
   }
@@ -69,7 +69,7 @@ public:
     return first->merge(first, second, *this);
   }
 
-  bool merge(Pointer& first, Pointer& /*second*/, const Oracle& g) override {
+  bool merge(Pointer& first, Pointer&, const Oracle& g) const override {
     // oracle * oracle = oracle^2 → true ^ true = false
     first = std::make_shared<Oracle>(odd ^ g.odd);
     return true;

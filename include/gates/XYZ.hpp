@@ -43,7 +43,7 @@ public:
     return psi.apply_ctrl(mat, ixs, tgt);
   }
 
-  bool isTrivial() override {
+  bool isTrivial() const override {
     return angle == 0;
   }
 
@@ -51,16 +51,16 @@ public:
     return ixs.size() * ixs.size();
   }
 
-  void invert(Pointer& self) override {
+  void invert(Pointer& self) const override {
     self = std::make_shared<XYZ>(op, -angle, tgt, ixs);
   }
 
-  void mutate(Pointer& self) override {
+  void mutate(Pointer& self) const override {
     std::normal_distribution<> dAng{0.0, 0.1};
     self = std::make_shared<XYZ>(op, angle + dAng(gen::rng), tgt, ixs);
   }
 
-  void simplify(Pointer& self) override {
+  void simplify(Pointer& self) const override {
     self = std::make_shared<XYZ>(op, Tools::rationalize_angle(angle), tgt, ixs);
   }
 
@@ -68,7 +68,7 @@ public:
     return first->merge(first, second, *this);
   }
 
-  bool merge(Pointer& first, Pointer& /*second*/, const XYZ& g) override {
+  bool merge(Pointer& first, Pointer&, const XYZ& g) const override {
     if(g.op == op && g.tgt == tgt && g.ixs == ixs) {
       first = std::make_shared<XYZ>(op, angle + g.angle, tgt, ixs);
       return true;

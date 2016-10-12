@@ -48,7 +48,7 @@ public:
     return psi.apply_ctrl(gates[op].op, ixs, tgt);
   }
 
-  bool isTrivial() override {
+  bool isTrivial() const override {
     return op == 0;
   }
 
@@ -56,7 +56,7 @@ public:
     return ixs.size() * ixs.size();
   }
 
-  void invert(Pointer& self) override {
+  void invert(Pointer& self) const override {
     int dIx = gates[op].inv;
     if(dIx != 0)
       self = std::make_shared<Fixed>(op + dIx, tgt, ixs);
@@ -66,7 +66,7 @@ public:
     return first->merge(first, second, *this);
   }
 
-  bool merge(Pointer& first, Pointer& /*second*/, const Fixed& g) override {
+  bool merge(Pointer& first, Pointer&, const Fixed& g) const override {
     // G * G = square(G) if also among our operations
     if(g.op == op && g.tgt == tgt && g.ixs == ixs && gates[op].sq != 0) {
       first = std::make_shared<Fixed>(op + gates[op].sq, tgt, ixs);

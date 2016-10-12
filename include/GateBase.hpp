@@ -20,7 +20,7 @@ class GateBase : public internal::Visitors<RealBase, Gates...> {
 
 public:
 
-  using Pointer = std::shared_ptr<RealBase>;
+  using Pointer = std::shared_ptr<const RealBase>;
 
   // apply this gene to a state vector
   virtual Backend::State applyTo(const Backend::State&) const = 0;
@@ -30,7 +30,7 @@ public:
 
   // return whether this gate has degenerated to the identity (e.g., by means
   // of simplification or merge)
-  virtual bool isTrivial() {
+  virtual bool isTrivial() const {
     return false;
   }
 
@@ -45,11 +45,11 @@ public:
    * deletion of this. Keep a local copy of the shared pointer on stack if
    * that is anything than the very last command. */
 
-  virtual void invert(Pointer& /*self*/) { }
+  virtual void invert(Pointer& /*self*/) const { }
 
-  virtual void mutate(Pointer& /*self*/) { }
+  virtual void mutate(Pointer& /*self*/) const { }
 
-  virtual void simplify(Pointer& /*self*/) { }
+  virtual void simplify(Pointer& /*self*/) const { }
 
   /* Merge needs to be implemented using double dispatch, because only
    * genes of the same class can typically be merged (albeit this is not a
@@ -68,7 +68,7 @@ public:
    *
    * See: http://www.oodesign.com/visitor-pattern.html */
 
-  bool merge(Pointer& first, Pointer& second) {
+  bool merge(Pointer& first, Pointer& second) const {
     if(first->isTrivial()) {
       // op1 = identity: replace by second and consume
       first = second;
@@ -131,11 +131,12 @@ namespace internal {
 template<class GateBase, template<class> class Gate>
 class Visitor {
 
-  using SP = std::shared_ptr<GateBase>;
+  using Pointer = std::shared_ptr<const GateBase>;
 
 protected:
 
-  virtual bool merge(SP& /*first*/, SP& /*second*/, const Gate<GateBase>&) {
+  virtual bool merge(Pointer& /*first*/, Pointer& /*second*/,
+      const Gate<GateBase>&) const {
     return false;
   }
 
