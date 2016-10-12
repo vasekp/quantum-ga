@@ -35,11 +35,13 @@ fourier: CXXFLAGS += -DFOURIER
 
 search:	CXXFLAGS += -DSEARCH
 
+all: $(TARGETS)
+
 $(TARGETS): $(SOURCES) $(HEADERS)
 	$(CXX) $(CXXFLAGS) $(SOURCES) -o $@
 
 clean:
 	-rm $(TARGETS)
 
-.PHONY: clean
+.PHONY: all clean
 
