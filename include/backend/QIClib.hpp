@@ -1,6 +1,6 @@
-// allow only one wrapper
-#ifndef QGA_WRAPPER_HPP
-#define QGA_WRAPPER_HPP
+// allow only one backend
+#ifndef QGA_BACKEND_HPP
+#define QGA_BACKEND_HPP
 
 #define QICLIB_DONT_USE_NLOPT
 #define ARMA_DONT_USE_WRAPPER
@@ -55,7 +55,7 @@ public:
 
   Controls() = default;
 
-  Controls(const std::vector<bool>& bits) : arma::uvec(ix_vector(bits)) { }
+  Controls(const std::vector<bool>& bits): arma::uvec(ix_vector(bits)) { }
 
   friend bool operator== (const Controls& lhs, const Controls& rhs) {
     return lhs.size() == rhs.size() && arma::all(lhs.rep() == rhs.rep());
@@ -92,12 +92,12 @@ class State : public arma::cx_vec {
 
 public:
 
-  State(const Base& base) : Base(base) { }
+  State(const Base& base): Base(base) { }
 
-  State(Base&& base) : Base(std::move(base)) { }
+  State(Base&& base): Base(std::move(base)) { }
 
   // initializes in a basis state
-  State(size_t index = 0) : Base(dim(), arma::fill::zeros) {
+  State(size_t index = 0): Base(dim(), arma::fill::zeros) {
     this->operator[](index) = 1;
   }
 
@@ -145,4 +145,4 @@ private:
 
 } // namespace QGA
 
-#endif // !defined QGA_WRAPPER_HPP
+#endif // !defined QGA_BACKEND_HPP

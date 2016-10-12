@@ -96,6 +96,8 @@ public:
     return g.write(os);
   }
 
+  virtual ~GateBase() { }
+
 protected:
 
   /* Every derived class must implement this function with exactly the
@@ -162,6 +164,8 @@ protected:
       const Gate<GateBase>&) const {
     return false;
   }
+
+  virtual ~Visitor() { }
 
 }; // class Visitor
 

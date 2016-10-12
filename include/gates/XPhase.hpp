@@ -1,3 +1,6 @@
+#ifndef GATE_XPHASE_HPP
+#define GATE_XPHASE_HPP
+
 namespace QGA {
 
 
@@ -61,9 +64,8 @@ public:
     return os << 'X' << tgt + 1 << '(' << angle / Const::pi << "π)";
   }
 
-  NOINLINE X(unsigned tgt_, double angle_): tgt(tgt_), angle(angle_) {
-    mat = Backend::xrot(angle);
-  }
+  X(unsigned tgt_, double angle_):
+    tgt(tgt_), angle(angle_), mat(Backend::xrot(angle)) { }
 
 }; // class X
 
@@ -145,16 +147,14 @@ public:
     return os;
   }
 
-  NOINLINE CPhase(unsigned tgt_, double angle_, std::vector<bool> ctrl):
-      tgt(tgt_), angle(angle_), ixs(ctrl) {
-    mat = Backend::zrot(angle);
-  }
+  CPhase(unsigned tgt_, double angle_, std::vector<bool> ctrl):
+      tgt(tgt_), angle(angle_), ixs(ctrl), mat(Backend::zrot(angle)) { }
 
-  NOINLINE CPhase(unsigned tgt_, double angle_, const Backend::Controls& ixs_):
-      tgt(tgt_), angle(angle_), ixs(ixs_) {
-    mat = Backend::zrot(angle);
-  }
+  CPhase(unsigned tgt_, double angle_, const Backend::Controls& ixs_):
+      tgt(tgt_), angle(angle_), ixs(ixs_), mat(Backend::zrot(angle)) { }
 
 }; // class CPhase
 
 } // namespace QGA
+
+#endif // !defined GATE_XPHASE_HPP

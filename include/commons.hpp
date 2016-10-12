@@ -2,13 +2,24 @@
 #define QGA_COMMONS_HPP
 
 #include <atomic>
-#include <string>
-#include <iomanip>
-#include <cstddef>
 #include <complex>
 #include <string>
+#include <cstddef>
+
 #include <cmath>
+#include <limits>
+#include <memory>
+#include <random>
+#include <stdexcept>
+
+#include <iomanip>
+#include <ostream>
 #include <sstream>
+
+#include <array>
+#include <vector>
+#include <utility>
+#include <algorithm>
 
 using std::size_t;
 

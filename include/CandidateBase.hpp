@@ -35,7 +35,7 @@ public:
     gt.erase(++last, gt.end());
   }
 
-  NOINLINE Fitness fitness() const {
+  Fitness fitness() const {
     unsigned cplx{0};
     for(const auto& g : gt)
       cplx += g->complexity();

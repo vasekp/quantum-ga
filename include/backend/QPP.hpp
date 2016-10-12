@@ -1,6 +1,6 @@
-// allow only one wrapper
-#ifndef QGA_WRAPPER_HPP
-#define QGA_WRAPPER_HPP
+// allow only one backend
+#ifndef QGA_BACKEND_HPP
+#define QGA_BACKEND_HPP
 
 #include "qpp.h"
 //#include <unsupported/Eigen/FFT>
@@ -81,12 +81,12 @@ class State : public qpp::ket {
 
 public:
 
-  State(const Base& base) : Base(base) { }
+  State(const Base& base): Base(base) { }
 
-  State(Base&& base) : Base(std::move(base)) { }
+  State(Base&& base): Base(std::move(base)) { }
 
   // initializes in a basis state
-  State(size_t index = 0) :
+  State(size_t index = 0):
     Base(qpp::mket(qpp::n2multiidx(index, dims()))) { }
 
   // resets in a basis state
@@ -135,4 +135,4 @@ private:
 
 } // namespace QGA
 
-#endif // !defined QGA_WRAPPER_HPP
+#endif // !defined QGA_BACKEND_HPP

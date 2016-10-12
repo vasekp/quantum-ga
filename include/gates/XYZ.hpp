@@ -1,3 +1,6 @@
+#ifndef GATE_XYZ_HPP
+#define GATE_XYZ_HPP
+
 namespace QGA {
 
 struct gate_struct {
@@ -16,8 +19,8 @@ template<class GateBase>
 class XYZ : public GateBase {
 
   size_t op;
-  double angle;
   unsigned tgt;
+  double angle;
   Backend::Controls ixs;
   Backend::Gate mat;
 
@@ -36,7 +39,7 @@ public:
     // distribution of angle
     std::uniform_real_distribution<> dAng{-0.5*Const::pi, 0.5*Const::pi};
     return std::make_shared<XYZ>(
-        dOp(gen::rng), dAng(gen::rng), tgt_, dCtrl(gen::rng));
+        dOp(gen::rng), tgt_, dAng(gen::rng), dCtrl(gen::rng));
   }
 
   Backend::State applyTo(const Backend::State& psi) const override {
@@ -52,16 +55,16 @@ public:
   }
 
   void invert(Pointer& self) const override {
-    self = std::make_shared<XYZ>(op, -angle, tgt, ixs);
+    self = std::make_shared<XYZ>(op, tgt, -angle, ixs);
   }
 
   void mutate(Pointer& self) const override {
     std::normal_distribution<> dAng{0.0, 0.1};
-    self = std::make_shared<XYZ>(op, angle + dAng(gen::rng), tgt, ixs);
+    self = std::make_shared<XYZ>(op, tgt, angle + dAng(gen::rng), ixs);
   }
 
   void simplify(Pointer& self) const override {
-    self = std::make_shared<XYZ>(op, Tools::rationalize_angle(angle), tgt, ixs);
+    self = std::make_shared<XYZ>(op, tgt, Tools::rationalize_angle(angle), ixs);
   }
 
   bool invite(Pointer& first, Pointer& second) const override {
@@ -70,7 +73,7 @@ public:
 
   bool merge(Pointer& first, Pointer&, const XYZ& g) const override {
     if(g.op == op && g.tgt == tgt && g.ixs == ixs) {
-      first = std::make_shared<XYZ>(op, angle + g.angle, tgt, ixs);
+      first = std::make_shared<XYZ>(op, tgt, angle + g.angle, ixs);
       return true;
     } else
       return false;
@@ -88,18 +91,14 @@ public:
     return os;
   }
 
-  NOINLINE XYZ(size_t op_, double angle_, unsigned tgt_,
-      std::vector<bool> ctrl):
-      op(op_), angle(angle_), tgt(tgt_), ixs(ctrl) {
-    mat = gates[op].fn(angle);
-  }
+  XYZ(size_t op_, unsigned tgt_, double angle_, std::vector<bool> ctrl):
+    op(op_), tgt(tgt_), angle(angle_), ixs(ctrl), mat(gates[op].fn(angle)) { }
 
-  NOINLINE XYZ(size_t op_, double angle_, unsigned tgt_,
-      const Backend::Controls& ixs_):
-      op(op_), angle(angle_), tgt(tgt_), ixs(ixs_) {
-    mat = gates[op].fn(angle);
-  }
+  XYZ(size_t op_, unsigned tgt_, double angle_, const Backend::Controls& ixs_):
+    op(op_), tgt(tgt_), angle(angle_), ixs(ixs_), mat(gates[op].fn(angle)) { }
 
 }; // class XYZ
 
 } // namespace QGA
+
+#endif // !defined GATE_XYZ_HPP

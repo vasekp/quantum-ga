@@ -1,3 +1,6 @@
+#ifndef GATE_FIXED_HPP
+#define GATE_FIXED_HPP
+
 namespace QGA {
 
 struct gate_struct {
@@ -86,7 +89,7 @@ public:
     return os;
   }
 
-  NOINLINE Fixed(size_t op_, unsigned tgt_, std::vector<bool> ctrl):
+  Fixed(size_t op_, unsigned tgt_, std::vector<bool> ctrl):
       op(op_), tgt(tgt_), ixs(ctrl) { }
 
   Fixed(size_t op_, unsigned tgt_, const Backend::Controls& ixs_):
@@ -95,3 +98,5 @@ public:
 }; // class Fixed
 
 } // namespace QGA
+
+#endif // !defined GATE_FIXED_HPP
