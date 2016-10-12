@@ -28,7 +28,7 @@ public:
     for(auto cur = last + 1; cur != end; cur++) {
       // Can be merged: done, go to next cur
       // Can not: put *cur after *last and increase both
-      bool consumed = (*last)->merge(*last, *cur);
+      bool consumed = (*last).merge(*cur);
       if(!consumed)
         std::swap(*++last, *cur);
     }
@@ -45,7 +45,7 @@ public:
 
   friend std::ostream& operator<< (std::ostream& os, const CandidateBase& c) {
     for(const auto& g : c.gt)
-      os << *g << ' ';
+      os << g << ' ';
     return os;
   }
 

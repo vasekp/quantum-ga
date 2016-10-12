@@ -83,7 +83,7 @@ private:
     std::uniform_int_distribution<size_t> dPos{0, sz - 1};
     const double probTerm = 1/Config::expMutationCount;
     do
-      gtNew[dPos(gen::rng)]->mutate(gtNew[dPos(gen::rng)]);
+      gtNew[dPos(gen::rng)].mutate();
     while(dUni(gen::rng) > probTerm);
     return gtNew != gtOrig ? Candidate{std::move(gtNew)} : parent;
   }
@@ -129,7 +129,7 @@ private:
     gtNew.insert(gtNew.end(), ins.begin(), ins.end());
     gtNew.insert(gtNew.end(), gtOrig.begin() + pos1, gtOrig.begin() + pos2);
     for(auto& g : ins)
-      g->invert(g);
+      g.invert();
     gtNew.insert(gtNew.end(),
         std::make_move_iterator(ins.rbegin()),
         std::make_move_iterator(ins.rend()));
@@ -218,7 +218,7 @@ private:
           gtOrig.rbegin() + sz - pos2, gtOrig.rbegin() + sz - pos1);
       auto end = gtNew.end();
       for(auto it = prev_end; it != end; it++)
-        (*it)->invert(*it);
+        it->invert();
     }
     gtNew.insert(gtNew.end(), gtOrig.begin() + pos2, gtOrig.end());
     return Candidate{std::move(gtNew)};
@@ -276,7 +276,7 @@ private:
       gtNew.insert(gtNew.end(), gt2.rbegin(), gt2.rend());
       auto end = gtNew.end();
       for(auto it = start; it != end; it++)
-        (*it)->invert(*it);
+        it->invert();
     }
     gtNew.insert(gtNew.end(), gt3.begin(), gt3.end());
     return Candidate{std::move(gtNew)};
@@ -295,7 +295,7 @@ public:
       return parent;
     std::vector<Gene> gtNew = gtOrig;
     for(auto& g : gtNew)
-      g->simplify(g);
+      g.simplify();
     return gtNew != gtOrig ? Candidate{std::move(gtNew)} : parent;
   }
 

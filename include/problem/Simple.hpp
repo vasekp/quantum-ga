@@ -36,7 +36,7 @@ private:
   State sim() const {
     State psi{0};
     for(const auto& g : gt)
-      psi = psi.apply(*g);
+      psi = psi.apply(g);
     return psi;
   }
 

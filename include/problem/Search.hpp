@@ -172,7 +172,7 @@ private:
   State sim(const State& psi, unsigned mark) const {
     State ret{psi};
     for(const auto& g : gt)
-      ret = ret.apply(*g, mark);
+      ret = ret.apply(g, mark);
     return ret;
   }
 
