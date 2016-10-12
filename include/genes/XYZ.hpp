@@ -32,7 +32,7 @@ public:
     std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
     // distribution of controls
     unsigned tgt_ = dTgt(gen::rng);
-    QGA::controls_distribution dCtrl{Config::nBit, Config::pControl, tgt_};
+    Tools::controls_distribution dCtrl{Config::nBit, Config::pControl, tgt_};
     // distribution of angle
     std::uniform_real_distribution<> dAng{-0.5*Const::pi, 0.5*Const::pi};
     return std::make_shared<XYZ>(
@@ -61,9 +61,7 @@ public:
   }
 
   void simplify(SP& self) override {
-    self = std::make_shared<XYZ>(op,
-        GeneBase::rationalize(std::fmod(angle / Const::pi, 2.0)) * Const::pi,
-        tgt, ixs);
+    self = std::make_shared<XYZ>(op, Tools::rationalize_angle(angle), tgt, ixs);
   }
 
   bool invite(SP& first, SP& second) const override {

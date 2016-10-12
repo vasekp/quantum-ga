@@ -43,5 +43,6 @@ namespace QGA {
 #include "CandidateFactory.hpp"
 
 #include "Colours.hpp"
+#include "Tools.hpp"
 
 #endif // !defined QGA_COMMONS_HPP

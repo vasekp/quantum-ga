@@ -39,7 +39,7 @@ public:
     std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
     // distribution of controls
     unsigned tgt_ = dTgt(gen::rng);
-    QGA::controls_distribution dCtrl{Config::nBit, Config::pControl, tgt_};
+    Tools::controls_distribution dCtrl{Config::nBit, Config::pControl, tgt_};
     return std::make_shared<Fixed>(
         dOp(gen::rng), tgt_, dCtrl(gen::rng));
   }
@@ -66,7 +66,7 @@ public:
     return first->merge(first, second, *this);
   }
 
-  bool merge(SP& first, SP& second, const Fixed& g) override {
+  bool merge(SP& first, SP& /*second*/, const Fixed& g) override {
     // G * G = square(G) if also among our operations
     if(g.op == op && g.tgt == tgt && g.ixs == ixs && gates[op].sq != 0) {
       first = std::make_shared<Fixed>(op + gates[op].sq, tgt, ixs);
