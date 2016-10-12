@@ -376,7 +376,7 @@ public:
     return {ops[index].fun, index};
   }
 
-  CFSelector() {
+  CFSelector(): ops{}, count(0) {
     ops.push_back({ &CF::mAlterDiscrete,   "MDiscrete" });
     ops.push_back({ &CF::mAlterContinuous, "MContns" });
     ops.push_back({ &CF::mAddSlice,        "AddSlice" });

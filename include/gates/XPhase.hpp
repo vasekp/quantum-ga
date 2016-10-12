@@ -64,9 +64,8 @@ public:
     return os << 'X' << tgt + 1 << '(' << angle / Const::pi << "π)";
   }
 
-  X(unsigned tgt_, double angle_): tgt(tgt_), angle(angle_) {
-    mat = Backend::xrot(angle);
-  }
+  X(unsigned tgt_, double angle_):
+    tgt(tgt_), angle(angle_), mat(Backend::xrot(angle)) { }
 
 }; // class X
 
@@ -149,14 +148,10 @@ public:
   }
 
   CPhase(unsigned tgt_, double angle_, std::vector<bool> ctrl):
-      tgt(tgt_), angle(angle_), ixs(ctrl) {
-    mat = Backend::zrot(angle);
-  }
+      tgt(tgt_), angle(angle_), ixs(ctrl), mat(Backend::zrot(angle)) { }
 
   CPhase(unsigned tgt_, double angle_, const Backend::Controls& ixs_):
-      tgt(tgt_), angle(angle_), ixs(ixs_) {
-    mat = Backend::zrot(angle);
-  }
+      tgt(tgt_), angle(angle_), ixs(ixs_), mat(Backend::zrot(angle)) { }
 
 }; // class CPhase
 

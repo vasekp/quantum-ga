@@ -14,7 +14,7 @@ TARGETS := simple fourier search
 default: search
 
 CXXFLAGS += -std=c++11 -march=native
-CXXFLAGS += -pedantic -Wall -Wextra #-Weffc++
+CXXFLAGS += -pedantic -Wall -Wextra -Weffc++
 CXXFLAGS += -fno-diagnostics-show-caret -fopenmp
 CXXFLAGS += -Iframework/include
 
