@@ -81,12 +81,12 @@ class State : public qpp::ket {
 
 public:
 
-  State(const Base& base) : Base(base) { }
+  State(const Base& base): Base(base) { }
 
-  State(Base&& base) : Base(std::move(base)) { }
+  State(Base&& base): Base(std::move(base)) { }
 
   // initializes in a basis state
-  State(size_t index = 0) :
+  State(size_t index = 0):
     Base(qpp::mket(qpp::n2multiidx(index, dims()))) { }
 
   // resets in a basis state

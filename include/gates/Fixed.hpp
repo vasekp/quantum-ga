@@ -89,7 +89,7 @@ public:
     return os;
   }
 
-  NOINLINE Fixed(size_t op_, unsigned tgt_, std::vector<bool> ctrl):
+  Fixed(size_t op_, unsigned tgt_, std::vector<bool> ctrl):
       op(op_), tgt(tgt_), ixs(ctrl) { }
 
   Fixed(size_t op_, unsigned tgt_, const Backend::Controls& ixs_):

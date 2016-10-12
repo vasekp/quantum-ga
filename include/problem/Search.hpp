@@ -103,11 +103,11 @@ struct Fitness {
        << f.ocalls << '}';
   }
 
-  friend NOINLINE bool operator< (const Fitness& a, const Fitness& b) {
+  friend bool operator< (const Fitness& a, const Fitness& b) {
     return a.error < b.error || (a.error == b.error && a.ocalls < b.ocalls);
   }
 
-  friend NOINLINE bool operator<< (const Fitness& a, const Fitness& b) {
+  friend bool operator<< (const Fitness& a, const Fitness& b) {
     return a.error <= b.error
         && a.length <= b.length
         && a.ocalls <= b.ocalls
@@ -131,7 +131,7 @@ public:
 
   using Base::Base;
 
-  NOINLINE Fitness fitness() const {
+  Fitness fitness() const {
     size_t ocalls = 0;
     for(const auto& g : gt)
       ocalls += g->calls();

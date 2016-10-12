@@ -33,7 +33,7 @@ public:
     return Selector{};
   }
 
-  static NOINLINE Candidate genInit() {
+  static Candidate genInit() {
     // probability of termination; expLengthIni = expected number of genes
     const double probTerm = 1/Config::expLengthIni;
     std::uniform_real_distribution<> dUni{0, 1};
@@ -45,7 +45,7 @@ public:
     return Candidate{std::move(gtOrig)};
   }
 
-  NOINLINE Candidate getNew() {
+  Candidate getNew() {
     auto op = sel.select();
     return (this->*op.first)().setOrigin(op.second);
   }

@@ -64,7 +64,7 @@ public:
     return os << 'X' << tgt + 1 << '(' << angle / Const::pi << "π)";
   }
 
-  NOINLINE X(unsigned tgt_, double angle_): tgt(tgt_), angle(angle_) {
+  X(unsigned tgt_, double angle_): tgt(tgt_), angle(angle_) {
     mat = Backend::xrot(angle);
   }
 
@@ -148,12 +148,12 @@ public:
     return os;
   }
 
-  NOINLINE CPhase(unsigned tgt_, double angle_, std::vector<bool> ctrl):
+  CPhase(unsigned tgt_, double angle_, std::vector<bool> ctrl):
       tgt(tgt_), angle(angle_), ixs(ctrl) {
     mat = Backend::zrot(angle);
   }
 
-  NOINLINE CPhase(unsigned tgt_, double angle_, const Backend::Controls& ixs_):
+  CPhase(unsigned tgt_, double angle_, const Backend::Controls& ixs_):
       tgt(tgt_), angle(angle_), ixs(ixs_) {
     mat = Backend::zrot(angle);
   }
