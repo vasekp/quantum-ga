@@ -66,10 +66,10 @@ public:
   }
 
   bool invite(SP& first, SP& second) const override {
-    return first->visit(first, second, *this);
+    return first->merge(first, second, *this);
   }
 
-  bool visit(SP& first, SP& /*second*/, const Oracle& g) override {
+  bool merge(SP& first, SP& /*second*/, const Oracle& g) override {
     // oracle * oracle = oracle^2 → true ^ true = false
     first = std::make_shared<Oracle>(odd ^ g.odd);
     return true;

@@ -64,10 +64,10 @@ public:
   }
 
   bool invite(SP& first, SP& second) const override {
-    return first->visit(first, second, *this);
+    return first->merge(first, second, *this);
   }
 
-  bool visit(SP& first, SP& second, const Fixed& g) override {
+  bool merge(SP& first, SP& second, const Fixed& g) override {
     // G * G = square(G) if also among our operations
     if(g.op == op && g.tgt == tgt && g.ixs == ixs && gates[op].sq != 0) {
       first = std::make_shared<Fixed>(op + gates[op].sq, tgt, hw, ixs);

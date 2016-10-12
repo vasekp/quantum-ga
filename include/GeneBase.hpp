@@ -55,12 +55,12 @@ public:
    * class.
    *
    * Let first is a shared pointer to Derived1 and second is a shared pointer
-   * to Derived2. Both classes override their invite() and visit() methods.
-   * The call pattern goes as following:
+   * to Derived2. Both classes override their invite() and 3-argument merge()
+   * methods. The call pattern goes as following:
    *   first->merge(first, second)
    *   -> second->invite(first, second) [vtable lookup in Derived2]
-   *   -> first->visit(first, second, Derived2&) [vtable lookup in Derived1]
-   * Now the override Derived1::visit() is called in an overload with its
+   *   -> first->merge(first, second, Derived2&) [vtable lookup in Derived1]
+   * Now the override Derived1::merge() is called in an overload with its
    * third parameter being a (const) Derived2&. This allows to react properly
    * to any possible combination of the two derived classes.
    *
@@ -78,6 +78,8 @@ public:
       return second->invite(first, second);
   }
 
+  using Visitors<Gene, Derived...>::merge;
+
   friend std::ostream& operator<< (std::ostream& os, const GeneBase& g) {
     return g.write(os);
   }
@@ -88,7 +90,7 @@ protected:
    * following definition:
    *
    *   bool invite(SP& first, SP& second) const override {
-   *     return first->visit(first, second, *this);
+   *     return first->merge(first, second, *this);
    *   }
    *
    * This can't be done here because *this only refers to the derived class
@@ -142,7 +144,7 @@ protected:
  * possible visitee, but we don't know what the derived classes are yet. (This
  * is supplied in Gene.hpp.)
  *
- * Subclasses can override visit(SP&, SP&, const X&) for some particular
+ * Subclasses can override merge(SP&, SP&, const X&) for some particular
  * values of X (presumably themselves) to allow merging with instances of
  * class X.
  *
@@ -159,14 +161,14 @@ class Visitor {
 
 protected:
 
-  virtual bool visit(SP& /*first*/, SP& /*second*/, const Derived<Gene>&) {
+  virtual bool merge(SP& /*first*/, SP& /*second*/, const Derived<Gene>&) {
     return false;
   }
 
 }; // class Visitor
 
 
-/* Chain template dependency is used to generate the visit() methods one for
+/* Chain template dependency is used to generate the merge() methods one for
  * each of a list of derived classes. */
 
 template<class Gene,
@@ -179,8 +181,8 @@ class Visitors :
 
 public:
 
-  using Visitor<Gene, Head>::visit;
-  using Visitors<Gene, Tail...>::visit;
+  using Visitor<Gene, Head>::merge;
+  using Visitors<Gene, Tail...>::merge;
 
 }; // class Visitors
 
@@ -192,7 +194,7 @@ class Visitors<Gene, Last> :
 
 public:
 
-  using Visitor<Gene, Last>::visit;
+  using Visitor<Gene, Last>::merge;
 
 }; // class Visitors<Gene, Last>
 

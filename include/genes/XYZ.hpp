@@ -69,10 +69,10 @@ public:
   }
 
   bool invite(SP& first, SP& second) const override {
-    return first->visit(first, second, *this);
+    return first->merge(first, second, *this);
   }
 
-  bool visit(SP& first, SP& /*second*/, const XYZ& g) override {
+  bool merge(SP& first, SP& /*second*/, const XYZ& g) override {
     if(g.op == op && g.tgt == tgt && g.ixs == ixs) {
       first = std::make_shared<XYZ>(op, angle + g.angle, tgt, ixs, hw);
       return true;
