@@ -224,6 +224,44 @@ private:
     return Candidate{std::move(gtNew)};
   }
 
+  Candidate mPermuteSlice() {
+    auto &parent = get();
+    auto &gtOrig = parent.genotype();
+    auto sz = gtOrig.size();
+    if(sz < 2)
+      return parent;
+    size_t pos1 = gen::rng() % (sz - 1),
+           pos2 = gen::rng() % (sz - 1);
+    if(pos2 < pos1)
+      std::swap(pos1, pos2);
+    // ensure that pos2-pos1 is at least 2
+    pos2 += 2;
+    std::vector<Gene> gtNew = gtOrig;
+    std::shuffle(gtNew.begin() + pos1, gtNew.begin() + pos2, gen::rng);
+    return Candidate{std::move(gtNew)};
+  }
+
+  Candidate mRepeatSlice() {
+    auto &parent = get();
+    auto &gtOrig = parent.genotype();
+    auto sz = gtOrig.size();
+    if(sz < 2)
+      return parent;
+    size_t pos1 = gen::rng() % sz,
+           pos2 = gen::rng() % sz;
+    if(pos2 < pos1)
+      std::swap(pos1, pos2);
+    // ensure that pos2-pos1 is at least 1
+    pos2 += 1;
+    std::vector<Gene> gtNew{};
+    gtNew.reserve(sz + pos2 - pos1);
+    gtNew.insert(gtNew.end(), gtOrig.begin(), gtOrig.begin() + pos1);
+    gtNew.insert(gtNew.end(), gtOrig.begin() + pos1, gtOrig.begin() + pos2);
+    gtNew.insert(gtNew.end(), gtOrig.begin() + pos1, gtOrig.begin() + pos2);
+    gtNew.insert(gtNew.end(), gtOrig.begin() + pos2, gtOrig.end());
+    return Candidate{std::move(gtNew)};
+  }
+
   Candidate crossoverUniform() {
     auto &parent1 = get(),
          &parent2 = get();
@@ -385,6 +423,8 @@ public:
     ops.push_back({ &CF::mDeleteUniform,   "DelUnif"  });
     ops.push_back({ &CF::mSplitSwap,       "SpltSwp"  });
     ops.push_back({ &CF::mReverseSlice,    "InvSlice" });
+    ops.push_back({ &CF::mPermuteSlice,    "PermSlice" });
+    ops.push_back({ &CF::mRepeatSlice,     "RepSlice" });
     ops.push_back({ &CF::crossoverUniform, "C/Over"   });
   //ops.push_back({ &CF::concat3,          "Concat3"  });
     ops.push_back({ &CF::simplify,         "Simplify" });
