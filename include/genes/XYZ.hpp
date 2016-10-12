@@ -45,6 +45,10 @@ public:
     return psi.apply_ctrl(mat, ixs, tgt);
   }
 
+  bool isTrivial() override {
+    return angle == 0;
+  }
+
   unsigned complexity() const override {
     return hw * hw;
   }
@@ -68,15 +72,8 @@ public:
     return first->visit(first, second, *this);
   }
 
-  bool visit(SP& first, SP& second, const XYZ& g) override {
-    if(angle == 0) {
-      // op1 = identity: replace by second and consume
-      first = second;
-      return true;
-    } else if(g.angle == 0) {
-      // op2 = identity: consume
-      return true;
-    } else if(g.op == op && g.tgt == tgt && g.ixs == ixs) {
+  bool visit(SP& first, SP& /*second*/, const XYZ& g) override {
+    if(g.op == op && g.tgt == tgt && g.ixs == ixs) {
       first = std::make_shared<XYZ>(op, angle + g.angle, tgt, ixs, hw);
       return true;
     } else

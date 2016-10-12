@@ -26,6 +26,12 @@ public:
   // return an arbitrary notion of complexity of this operation (accumulative)
   virtual unsigned complexity() const = 0;
 
+  // return whether this gate has degenerated to the identity (e.g., by means
+  // of simplification or merge)
+  virtual bool isTrivial() {
+    return false;
+  }
+
   /* The following functions pass a std::shared_ptr (SP) pointing to this
    * along with this. If a gene allows a given operation, it can use this
    * parameter to actually rewrite the shared pointer by a new
@@ -61,7 +67,15 @@ public:
    * See: http://www.oodesign.com/visitor-pattern.html */
 
   bool merge(SP& first, SP& second) {
-    return second->invite(first, second);
+    if(first->isTrivial()) {
+      // op1 = identity: replace by second and consume
+      first = second;
+      return true;
+    } else if(second->isTrivial()) {
+      // op2 = identity: consume
+      return true;
+    } else
+      return second->invite(first, second);
   }
 
   friend std::ostream& operator<< (std::ostream& os, const GeneBase& g) {

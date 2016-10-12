@@ -33,10 +33,9 @@ template<class GeneBase>
 class Oracle : public GeneBase {
 
   using SP = std::shared_ptr<GeneBase>;
+  bool odd;  // parity of the power
 
 public:
-
-  Oracle() { }
 
   static SP getNew() {
     return std::make_shared<Oracle>();
@@ -48,8 +47,14 @@ public:
 
   State applyTo(const State& psi, unsigned mark) const override {
     State ret{psi};
-    ret[mark] = -ret[mark];
+    if(odd)
+      ret[mark] = -ret[mark];
     return ret;
+  }
+
+  bool isTrivial() override {
+    // oracle^(2k) = oracle^0 = identity
+    return !odd;
   }
 
   unsigned complexity() const override {
@@ -64,9 +69,17 @@ public:
     return first->visit(first, second, *this);
   }
 
-  std::ostream& write(std::ostream& os) const override {
-    return os << "Oracle";
+  bool visit(SP& first, SP& /*second*/, const Oracle& g) override {
+    // oracle * oracle = oracle^2 → true ^ true = false
+    first = std::make_shared<Oracle>(odd ^ g.odd);
+    return true;
   }
+
+  std::ostream& write(std::ostream& os) const override {
+    return os << (odd ? "Oracle" : "[Id]");
+  }
+
+  Oracle(bool odd_ = true): odd(odd_) { }
 
 }; // class Oracle<GeneBase>
 

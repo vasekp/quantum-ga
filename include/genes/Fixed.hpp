@@ -49,6 +49,10 @@ public:
     return psi.apply_ctrl(gates[op].op, ixs, tgt);
   }
 
+  bool isTrivial() override {
+    return op == 0;
+  }
+
   unsigned complexity() const override {
     return hw * hw;
   }
@@ -64,15 +68,8 @@ public:
   }
 
   bool visit(SP& first, SP& second, const Fixed& g) override {
-    if(op == 0) {
-      // Identity * G = G
-      first = second;
-      return true;
-    } else if(g.op == 0) {
-      // G * Identity = G
-      return true;
-    } else if(g.op == op && g.tgt == tgt && g.ixs == ixs && gates[op].sq != 0) {
-      // G * G = square(G) if also among our operations
+    // G * G = square(G) if also among our operations
+    if(g.op == op && g.tgt == tgt && g.ixs == ixs && gates[op].sq != 0) {
       first = std::make_shared<Fixed>(op + gates[op].sq, tgt, hw, ixs);
       return true;
     } else
