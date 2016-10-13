@@ -80,7 +80,7 @@ template<class GateBase>
 using CNOT = internal::CNOT<GateBase, Controls::ONE>;
 
 template<class GateBase>
-using CkNOT = internal::CNOT<GateBase, Controls::ANY>;
+using CkNOT = internal::CNOT<GateBase, Controls::LEAST1>;
 
 } // namespace Gates
 

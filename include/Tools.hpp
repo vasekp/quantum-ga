@@ -45,6 +45,7 @@ double rationalize_angle(double a) {
 enum class Controls {
   NONE,
   ONE,
+  LEAST1,
   ANY
 };
 
@@ -137,6 +138,37 @@ public:
   }
 
 }; // class controls_distribution<ONE>
+
+template<>
+class controls_distribution<Controls::LEAST1> :
+  public controls_distribution<Controls::ANY>
+{
+
+  using Base = controls_distribution<Controls::ANY>;
+
+  const unsigned nBit;
+  const unsigned iSkip;
+
+public:
+
+  controls_distribution(unsigned nBit_, unsigned iSkip_, double pTrue_):
+    Base(nBit_, iSkip_, pTrue_), nBit(nBit_), iSkip(iSkip_) {
+#ifdef DEBUG
+      if(nBit <= 1)
+        throw std::logic_error("nBit < 2 in controls_distribution<LEAST1>!");
+#endif
+    }
+
+  template<class URNG>
+  std::vector<bool> operator() (URNG& rng) {
+    std::vector<bool> bits = Base::operator()(rng);
+    std::uniform_int_distribution<> dist(0, nBit - 2);
+    unsigned res = dist(rng);
+    bits[res + (res >= iSkip)] = true;
+    return bits;
+  }
+
+}; // class controls_distribution<LEAST1>
 
 template<>
 class controls_distribution<Controls::NONE> {
