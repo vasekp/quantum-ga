@@ -112,6 +112,10 @@ public:
     return psi.apply_ctrl(mat, ixs, tgt);
   }
 
+  bool isTrivial() const override {
+    return angle == 0;
+  }
+
   unsigned complexity() const override {
     return ixs.size() * ixs.size();
   }
