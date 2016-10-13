@@ -68,5 +68,6 @@ namespace QGA {
 #include "gates/XYZ.hpp"
 #include "gates/CPhase.hpp"
 #include "gates/CNOT.hpp"
+#include "gates/SU2.hpp"
 
 #endif // !defined QGA_COMMONS_HPP
