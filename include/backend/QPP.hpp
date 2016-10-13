@@ -36,7 +36,7 @@ Gate xrot(double a) {
 
 Gate yrot(double a) {
   Gate ret{2, 2};
-  ret << std::cos(a), std::sin(a), -std::sin(a), std::cos(a);
+  ret << std::cos(a), -std::sin(a), std::sin(a), std::cos(a);
   return ret;
 }
 
