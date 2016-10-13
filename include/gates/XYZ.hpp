@@ -110,6 +110,9 @@ public:
 template<class GateBase>
 using CnXYZ = Param<GateBase, &gates, Controls::ANY>;
 
+template<class GateBase>
+using XYZ = Param<GateBase, &gates, Controls::NONE>;
+
 } // namespace QGA
 
 #endif // !defined GATE_XYZ_HPP

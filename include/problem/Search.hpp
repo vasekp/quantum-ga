@@ -2,7 +2,8 @@
 #ifndef QGA_PROBLEM_HPP
 #define QGA_PROBLEM_HPP
 
-#include "../gates/XPhase.hpp"
+#include "../gates/XYZ.hpp"
+#include "../gates/CPhase.hpp"
 
 using QGA::Backend::State;
 
@@ -87,7 +88,7 @@ public:
 /* Our Gene type will randomly choose between XPhase and Oracle and will support
  * Gene::calls(). */
 
-using Gene = QGA::CustomGene<NewBase, QGA::X, QGA::CPhase, Oracle>;
+using Gene = QGA::CustomGene<NewBase, QGA::XYZ, QGA::CPhase, Oracle>;
 
 
 struct Fitness {
