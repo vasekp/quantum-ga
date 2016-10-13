@@ -33,8 +33,7 @@ public:
   CustomGene(Pointer&& ptr): Pointer(std::move(ptr)) { }
 
   static Pointer getNew() {
-    std::uniform_int_distribution<> dist(0, sizeof...(Gates) - 1);
-    return internal::Chooser<CGate, Gates...>::getNew(dist(gen::rng));
+    return internal::Chooser<CGate, Gates...>::getNew();
   }
 
   const CGate* operator->() const {
@@ -105,13 +104,22 @@ template<class GateBase,
   template<class> class... Tail>
 class Chooser {
 
-public:
+  template<class, template<class> class, template<class> class...>
+  friend class Chooser;
 
   static typename GateBase::Pointer getNew(unsigned index) {
     if(index == 0)
       return Head<GateBase>::getNew();
     else
       return Chooser<GateBase, Tail...>::getNew(index - 1);
+  }
+
+public:
+
+  static typename GateBase::Pointer getNew() {
+    // upper bound inclusive: no need to add 1 for Head
+    std::uniform_int_distribution<> dist(0, sizeof...(Tail));
+    return getNew(dist(gen::rng));
   }
 
 }; // class Chooser<GateBase, Head, Tail...>
@@ -122,12 +130,18 @@ class Chooser<GateBase, Last> {
 
 public:
 
-  static typename GateBase::Pointer getNew(unsigned index) {
+#ifdef DEBUG
+  static typename GateBase::Pointer getNew(unsigned index = 0) {
     if(index == 0)
       return Last<GateBase>::getNew();
     else
       throw std::logic_error("Index too large in Chooser!");
   }
+#else
+  static typename GateBase::Pointer getNew(unsigned = 0) {
+    return Last<GateBase>::getNew();
+  }
+#endif
 
 }; // class Chooser<GateBase, Last>
 
