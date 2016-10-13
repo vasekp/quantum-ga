@@ -40,11 +40,25 @@ double rationalize_angle(double a) {
 }
 
 
+/* An enum for possible settings for controls_distribution below */
+
+enum class Controls {
+  NONE,
+  ONE,
+  ANY
+};
+
+
 /* A distribution generating bit strings of length nBit where the probability
  * of 1 in each position is given by pTrue. The bit at position nSkip is left
  * off. The provided uniform RNG is invoked only the minimum necessary number
  * of times. */
-class controls_distribution {
+
+template<Controls cc>
+class controls_distribution { };
+
+template<>
+class controls_distribution<Controls::ANY> {
 
   const unsigned nBit;
   const double pTrue;
@@ -59,8 +73,7 @@ class controls_distribution {
 
 public:
 
-  controls_distribution(unsigned nBit_, double pTrue_,
-      unsigned iSkip_ = (unsigned)(~0)):
+  controls_distribution(unsigned nBit_, unsigned iSkip_, double pTrue_):
     nBit(nBit_), pTrue(pTrue_), iSkip(iSkip_),
     dSTrue(-std::log(pTrue) / std::log(2.0)),
     dSFalse(-std::log(1 - pTrue) / std::log(2.0)),
@@ -96,7 +109,51 @@ public:
     return bits;
   }
 
-}; // class controls_distribution
+}; // class controls_distribution<ANY>
+
+template<>
+class controls_distribution<Controls::ONE> {
+
+  const unsigned nBit;
+  const unsigned iSkip;
+
+public:
+
+  controls_distribution(unsigned nBit_, unsigned iSkip_, double):
+    nBit(nBit_), iSkip(iSkip_) {
+#ifdef DEBUG
+      if(nBit <= 1)
+        throw std::logic_error("nBit < 2 in controls_distribution<ONE>!");
+#endif
+    }
+
+  template<class URNG>
+  std::vector<bool> operator() (URNG& rng) {
+    std::vector<bool> bits(nBit, false);
+    std::uniform_int_distribution<> dist(0, nBit - 2);
+    unsigned res = dist(rng);
+    bits[res + (res >= iSkip)] = true;
+    return bits;
+  }
+
+}; // class controls_distribution<ONE>
+
+template<>
+class controls_distribution<Controls::NONE> {
+
+  const unsigned nBit;
+
+public:
+
+  controls_distribution(unsigned nBit_, unsigned, double):
+    nBit(nBit_) { }
+
+  template<class URNG>
+  std::vector<bool> operator() (URNG&) {
+    return std::vector<bool>(nBit, false);
+  }
+
+}; // class controls_distribution<NONE>
 
 } // namespace Tools
 

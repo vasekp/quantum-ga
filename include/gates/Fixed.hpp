@@ -22,6 +22,8 @@ std::vector<gate_struct> gates {
   { Backend::Si, "Si", -1, -4 }*/
 };
 
+using Tools::Controls;
+
 
 template<class GateBase>
 class Fixed : public GateBase {
@@ -41,10 +43,11 @@ public:
     // distribution of targets
     std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
     // distribution of controls
-    unsigned tgt_ = dTgt(gen::rng);
-    Tools::controls_distribution dCtrl{Config::nBit, Config::pControl, tgt_};
+    unsigned tgt = dTgt(gen::rng);
+    Tools::controls_distribution<Controls::ANY>
+      dCtrl{Config::nBit, tgt, Config::pControl};
     return std::make_shared<Fixed>(
-        dOp(gen::rng), tgt_, dCtrl(gen::rng));
+        dOp(gen::rng), tgt, dCtrl(gen::rng));
   }
 
   Backend::State applyTo(const Backend::State& psi) const override {

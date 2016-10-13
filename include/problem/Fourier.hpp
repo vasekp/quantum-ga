@@ -6,7 +6,7 @@
 
 using QGA::Backend::State;
 
-using Gene = QGA::Gene<QGA::XYZ>;
+using Gene = QGA::Gene<QGA::CnXYZ>;
 
 
 class Candidate : public QGA::CandidateBase<Candidate, Gene> {

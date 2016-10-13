@@ -3,6 +3,7 @@
 
 namespace QGA {
 
+using Tools::Controls;
 
 template<class GateBase>
 class X : public GateBase {
@@ -86,24 +87,25 @@ public:
     // distribution of targets
     std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
     // distribution of controls
-    unsigned tgt_ = dTgt(gen::rng);
-    Tools::controls_distribution dCtrl{Config::nBit, Config::pControl, tgt_};
+    unsigned tgt = dTgt(gen::rng);
+    Tools::controls_distribution<Controls::ANY>
+      dCtrl{Config::nBit, tgt, Config::pControl};
     // distribution of angle
     std::uniform_real_distribution<> dAng{-0.5*Const::pi, 0.5*Const::pi};
     // Convert P2[13] to P1[23]: mathematically identical and more easily
     // mergeable
     std::vector<bool> ctrl = dCtrl(gen::rng);
-    ctrl[tgt_] = true;
+    ctrl[tgt] = true;
     {
       unsigned i;
       for(i = 0; i < Config::nBit; i++)
         if(ctrl[i])
           break;
       // i guaranteed to be < nBit now (at least one bit is set)
-      tgt_ = i;
+      tgt = i;
     }
-    ctrl[tgt_] = false;
-    return std::make_shared<CPhase>(tgt_, dAng(gen::rng), ctrl);
+    ctrl[tgt] = false;
+    return std::make_shared<CPhase>(tgt, dAng(gen::rng), ctrl);
   }
 
   Backend::State applyTo(const Backend::State& psi) const override {
