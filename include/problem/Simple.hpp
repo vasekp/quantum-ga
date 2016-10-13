@@ -2,8 +2,6 @@
 #ifndef QGA_PROBLEM_HPP
 #define QGA_PROBLEM_HPP
 
-#include "../gates/Fixed.hpp"
-
 using QGA::Backend::State;
 
 using Gene = QGA::Gene<QGA::CnFixedRed>;

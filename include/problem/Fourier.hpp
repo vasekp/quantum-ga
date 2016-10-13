@@ -2,9 +2,6 @@
 #ifndef QGA_PROBLEM_HPP
 #define QGA_PROBLEM_HPP
 
-#include "../gates/XYZ.hpp"
-#include "../gates/CNOT.hpp"
-
 using QGA::Backend::State;
 
 using Gene = QGA::Gene<QGA::XYZ, QGA::CNOT>;

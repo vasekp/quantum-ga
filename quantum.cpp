@@ -6,14 +6,6 @@
 #include "genetic.hpp"
 #include "include/commons.hpp"
 
-#ifdef USE_QPP
-  #include "include/backend/QPP.hpp"
-#elif defined USE_QICLIB
-  #include "include/backend/QIClib.hpp"
-#else
-  #error Either USE_QPP or USE_QICLIB needed.
-#endif
-
 #ifdef FOURIER
   #include "include/problem/Fourier.hpp"
   #ifdef USE_QPP

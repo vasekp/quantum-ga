@@ -1,16 +1,10 @@
 namespace QGA {
 
-/* Forward declarations */
-namespace Backend {
-  class State;
-}
-
 namespace internal {
   // Defined below
   template<class, template<class> class, template<class> class...>
   class Visitors;
 }
-/* End forward declarations */
 
 
 /* The base class for all genes. Defines methods derived classes have to
