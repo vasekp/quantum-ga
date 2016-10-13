@@ -31,7 +31,7 @@ namespace Config {
   const unsigned nBit = 3;
 
   // strength parameter of NSGA selection
-  const double selectBias = 0.3;
+  const double selectBias = 0.2;
 
   // Archive (external population) size
   const size_t arSize = 100;
@@ -40,7 +40,7 @@ namespace Config {
   const size_t popSize = 2000;
 
   // Number of candidates to keep from parent generation
-  const size_t popKeep = 300;
+  const size_t popKeep = 0;
 
   // Number of generations (constant)
   const unsigned long nGen = std::numeric_limits<unsigned long>::max();
