@@ -3,6 +3,8 @@
 
 namespace QGA {
 
+namespace Gates {
+
 using Tools::Controls;
 
 template<class GateBase>
@@ -94,6 +96,8 @@ public:
       tgt(tgt_), angle(angle_), ixs(ixs_), mat(Backend::phase(angle)) { }
 
 }; // class CPhase
+
+} // namespace Gates
 
 } // namespace QGA
 

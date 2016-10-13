@@ -4,7 +4,7 @@
 
 using QGA::Backend::State;
 
-using Gene = QGA::Gene<QGA::CnFixedRed>;
+using Gene = QGA::Gene<QGA::Gates::FixedRed>;
 
 const State out{3};
 

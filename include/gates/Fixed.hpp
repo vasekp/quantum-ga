@@ -3,6 +3,12 @@
 
 namespace QGA {
 
+namespace Gates {
+
+using Tools::Controls;
+
+namespace internal {
+
 struct gate_struct_f {
   Backend::Gate op;
   std::string name;
@@ -28,9 +34,6 @@ static const std::vector<gate_struct_f> fixed_reduced {
   { Backend::T, "T", +1, 0 },
   { Backend::Ti, "Ti", -1, 0 },
 };
-
-using Tools::Controls;
-
 
 template<class GateBase, const std::vector<gate_struct_f>* gates, Controls cc>
 class Fixed : public GateBase {
@@ -107,12 +110,18 @@ public:
 
 }; // class Fixed
 
+} // namespace internal
+
 
 template<class GateBase>
-using CnFixedFull = Fixed<GateBase, &fixed_full, Controls::ANY>;
+using Fixed = internal::Fixed<GateBase,
+        &internal::fixed_full, Controls::NONE>;
 
 template<class GateBase>
-using CnFixedRed = Fixed<GateBase, &fixed_reduced, Controls::ANY>;
+using FixedRed = internal::Fixed<GateBase,
+        &internal::fixed_reduced, Controls::NONE>;
+
+} // namespace Gates
 
 } // namespace QGA
 
