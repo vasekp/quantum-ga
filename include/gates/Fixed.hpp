@@ -3,29 +3,36 @@
 
 namespace QGA {
 
-struct gate_struct {
+struct gate_struct_f {
   Backend::Gate op;
   std::string name;
   int inv;
   int sq;
 };
 
-std::vector<gate_struct> gates {
+static const std::vector<gate_struct_f> fixed_full {
   { Backend::I, "I", 0, 0 },
   { Backend::H, "H", 0, -1 },
-/*{ Backend::X, "X", 0, -2 },
+  { Backend::X, "X", 0, -2 },
   { Backend::Y, "Y", 0, -3 },
-  { Backend::Z, "Z", 0, -4 },*/
-  { Backend::T, "T", +1, 0/*+2*/ },
-  { Backend::Ti, "Ti", -1, 0/*+2*/ },
-/*{ Backend::S, "S", +1, -3 },
-  { Backend::Si, "Si", -1, -4 }*/
+  { Backend::Z, "Z", 0, -4 },
+  { Backend::T, "T", +1, +2 },
+  { Backend::Ti, "Ti", -1, +2 },
+  { Backend::S, "S", +1, -3 },
+  { Backend::Si, "Si", -1, -4 }
+};
+
+static const std::vector<gate_struct_f> fixed_reduced {
+  { Backend::I, "I", 0, 0 },
+  { Backend::H, "H", 0, -1 },
+  { Backend::T, "T", +1, 0 },
+  { Backend::Ti, "Ti", -1, 0 },
 };
 
 using Tools::Controls;
 
 
-template<class GateBase>
+template<class GateBase, const std::vector<gate_struct_f>* gates, Controls cc>
 class Fixed : public GateBase {
 
   size_t op;
@@ -39,7 +46,7 @@ public:
   static Pointer getNew() {
     /* Distributions: cheap and safer in MT environment this way */
     // distribution of possible gates (except of identity)
-    std::uniform_int_distribution<size_t> dOp{1, gates.size() - 1};
+    std::uniform_int_distribution<size_t> dOp{1, gates->size() - 1};
     // distribution of targets
     std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
     // distribution of controls
@@ -51,7 +58,7 @@ public:
   }
 
   Backend::State applyTo(const Backend::State& psi) const override {
-    return psi.apply_ctrl(gates[op].op, ixs, tgt);
+    return psi.apply_ctrl((*gates)[op].op, ixs, tgt);
   }
 
   bool isTrivial() const override {
@@ -63,7 +70,7 @@ public:
   }
 
   void invert(Pointer& self) const override {
-    int dIx = gates[op].inv;
+    int dIx = (*gates)[op].inv;
     if(dIx != 0)
       self = std::make_shared<Fixed>(op + dIx, tgt, ixs);
   }
@@ -74,15 +81,15 @@ public:
 
   bool merge(Pointer& first, Pointer&, const Fixed& g) const override {
     // G * G = square(G) if also among our operations
-    if(g.op == op && g.tgt == tgt && g.ixs == ixs && gates[op].sq != 0) {
-      first = std::make_shared<Fixed>(op + gates[op].sq, tgt, ixs);
+    if(g.op == op && g.tgt == tgt && g.ixs == ixs && (*gates)[op].sq != 0) {
+      first = std::make_shared<Fixed>(op + (*gates)[op].sq, tgt, ixs);
       return true;
     } else
       return false;
   }
 
   std::ostream& write(std::ostream& os) const override {
-    os << gates[op].name << tgt + 1;
+    os << (*gates)[op].name << tgt + 1;
     if(ixs.size()) {
       os << '[';
       for(auto& ctrl : ixs.as_vector())
@@ -99,6 +106,13 @@ public:
     op(op_), tgt(tgt_), ixs(ixs_) { }
 
 }; // class Fixed
+
+
+template<class GateBase>
+using CnFixedFull = Fixed<GateBase, &fixed_full, Controls::ANY>;
+
+template<class GateBase>
+using CnFixedRed = Fixed<GateBase, &fixed_reduced, Controls::ANY>;
 
 } // namespace QGA
 

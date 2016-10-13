@@ -3,12 +3,12 @@
 
 namespace QGA {
 
-struct gate_struct {
+struct gate_struct_p {
   Backend::Gate(*fn)(double);
   char name;
 };
 
-static const std::vector<gate_struct> gates {
+static const std::vector<gate_struct_p> param_full {
   {Backend::xrot, 'X'},
   {Backend::yrot, 'Y'},
   {Backend::zrot, 'Z'}
@@ -17,7 +17,7 @@ static const std::vector<gate_struct> gates {
 using Tools::Controls;
 
 
-template<class GateBase, const std::vector<gate_struct>* gates, Controls cc>
+template<class GateBase, const std::vector<gate_struct_p>* gates, Controls cc>
 class Param : public GateBase {
 
   size_t op;
@@ -108,10 +108,10 @@ public:
 
 
 template<class GateBase>
-using CnXYZ = Param<GateBase, &gates, Controls::ANY>;
+using CnXYZ = Param<GateBase, &param_full, Controls::ANY>;
 
 template<class GateBase>
-using XYZ = Param<GateBase, &gates, Controls::NONE>;
+using XYZ = Param<GateBase, &param_full, Controls::NONE>;
 
 } // namespace QGA
 

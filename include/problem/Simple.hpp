@@ -6,7 +6,7 @@
 
 using QGA::Backend::State;
 
-using Gene = QGA::Gene<QGA::Fixed>;
+using Gene = QGA::Gene<QGA::CnFixedRed>;
 
 const State out{3};
 
