@@ -1,6 +1,3 @@
-#ifndef GATE_CPHASE_HPP
-#define GATE_CPHASE_HPP
-
 namespace QGA {
 
 namespace Gates {
@@ -100,5 +97,3 @@ public:
 } // namespace Gates
 
 } // namespace QGA
-
-#endif // !defined GATE_CPHASE_HPP

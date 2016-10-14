@@ -1,6 +1,3 @@
-#ifndef GATE_FIXED_HPP
-#define GATE_FIXED_HPP
-
 namespace QGA {
 
 namespace Gates {
@@ -124,5 +121,3 @@ using FixedRed = internal::Fixed<GateBase,
 } // namespace Gates
 
 } // namespace QGA
-
-#endif // !defined GATE_FIXED_HPP

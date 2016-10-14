@@ -1,6 +1,3 @@
-#ifndef GATE_CNOT_HPP
-#define GATE_CNOT_HPP
-
 namespace QGA {
 
 namespace Gates {
@@ -85,5 +82,3 @@ using CkNOT = internal::CNOT<GateBase, Controls::LEAST1>;
 } // namespace Gates
 
 } // namespace QGA
-
-#endif // !defined GATE_CNOT_HPP

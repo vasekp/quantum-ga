@@ -1,6 +1,3 @@
-#ifndef GATE_XYZ_HPP
-#define GATE_XYZ_HPP
-
 namespace QGA {
 
 namespace Gates {
@@ -122,5 +119,3 @@ using XYZ = internal::Param<GateBase, &internal::param_full, Controls::NONE>;
 } // namespace Gates
 
 } // namespace QGA
-
-#endif // !defined GATE_XYZ_HPP

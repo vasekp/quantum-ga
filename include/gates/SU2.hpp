@@ -1,6 +1,3 @@
-#ifndef GATE_SU2_HPP
-#define GATE_SU2_HPP
-
 namespace QGA {
 
 namespace Gates {
@@ -128,5 +125,3 @@ using SU2 = internal::SU2<GateBase, Controls::NONE>;
 } // namespace Gates
 
 } // namespace QGA
-
-#endif // !defined GATE_SU2_HPP
