@@ -99,11 +99,6 @@ public:
   }
 
   Param(size_t op_, unsigned tgt_, double angle_,
-      std::vector<bool> ctrl):
-    op(op_), tgt(tgt_), angle(angle_), ixs(ctrl), mat((*gates)[op].fn(angle))
-  { }
-
-  Param(size_t op_, unsigned tgt_, double angle_,
       const Backend::Controls& ixs_):
     op(op_), tgt(tgt_), angle(angle_), ixs(ixs_), mat((*gates)[op].fn(angle))
   { }

@@ -96,12 +96,6 @@ public:
   }
 
   SU2(unsigned tgt_, double angle1_, double angle2_, double angle3_,
-      std::vector<bool> ctrl):
-    tgt(tgt_), angle1(angle1_), angle2(angle2_), angle3(angle3_), ixs(ctrl),
-    mat(Backend::zrot(angle3) * Backend::yrot(angle2) * Backend::zrot(angle1))
-  { }
-
-  SU2(unsigned tgt_, double angle1_, double angle2_, double angle3_,
       const Backend::Controls& ixs_):
     tgt(tgt_), angle1(angle1_), angle2(angle2_), angle3(angle3_), ixs(ixs_),
     mat(Backend::zrot(angle3) * Backend::yrot(angle2) * Backend::zrot(angle1))

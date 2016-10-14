@@ -65,9 +65,6 @@ public:
     return os;
   }
 
-  CNOT(unsigned tgt_, std::vector<bool> ctrl):
-      tgt(tgt_), ixs(ctrl), odd(true) { }
-
   CNOT(unsigned tgt_, const Backend::Controls& ixs_, bool odd_ = true):
       tgt(tgt_), ixs(ixs_), odd(odd_) { }
 
