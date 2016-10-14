@@ -49,6 +49,58 @@ enum class Controls {
   ANY
 };
 
+/* A helper class for controls_distribution */
+
+class bernoulli_distribution_s {
+
+  const double pTrue;
+
+  // entropy decrease per true result
+  const double dSTrue;
+  // entropy decrease per false result
+  const double dSFalse;
+  // entropy minimum left for reliable generation
+  const double Smin;
+
+  // random value uniformly distributed between 0 and 1
+  double c;
+  // entropy available in c
+  double S;
+
+public:
+
+  bernoulli_distribution_s(double pTrue_):
+    pTrue(pTrue_),
+    dSTrue(-std::log(pTrue) / std::log(2.0)),
+    dSFalse(-std::log(1 - pTrue) / std::log(2.0)),
+    Smin(std::min(std::max(dSTrue, dSFalse), (double)S0())),
+    c(0), S(0) { }
+
+  // entropy in a fully randomized double
+  // can't be a normal static constexpr member due to language limitations
+  static constexpr size_t S0() {
+    return std::numeric_limits<double>::digits;
+  }
+
+  template<class URNG>
+  bool operator() (URNG& rng) {
+    if(S < Smin) {
+      c = std::generate_canonical<double, S0()>(rng);
+      S = S0();
+    }
+    if(c < pTrue) {
+      c /= pTrue;
+      S -= dSTrue;
+      return true;
+    } else {
+      c = (c - pTrue)/(1 - pTrue);
+      S -= dSFalse;
+      return false;
+    }
+  }
+
+}; // class bernoulli_distribution_s
+
 
 /* A distribution generating bit strings of length nBit where the probability
  * of 1 in each position is given by pTrue. The bit at position nSkip is left
@@ -65,47 +117,20 @@ class controls_distribution<Controls::ANY> {
   const double pTrue;
   const unsigned iSkip;
 
-  // entropy decrease per true result
-  const double dSTrue;
-  // entropy decrease per false result
-  const double dSFalse;
-  // entropy minimum left for reliable generation
-  const double Smin;
-
 public:
 
   controls_distribution(unsigned nBit_, unsigned iSkip_, double pTrue_):
-    nBit(nBit_), pTrue(pTrue_), iSkip(iSkip_),
-    dSTrue(-std::log(pTrue) / std::log(2.0)),
-    dSFalse(-std::log(1 - pTrue) / std::log(2.0)),
-    Smin(std::max(dSTrue, dSFalse)) { }
+    nBit(nBit_), pTrue(pTrue_), iSkip(iSkip_) { }
 
   template<class URNG>
   std::vector<bool> operator() (URNG& rng) {
     std::vector<bool> bits(nBit, false);
-    std::uniform_real_distribution<> dist;
-    double c = dist(rng);
-    // available entropy per call to dist
-    constexpr double S0 =
-      std::numeric_limits<typename URNG::result_type>::digits;
-    // current entropy
-    double S = S0;
+    bernoulli_distribution_s dist(pTrue);
 
     for(unsigned i = 0; i < nBit; i++) {
       if(i == iSkip)
         continue;
-      if(c < pTrue) {
-        bits[i] = true;
-        c /= pTrue;
-        S -= dSTrue;
-      } else {
-        c = (c - pTrue)/(1 - pTrue);
-        S -= dSFalse;
-      }
-      if(S < Smin) {
-        c = dist(rng);
-        S = S0; // NB can still be < Smin but there's not much more we can do
-      }
+      bits[i] = dist(rng);
     }
     return bits;
   }
