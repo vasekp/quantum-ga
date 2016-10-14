@@ -2,14 +2,14 @@
 #ifndef QGA_PROBLEM_HPP
 #define QGA_PROBLEM_HPP
 
-#include "../gates/XPhase.hpp"
+namespace {
 
 using QGA::Backend::State;
 
 /* An extension of QGA::GateBase allowing us to count oracle calls and pass
  * an additional parameter to applyTo(). */
 
-template<class GateBase, template<class> class... Gates>
+template<class GateBase, class... Gates>
 class NewBase : public QGA::GateBase<GateBase, Gates...> {
 
   using QGA::GateBase<GateBase, Gates...>::applyTo;
@@ -27,10 +27,12 @@ public:
 };
 
 
-/* The oracle gene template. */
+/* The oracle gate. */
+
+struct Oracle {
 
 template<class GateBase>
-class Oracle : public GateBase {
+class Inner : public GateBase {
 
   using typename GateBase::Pointer;
   bool odd;  // parity of the power
@@ -38,7 +40,7 @@ class Oracle : public GateBase {
 public:
 
   static Pointer getNew() {
-    return std::make_shared<Oracle>();
+    return std::make_shared<Inner>();
   }
 
   State applyTo(const State&) const override {
@@ -65,29 +67,36 @@ public:
     return 1;
   }
 
-  bool invite(Pointer& first, Pointer& second) const override {
-    return first->merge(first, second, *this);
+  Pointer invite(const Pointer& first) const override {
+    return first->merge(*this);
   }
 
-  bool merge(Pointer& first, Pointer&, const Oracle& g) const override {
+  Pointer merge(const Inner& g) const override {
     // oracle * oracle = oracle^2 → true ^ true = false
-    first = std::make_shared<Oracle>(odd ^ g.odd);
-    return true;
+    return std::make_shared<Inner>(odd ^ g.odd);
   }
 
   std::ostream& write(std::ostream& os) const override {
     return os << (odd ? "Oracle" : "[Id]");
   }
 
-  Oracle(bool odd_ = true): odd(odd_) { }
+  Inner(bool odd_ = true): odd(odd_) { }
 
-}; // class Oracle<GateBase>
+}; // class Oracle::Inner
+
+template<class GateBase>
+using Template = Inner<GateBase>;
+
+}; // struct Oracle
 
 
-/* Our Gene type will randomly choose between XPhase and Oracle and will support
- * Gene::calls(). */
+/* Our Gene type will randomly choose between uncontrolled X/Y/Z, controlled
+ * Phase, and Oracle and will support Gene::calls(). */
 
-using Gene = QGA::CustomGene<NewBase, QGA::X, QGA::CPhase, Oracle>;
+using Gene = QGA::CustomGene<NewBase,
+        QGA::Gates::XYZ<>,
+        QGA::Gates::CPhase,
+        Oracle>;
 
 
 struct Fitness {
@@ -177,5 +186,7 @@ private:
   }
 
 }; // class Candidate
+
+} // anonymous namespace
 
 #endif // !defined QGA_PROBLEM_HPP

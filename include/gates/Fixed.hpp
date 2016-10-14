@@ -1,29 +1,32 @@
-#ifndef GATE_FIXED_HPP
-#define GATE_FIXED_HPP
-
 namespace QGA {
 
-struct gate_struct {
+namespace Gates {
+
+using Tools::Controls;
+
+struct gate_struct_f {
   Backend::Gate op;
   std::string name;
   int inv;
   int sq;
 };
 
-std::vector<gate_struct> gates {
+
+namespace internal {
+
+static const std::vector<gate_struct_f> gates_fixed {
   { Backend::I, "I", 0, 0 },
   { Backend::H, "H", 0, -1 },
-/*{ Backend::X, "X", 0, -2 },
+  { Backend::X, "X", 0, -2 },
   { Backend::Y, "Y", 0, -3 },
-  { Backend::Z, "Z", 0, -4 },*/
-  { Backend::T, "T", +1, 0/*+2*/ },
-  { Backend::Ti, "Ti", -1, 0/*+2*/ },
-/*{ Backend::S, "S", +1, -3 },
-  { Backend::Si, "Si", -1, -4 }*/
+  { Backend::Z, "Z", 0, -4 },
+  { Backend::T, "T", +1, +2 },
+  { Backend::Ti, "Ti", -1, +2 },
+  { Backend::S, "S", +1, -3 },
+  { Backend::Si, "Si", -1, -4 }
 };
 
-
-template<class GateBase>
+template<class GateBase, const std::vector<gate_struct_f>* gates, Controls cc>
 class Fixed : public GateBase {
 
   size_t op;
@@ -37,18 +40,19 @@ public:
   static Pointer getNew() {
     /* Distributions: cheap and safer in MT environment this way */
     // distribution of possible gates (except of identity)
-    std::uniform_int_distribution<size_t> dOp{1, gates.size() - 1};
+    std::uniform_int_distribution<size_t> dOp{1, gates->size() - 1};
     // distribution of targets
     std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
     // distribution of controls
-    unsigned tgt_ = dTgt(gen::rng);
-    Tools::controls_distribution dCtrl{Config::nBit, Config::pControl, tgt_};
+    unsigned tgt = dTgt(gen::rng);
+    Tools::controls_distribution<cc>
+      dCtrl{Config::nBit, tgt, Config::pControl};
     return std::make_shared<Fixed>(
-        dOp(gen::rng), tgt_, dCtrl(gen::rng));
+        dOp(gen::rng), tgt, dCtrl(gen::rng));
   }
 
   Backend::State applyTo(const Backend::State& psi) const override {
-    return psi.apply_ctrl(gates[op].op, ixs, tgt);
+    return psi.apply_ctrl((*gates)[op].op, ixs, tgt);
   }
 
   bool isTrivial() const override {
@@ -59,27 +63,28 @@ public:
     return ixs.size() * ixs.size();
   }
 
-  void invert(Pointer& self) const override {
-    int dIx = gates[op].inv;
+  Pointer invert(const Pointer& self) const override {
+    int dIx = (*gates)[op].inv;
     if(dIx != 0)
-      self = std::make_shared<Fixed>(op + dIx, tgt, ixs);
+      return std::make_shared<Fixed>(op + dIx, tgt, ixs);
+    else
+      return self;
   }
 
-  bool invite(Pointer& first, Pointer& second) const override {
-    return first->merge(first, second, *this);
+  Pointer invite(const Pointer& first) const override {
+    return first->merge(*this);
   }
 
-  bool merge(Pointer& first, Pointer&, const Fixed& g) const override {
+  Pointer merge(const Fixed& g) const override {
     // G * G = square(G) if also among our operations
-    if(g.op == op && g.tgt == tgt && g.ixs == ixs && gates[op].sq != 0) {
-      first = std::make_shared<Fixed>(op + gates[op].sq, tgt, ixs);
-      return true;
-    } else
-      return false;
+    if(g.op == op && g.tgt == tgt && g.ixs == ixs && (*gates)[op].sq != 0)
+      return std::make_shared<Fixed>(op + (*gates)[op].sq, tgt, ixs);
+    else
+      return {};
   }
 
   std::ostream& write(std::ostream& os) const override {
-    os << gates[op].name << tgt + 1;
+    os << (*gates)[op].name << tgt + 1;
     if(ixs.size()) {
       os << '[';
       for(auto& ctrl : ixs.as_vector())
@@ -89,14 +94,23 @@ public:
     return os;
   }
 
-  Fixed(size_t op_, unsigned tgt_, std::vector<bool> ctrl):
-      op(op_), tgt(tgt_), ixs(ctrl) { }
-
   Fixed(size_t op_, unsigned tgt_, const Backend::Controls& ixs_):
     op(op_), tgt(tgt_), ixs(ixs_) { }
 
 }; // class Fixed
 
-} // namespace QGA
+} // namespace internal
 
-#endif // !defined GATE_FIXED_HPP
+
+template<Controls cc = Controls::NONE,
+  const std::vector<gate_struct_f>* gates = internal::gates_fixed>
+struct Fixed {
+
+  template<class GateBase>
+  using Template = internal::Fixed<GateBase, gates, cc>;
+
+}; // struct Fixed
+
+} // namespace Gates
+
+} // namespace QGA

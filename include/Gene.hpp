@@ -2,7 +2,7 @@ namespace QGA {
 
 namespace internal {
   // Defined below
-  template<class, template<class> class, template<class> class...>
+  template<class, class, class...>
   class Chooser;
 }
 
@@ -19,8 +19,7 @@ namespace internal {
  * functions (like complexity() or functions added by extensions to the
  * original QGA::GateBase) are redirected using a ->. */
 
-template<template<class, template<class> class...> class GateBase,
-  template<class> class... Gates>
+template<template<class, class...> class GateBase, class... Gates>
 class CustomGene : internal::Gate<GateBase, Gates...>::Pointer {
 
   using CGate = internal::Gate<GateBase, Gates...>;
@@ -33,8 +32,7 @@ public:
   CustomGene(Pointer&& ptr): Pointer(std::move(ptr)) { }
 
   static Pointer getNew() {
-    std::uniform_int_distribution<> dist(0, sizeof...(Gates) - 1);
-    return internal::Chooser<CGate, Gates...>::getNew(dist(gen::rng));
+    return internal::Chooser<CGate, Gates...>::getNew();
   }
 
   const CGate* operator->() const {
@@ -48,19 +46,24 @@ public:
   /* These helper functions simplify the call pattern of the pointer-passing
    * virtual functions of GateBase. */
   void invert() {
-    pointer()->invert(pointer());
+    pointer() = pointer()->invert(pointer());
   }
 
   void mutate() {
-    pointer()->mutate(pointer());
+    pointer() = pointer()->mutate(pointer());
   }
 
   void simplify() {
-    pointer()->simplify(pointer());
+    pointer() = pointer()->simplify(pointer());
   }
 
   bool merge(CustomGene& other) {
-    return pointer()->merge(pointer(), other);
+    Pointer result = pointer()->merge(pointer(), other);
+    if(result) {
+      pointer() = result;
+      return true;
+    } else
+      return false;
   }
 
   /* Two genes are equal iff they point to the same object. This is used in
@@ -88,7 +91,7 @@ private:
  * extended functionality is requested of the GateBase this becomes
  * QGA::CustomGene<NewBase, Genes...>. */
 
-template<template<class> class... Gates>
+template<class... Gates>
 using Gene = CustomGene<GateBase, Gates...>;
 
 
@@ -100,34 +103,46 @@ namespace internal {
  * i = 2: C<Base>::getNew()
  * etc. */
 
-template<class GateBase,
-  template<class> class Head,
-  template<class> class... Tail>
+template<class GateBase, class Head, class... Tail>
 class Chooser {
 
-public:
+  template<class, class, class...>
+  friend class Chooser;
 
   static typename GateBase::Pointer getNew(unsigned index) {
     if(index == 0)
-      return Head<GateBase>::getNew();
+      return Head::template Template<GateBase>::getNew();
     else
       return Chooser<GateBase, Tail...>::getNew(index - 1);
   }
 
+public:
+
+  static typename GateBase::Pointer getNew() {
+    // upper bound inclusive: no need to add 1 for Head
+    std::uniform_int_distribution<> dist(0, sizeof...(Tail));
+    return getNew(dist(gen::rng));
+  }
+
 }; // class Chooser<GateBase, Head, Tail...>
 
-template<class GateBase,
-  template<class> class Last>
+template<class GateBase, class Last>
 class Chooser<GateBase, Last> {
 
 public:
 
-  static typename GateBase::Pointer getNew(unsigned index) {
+#ifdef DEBUG
+  static typename GateBase::Pointer getNew(unsigned index = 0) {
     if(index == 0)
-      return Last<GateBase>::getNew();
+      return Last::template Template<GateBase>::getNew();
     else
       throw std::logic_error("Index too large in Chooser!");
   }
+#else
+  static typename GateBase::Pointer getNew(unsigned = 0) {
+    return Last::template Template<GateBase>::getNew();
+  }
+#endif
 
 }; // class Chooser<GateBase, Last>
 

@@ -46,6 +46,14 @@ namespace QGA {
   }
 }
 
+#ifdef USE_QPP
+  #include "backend/QPP.hpp"
+#elif defined USE_QICLIB
+  #include "backend/QIClib.hpp"
+#else
+  #error Either USE_QPP or USE_QICLIB needed.
+#endif
+
 #include "GateBase.hpp"
 #include "Gene.hpp"
 #include "Fitness.hpp"
@@ -54,6 +62,12 @@ namespace QGA {
 #include "CandidateFactory.hpp"
 
 #include "Colours.hpp"
+
 #include "Tools.hpp"
+#include "gates/Fixed.hpp"
+#include "gates/XYZ.hpp"
+#include "gates/CPhase.hpp"
+#include "gates/CNOT.hpp"
+#include "gates/SU2.hpp"
 
 #endif // !defined QGA_COMMONS_HPP

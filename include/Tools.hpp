@@ -40,63 +40,59 @@ double rationalize_angle(double a) {
 }
 
 
+/* An enum for possible settings for controls_distribution below */
+
+enum class Controls {
+  NONE,
+  ONE,
+  LEAST1,
+  ANY
+};
+
 /* A distribution generating bit strings of length nBit where the probability
  * of 1 in each position is given by pTrue. The bit at position nSkip is left
- * off. The provided uniform RNG is invoked only the minimum necessary number
- * of times. */
+ * off. */
+
+template<Controls cc>
 class controls_distribution {
 
   const unsigned nBit;
   const double pTrue;
   const unsigned iSkip;
 
-  // entropy decrease per true result
-  const double dSTrue;
-  // entropy decrease per false result
-  const double dSFalse;
-  // entropy minimum left for reliable generation
-  const double Smin;
-
 public:
 
-  controls_distribution(unsigned nBit_, double pTrue_,
-      unsigned iSkip_ = (unsigned)(~0)):
-    nBit(nBit_), pTrue(pTrue_), iSkip(iSkip_),
-    dSTrue(-std::log(pTrue) / std::log(2.0)),
-    dSFalse(-std::log(1 - pTrue) / std::log(2.0)),
-    Smin(std::max(dSTrue, dSFalse)) { }
+  controls_distribution(unsigned nBit_, unsigned iSkip_, double pTrue_):
+    nBit(nBit_), pTrue(pTrue_), iSkip(iSkip_) {
+#ifdef DEBUG
+      if((cc == Controls::ONE || cc == Controls::LEAST1) && nBit <= 1)
+        throw std::logic_error("nBit < 2 in controls_distribution<≥1>!");
+#endif
+    }
 
   template<class URNG>
   std::vector<bool> operator() (URNG& rng) {
     std::vector<bool> bits(nBit, false);
-    std::uniform_real_distribution<> dist;
-    double c = dist(rng);
-    // available entropy per call to dist
-    constexpr double S0 =
-      std::numeric_limits<typename URNG::result_type>::digits;
-    // current entropy
-    double S = S0;
 
-    for(unsigned i = 0; i < nBit; i++) {
-      if(i == iSkip)
-        continue;
-      if(c < pTrue) {
-        bits[i] = true;
-        c /= pTrue;
-        S -= dSTrue;
-      } else {
-        c = (c - pTrue)/(1 - pTrue);
-        S -= dSFalse;
-      }
-      if(S < Smin) {
-        c = dist(rng);
-        S = S0; // NB can still be < Smin but there's not much more we can do
+    if(cc == Controls::ANY || cc == Controls::LEAST1) {
+      std::bernoulli_distribution dist(pTrue);
+      for(unsigned i = 0; i < nBit; i++) {
+        if(i == iSkip)
+          continue;
+        bits[i] = dist(rng);
       }
     }
+
+    if(cc == Controls::ONE || cc == Controls::LEAST1) {
+      std::uniform_int_distribution<> dist(0, nBit - 2);
+      unsigned res = dist(rng);
+      bits[res + (res >= iSkip)] = true;
+    }
+
     return bits;
   }
 
-}; // class controls_distribution
+}; // class controls_distribution<Controls>
 
 } // namespace Tools
 
