@@ -2,6 +2,8 @@
 #ifndef QGA_PROBLEM_HPP
 #define QGA_PROBLEM_HPP
 
+namespace {
+
 using QGA::Backend::State;
 
 static const std::vector<QGA::Gates::gate_struct_f> reduced_set {
@@ -46,5 +48,7 @@ private:
   }
 
 }; // class Candidate
+
+} // anonymous namespace
 
 #endif // !defined QGA_PROBLEM_HPP

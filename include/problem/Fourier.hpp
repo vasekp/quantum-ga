@@ -2,6 +2,8 @@
 #ifndef QGA_PROBLEM_HPP
 #define QGA_PROBLEM_HPP
 
+namespace {
+
 using QGA::Backend::State;
 
 using Gene = QGA::Gene<QGA::Gates::XYZ<>, QGA::Gates::CNOT<>>;
@@ -61,4 +63,5 @@ private:
 
 }; // class Candidate
 
+} // anonymous namespace
 #endif // !defined QGA_PROBLEM_HPP

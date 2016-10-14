@@ -2,6 +2,8 @@
 #ifndef QGA_PROBLEM_HPP
 #define QGA_PROBLEM_HPP
 
+namespace {
+
 using QGA::Backend::State;
 
 /* An extension of QGA::GateBase allowing us to count oracle calls and pass
@@ -185,5 +187,7 @@ private:
   }
 
 }; // class Candidate
+
+} // anonymous namespace
 
 #endif // !defined QGA_PROBLEM_HPP
