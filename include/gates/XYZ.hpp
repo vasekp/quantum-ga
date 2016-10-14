@@ -18,6 +18,18 @@ static const std::vector<gate_struct_p> gates_param {
   {Backend::zrot, 'Z'}
 };
 
+static const std::vector<gate_struct_p> gates_x {
+  {Backend::xrot, 'X'},
+};
+
+static const std::vector<gate_struct_p> gates_y {
+  {Backend::yrot, 'Y'},
+};
+
+static const std::vector<gate_struct_p> gates_z {
+  {Backend::zrot, 'Z'},
+};
+
 
 template<class GateBase, const std::vector<gate_struct_p>* gates, Controls cc>
 class Param : public GateBase {
@@ -108,11 +120,27 @@ public:
 template<Controls cc = Controls::NONE,
   const std::vector<gate_struct_p>* gates = &internal::gates_param>
 struct XYZ {
-
   template<class GateBase>
   using Template = internal::Param<GateBase, gates, cc>;
+};
 
-}; // struct XYZ
+template<Controls cc = Controls::NONE>
+struct X {
+  template<class GateBase>
+  using Template = internal::Param<GateBase, &internal::gates_x, cc>;
+};
+
+template<Controls cc = Controls::NONE>
+struct Y {
+  template<class GateBase>
+  using Template = internal::Param<GateBase, &internal::gates_y, cc>;
+};
+
+template<Controls cc = Controls::NONE>
+struct Z {
+  template<class GateBase>
+  using Template = internal::Param<GateBase, &internal::gates_z, cc>;
+};
 
 } // namespace Gates
 
