@@ -27,7 +27,7 @@ public:
   }
 
   Backend::State applyTo(const Backend::State& psi) const override {
-    return psi.apply_ctrl(Backend::X, ixs, tgt);
+    return odd ? psi.apply_ctrl(Backend::X, ixs, tgt) : psi;
   }
 
   bool isTrivial() const override {
@@ -52,6 +52,8 @@ public:
   }
 
   std::ostream& write(std::ostream& os) const override {
+    if(!odd)
+      return os << "[Id]";
     os << "NOT" << tgt + 1;
     if(ixs.size()) {
       os << '[';
