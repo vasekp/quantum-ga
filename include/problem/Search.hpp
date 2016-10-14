@@ -67,14 +67,13 @@ public:
     return 1;
   }
 
-  bool invite(Pointer& first, Pointer& second) const override {
-    return first->merge(first, second, *this);
+  Pointer invite(const Pointer& first) const override {
+    return first->merge(*this);
   }
 
-  bool merge(Pointer& first, Pointer&, const Inner& g) const override {
+  Pointer merge(const Inner& g) const override {
     // oracle * oracle = oracle^2 → true ^ true = false
-    first = std::make_shared<Inner>(odd ^ g.odd);
-    return true;
+    return std::make_shared<Inner>(odd ^ g.odd);
   }
 
   std::ostream& write(std::ostream& os) const override {

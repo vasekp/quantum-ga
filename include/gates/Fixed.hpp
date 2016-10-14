@@ -66,23 +66,24 @@ public:
     return ixs.size() * ixs.size();
   }
 
-  void invert(Pointer& self) const override {
+  Pointer invert(const Pointer& self) const override {
     int dIx = (*gates)[op].inv;
     if(dIx != 0)
-      self = std::make_shared<Fixed>(op + dIx, tgt, ixs);
+      return std::make_shared<Fixed>(op + dIx, tgt, ixs);
+    else
+      return self;
   }
 
-  bool invite(Pointer& first, Pointer& second) const override {
-    return first->merge(first, second, *this);
+  Pointer invite(const Pointer& first) const override {
+    return first->merge(*this);
   }
 
-  bool merge(Pointer& first, Pointer&, const Fixed& g) const override {
+  Pointer merge(const Fixed& g) const override {
     // G * G = square(G) if also among our operations
-    if(g.op == op && g.tgt == tgt && g.ixs == ixs && (*gates)[op].sq != 0) {
-      first = std::make_shared<Fixed>(op + (*gates)[op].sq, tgt, ixs);
-      return true;
-    } else
-      return false;
+    if(g.op == op && g.tgt == tgt && g.ixs == ixs && (*gates)[op].sq != 0)
+      return std::make_shared<Fixed>(op + (*gates)[op].sq, tgt, ixs);
+    else
+      return {};
   }
 
   std::ostream& write(std::ostream& os) const override {

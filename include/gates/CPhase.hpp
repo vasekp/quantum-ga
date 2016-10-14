@@ -58,29 +58,28 @@ public:
     return ixs.size() * ixs.size();
   }
 
-  void invert(Pointer& self) const override {
-    self = std::make_shared<Inner>(tgt, -angle, ixs);
+  Pointer invert(const Pointer&) const override {
+    return std::make_shared<Inner>(tgt, -angle, ixs);
   }
 
-  void mutate(Pointer& self) const override {
+  Pointer mutate(const Pointer&) const override {
     std::normal_distribution<> dAng{0.0, 0.1};
-    self = std::make_shared<Inner>(tgt, angle + dAng(gen::rng), ixs);
+    return std::make_shared<Inner>(tgt, angle + dAng(gen::rng), ixs);
   }
 
-  void simplify(Pointer& self) const override {
-    self = std::make_shared<Inner>(tgt, Tools::rationalize_angle(angle), ixs);
+  Pointer simplify(const Pointer&) const override {
+    return std::make_shared<Inner>(tgt, Tools::rationalize_angle(angle), ixs);
   }
 
-  bool invite(Pointer& first, Pointer& second) const override {
-    return first->merge(first, second, *this);
+  Pointer invite(const Pointer& first) const override {
+    return first->merge(*this);
   }
 
-  bool merge(Pointer& first, Pointer&, const Inner& g) const override {
-    if(g.tgt == tgt && g.ixs == ixs) {
-      first = std::make_shared<Inner>(tgt, angle + g.angle, ixs);
-      return true;
-    } else
-      return false;
+  Pointer merge(const Inner& g) const override {
+    if(g.tgt == tgt && g.ixs == ixs)
+      return std::make_shared<Inner>(tgt, angle + g.angle, ixs);
+    else
+      return {};
   }
 
   std::ostream& write(std::ostream& os) const override {

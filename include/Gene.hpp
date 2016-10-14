@@ -46,19 +46,24 @@ public:
   /* These helper functions simplify the call pattern of the pointer-passing
    * virtual functions of GateBase. */
   void invert() {
-    pointer()->invert(pointer());
+    pointer() = pointer()->invert(pointer());
   }
 
   void mutate() {
-    pointer()->mutate(pointer());
+    pointer() = pointer()->mutate(pointer());
   }
 
   void simplify() {
-    pointer()->simplify(pointer());
+    pointer() = pointer()->simplify(pointer());
   }
 
   bool merge(CustomGene& other) {
-    return pointer()->merge(pointer(), other);
+    Pointer result = pointer()->merge(pointer(), other);
+    if(result) {
+      pointer() = result;
+      return true;
+    } else
+      return false;
   }
 
   /* Two genes are equal iff they point to the same object. This is used in

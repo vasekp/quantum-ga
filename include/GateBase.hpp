@@ -39,21 +39,23 @@ public:
   }
 
   /* The following functions pass a std::shared_ptr (SP) pointing to this
-   * along with this. If a gene allows a given operation, it can use this
-   * parameter to actually rewrite the shared pointer by a new
-   * std::make_shared<>(...). If it does not, it can return with a no-op.
-   * The internals of SP guarantee that in either case all reference counts
-   * are updated properly and no memory is leaked.
-   *
-   * IMPORTANT: reassigning self from within the functions can result in a
-   * destruction of this. Keep a local copy of the shared pointer on stack if
-   * the assignment is anything else than the very last command. */
+   * along with this. If a gene allows a given operation, it should return a
+   * new SP created using std::make_shared<OwnClass>. If it does not, it
+   * should return the parameter self so it can be reused just with its
+   * reference count upped instead of creating a new copy. The default
+   * implementation does precisely that. */
 
-  virtual void invert(Pointer& /*self*/) const { }
+  virtual Pointer invert(const Pointer& self) const {
+    return self;
+  }
 
-  virtual void mutate(Pointer& /*self*/) const { }
+  virtual Pointer mutate(const Pointer& self) const {
+    return self;
+  }
 
-  virtual void simplify(Pointer& /*self*/) const { }
+  virtual Pointer simplify(const Pointer& self) const {
+    return self;
+  }
 
   /* Merge needs to be implemented using double dispatch, because only
    * genes of the same class can typically be merged (albeit this is not a
@@ -61,27 +63,26 @@ public:
    * class.
    *
    * Let first is a shared pointer to Derived1 and second is a shared pointer
-   * to Derived2. Both classes override their invite() and 3-argument merge()
+   * to Derived2. Both classes override their invite() and 1-argument merge()
    * methods. The call pattern goes as following:
    *   first->merge(first, second)
-   *   -> second->invite(first, second) [vtable lookup in Derived2]
-   *   -> first->merge(first, second, Derived2&) [vtable lookup in Derived1]
+   *   -> second->invite(first)         [vtable lookup in Derived2]
+   *   -> first->merge(const Derived2&) [vtable lookup in Derived1]
    * Now the override Derived1::merge() is called in an overload with its
-   * third parameter being a (const) Derived2&. This allows to react properly
+   * third parameter being a const Derived2&. This allows to react properly
    * to any possible combination of the two derived classes.
    *
    * See: http://www.oodesign.com/visitor-pattern.html */
 
-  bool merge(Pointer& first, Pointer& second) const {
+  Pointer merge(const Pointer& first, const Pointer& second) const {
     if(first->isTrivial()) {
-      // op1 = identity: replace by second and consume
-      first = second;
-      return true;
+      // op1 = identity: consume and return other
+      return second;
     } else if(second->isTrivial()) {
-      // op2 = identity: consume
-      return true;
+      // op2 = identity: consume and return first
+      return first;
     } else
-      return second->invite(first, second);
+      return second->invite(first);
   }
 
   using internal::Visitors<RealBase, Gates...>::merge;
@@ -97,19 +98,19 @@ protected:
   /* Every derived class must implement this function with exactly the
    * following definition:
    *
-   *   bool invite(Pointer& first, Pointer& second) const override {
-   *     return first->merge(first, second, *this);
+   *   Pointer invite(const Pointer& first) const override {
+   *     return first->merge(*this);
    *   }
    *
    * This can't be done here because *this only refers to the derived class
    * itself in its own context. We need to call a particular visitor for a
-   * specific class so it can't be a const GateBase&. See the description of
-   * merge() above.
+   * specific class so it can be recognized as a (const) GateBase&. See the
+   * description of merge() above.
    *
    * The derived class (gene template) needs to define this function even if
    * it does not allow merging with any other genes. */
 
-  virtual bool invite(Pointer& first, Pointer& second) const = 0;
+  virtual Pointer invite(const Pointer& other) const = 0;
 
   virtual std::ostream& write(std::ostream&) const = 0;
 
@@ -136,26 +137,24 @@ class Gate : public GateBase<Gate<GateBase, Gates...>, Gates...> { };
  * possible visitee, but we don't know what the derived classes are yet. (This
  * is supplied in Gene.hpp.)
  *
- * Subclasses can override merge(Pointer&, Pointer&, const X&) for some
- * particular values of X (presumably themselves) to allow merging with
- * instances of class X.
+ * Subclasses can override merge(const X&) for some particular values of X
+ * (presumably themselves) to allow merging with instances of class X.
  *
- * The default implementation returns false, indicating that no merge
- * happened. A return value of true means that one of the pair of genes has
- * been consumed. Note that a particular implementation can also return false
- * if it actually modifies first and second but does not combine them into a
- * single gene. */
+ * The default implementation returns an unassigned std::shared_pointer,
+ * indicating that no merge happened. Any other return value means that the
+ * pair of genes has been consumed and should be replaced by the return value
+ * (which can also be one of them). */
 
 template<class GateBase, class Gate>
 class Visitor {
 
   using Pointer = std::shared_ptr<const GateBase>;
+  using GateResolved = typename Gate::template Template<GateBase>;
 
 protected:
 
-  virtual bool merge(Pointer& /*first*/, Pointer& /*second*/,
-      const typename Gate::template Template<GateBase>&) const {
-    return false;
+  virtual Pointer merge(const GateResolved&) const {
+    return {};
   }
 
   virtual ~Visitor() { }

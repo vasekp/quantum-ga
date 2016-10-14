@@ -42,16 +42,15 @@ public:
     return ixs.size() * ixs.size();
   }
 
-  bool invite(Pointer& first, Pointer& second) const override {
-    return first->merge(first, second, *this);
+  Pointer invite(const Pointer& first) const override {
+    return first->merge(*this);
   }
 
-  bool merge(Pointer& first, Pointer&, const CNOT& g) const override {
-    if(g.tgt == tgt && g.ixs == ixs) {
-      first = std::make_shared<CNOT>(tgt, ixs, odd ^ g.odd);
-      return true;
-    } else
-      return false;
+  Pointer merge(const CNOT& g) const override {
+    if(g.tgt == tgt && g.ixs == ixs)
+      return std::make_shared<CNOT>(tgt, ixs, odd ^ g.odd);
+    else
+      return {};
   }
 
   std::ostream& write(std::ostream& os) const override {
