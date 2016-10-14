@@ -2,8 +2,6 @@
 #ifndef QGA_PROBLEM_HPP
 #define QGA_PROBLEM_HPP
 
-#include "../gates/XPhase.hpp"
-
 using QGA::Backend::State;
 
 /* An extension of QGA::GateBase allowing us to count oracle calls and pass
@@ -84,10 +82,13 @@ public:
 }; // class Oracle<GateBase>
 
 
-/* Our Gene type will randomly choose between XPhase and Oracle and will support
- * Gene::calls(). */
+/* Our Gene type will randomly choose between uncontrolled X/Y/Z, controlled
+ * Phase, and Oracle and will support Gene::calls(). */
 
-using Gene = QGA::CustomGene<NewBase, QGA::X, QGA::CPhase, Oracle>;
+using Gene = QGA::CustomGene<NewBase,
+        QGA::Gates::XYZ,
+        QGA::Gates::CPhase,
+        Oracle>;
 
 
 struct Fitness {

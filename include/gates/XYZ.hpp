@@ -3,20 +3,26 @@
 
 namespace QGA {
 
-struct gate_struct {
+namespace Gates {
+
+using Tools::Controls;
+
+namespace internal {
+
+struct gate_struct_p {
   Backend::Gate(*fn)(double);
   char name;
 };
 
-std::vector<gate_struct> gates {
+static const std::vector<gate_struct_p> param_full {
   {Backend::xrot, 'X'},
   {Backend::yrot, 'Y'},
   {Backend::zrot, 'Z'}
 };
 
 
-template<class GateBase>
-class XYZ : public GateBase {
+template<class GateBase, const std::vector<gate_struct_p>* gates, Controls cc>
+class Param : public GateBase {
 
   size_t op;
   unsigned tgt;
@@ -30,16 +36,16 @@ public:
 
   static Pointer getNew() {
     // distribution of possible gates
-    std::uniform_int_distribution<size_t> dOp{0, gates.size() - 1};
+    std::uniform_int_distribution<size_t> dOp{0, gates->size() - 1};
     // distribution of targets
     std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
     // distribution of controls
-    unsigned tgt_ = dTgt(gen::rng);
-    Tools::controls_distribution dCtrl{Config::nBit, Config::pControl, tgt_};
+    unsigned tgt = dTgt(gen::rng);
+    Tools::controls_distribution<cc> dCtrl{Config::nBit, tgt, Config::pControl};
     // distribution of angle
     std::uniform_real_distribution<> dAng{-0.5*Const::pi, 0.5*Const::pi};
-    return std::make_shared<XYZ>(
-        dOp(gen::rng), tgt_, dAng(gen::rng), dCtrl(gen::rng));
+    return std::make_shared<Param>(gates->size() == 1 ? 0 : dOp(gen::rng),
+        tgt, dAng(gen::rng), dCtrl(gen::rng));
   }
 
   Backend::State applyTo(const Backend::State& psi) const override {
@@ -55,32 +61,33 @@ public:
   }
 
   void invert(Pointer& self) const override {
-    self = std::make_shared<XYZ>(op, tgt, -angle, ixs);
+    self = std::make_shared<Param>(op, tgt, -angle, ixs);
   }
 
   void mutate(Pointer& self) const override {
     std::normal_distribution<> dAng{0.0, 0.1};
-    self = std::make_shared<XYZ>(op, tgt, angle + dAng(gen::rng), ixs);
+    self = std::make_shared<Param>(op, tgt, angle + dAng(gen::rng), ixs);
   }
 
   void simplify(Pointer& self) const override {
-    self = std::make_shared<XYZ>(op, tgt, Tools::rationalize_angle(angle), ixs);
+    self = std::make_shared<Param>(op, tgt,
+        Tools::rationalize_angle(angle), ixs);
   }
 
   bool invite(Pointer& first, Pointer& second) const override {
     return first->merge(first, second, *this);
   }
 
-  bool merge(Pointer& first, Pointer&, const XYZ& g) const override {
+  bool merge(Pointer& first, Pointer&, const Param& g) const override {
     if(g.op == op && g.tgt == tgt && g.ixs == ixs) {
-      first = std::make_shared<XYZ>(op, tgt, angle + g.angle, ixs);
+      first = std::make_shared<Param>(op, tgt, angle + g.angle, ixs);
       return true;
     } else
       return false;
   }
 
   std::ostream& write(std::ostream& os) const override {
-    os << gates[op].name << tgt + 1;
+    os << (*gates)[op].name << tgt + 1;
     if(ixs.size()) {
       os << '[';
       for(auto ctrl : ixs.as_vector())
@@ -91,13 +98,28 @@ public:
     return os;
   }
 
-  XYZ(size_t op_, unsigned tgt_, double angle_, std::vector<bool> ctrl):
-    op(op_), tgt(tgt_), angle(angle_), ixs(ctrl), mat(gates[op].fn(angle)) { }
+  Param(size_t op_, unsigned tgt_, double angle_,
+      std::vector<bool> ctrl):
+    op(op_), tgt(tgt_), angle(angle_), ixs(ctrl), mat((*gates)[op].fn(angle))
+  { }
 
-  XYZ(size_t op_, unsigned tgt_, double angle_, const Backend::Controls& ixs_):
-    op(op_), tgt(tgt_), angle(angle_), ixs(ixs_), mat(gates[op].fn(angle)) { }
+  Param(size_t op_, unsigned tgt_, double angle_,
+      const Backend::Controls& ixs_):
+    op(op_), tgt(tgt_), angle(angle_), ixs(ixs_), mat((*gates)[op].fn(angle))
+  { }
 
-}; // class XYZ
+}; // class Param
+
+} // namespace internal
+
+
+template<class GateBase>
+using CkXYZ = internal::Param<GateBase, &internal::param_full, Controls::ANY>;
+
+template<class GateBase>
+using XYZ = internal::Param<GateBase, &internal::param_full, Controls::NONE>;
+
+} // namespace Gates
 
 } // namespace QGA
 
