@@ -4,7 +4,14 @@
 
 using QGA::Backend::State;
 
-using Gene = QGA::Gene<QGA::Gates::FixedRed>;
+static const std::vector<QGA::Gates::gate_struct_f> reduced_set {
+  { QGA::Backend::I, "I", 0, 0 },
+  { QGA::Backend::H, "H", 0, -1 },
+  { QGA::Backend::T, "T", +1, 0 },
+  { QGA::Backend::Ti, "Ti", -1, 0 },
+};
+
+using Gene = QGA::Gene<QGA::Gates::Fixed<QGA::Tools::Controls::ANY, &reduced_set>>;
 
 const State out{3};
 

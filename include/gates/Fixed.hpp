@@ -7,8 +7,6 @@ namespace Gates {
 
 using Tools::Controls;
 
-namespace internal {
-
 struct gate_struct_f {
   Backend::Gate op;
   std::string name;
@@ -16,7 +14,10 @@ struct gate_struct_f {
   int sq;
 };
 
-static const std::vector<gate_struct_f> fixed_full {
+
+namespace internal {
+
+static const std::vector<gate_struct_f> gates_fixed {
   { Backend::I, "I", 0, 0 },
   { Backend::H, "H", 0, -1 },
   { Backend::X, "X", 0, -2 },
@@ -26,13 +27,6 @@ static const std::vector<gate_struct_f> fixed_full {
   { Backend::Ti, "Ti", -1, +2 },
   { Backend::S, "S", +1, -3 },
   { Backend::Si, "Si", -1, -4 }
-};
-
-static const std::vector<gate_struct_f> fixed_reduced {
-  { Backend::I, "I", 0, 0 },
-  { Backend::H, "H", 0, -1 },
-  { Backend::T, "T", +1, 0 },
-  { Backend::Ti, "Ti", -1, 0 },
 };
 
 template<class GateBase, const std::vector<gate_struct_f>* gates, Controls cc>
@@ -54,7 +48,7 @@ public:
     std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
     // distribution of controls
     unsigned tgt = dTgt(gen::rng);
-    Tools::controls_distribution<Controls::ANY>
+    Tools::controls_distribution<cc>
       dCtrl{Config::nBit, tgt, Config::pControl};
     return std::make_shared<Fixed>(
         dOp(gen::rng), tgt, dCtrl(gen::rng));
@@ -110,13 +104,14 @@ public:
 } // namespace internal
 
 
-template<class GateBase>
-using Fixed = internal::Fixed<GateBase,
-        &internal::fixed_full, Controls::NONE>;
+template<Controls cc = Controls::NONE,
+  const std::vector<gate_struct_f>* gates = internal::gates_fixed>
+struct Fixed {
 
-template<class GateBase>
-using FixedRed = internal::Fixed<GateBase,
-        &internal::fixed_reduced, Controls::NONE>;
+  template<class GateBase>
+  using Template = internal::Fixed<GateBase, gates, cc>;
+
+}; // struct Fixed
 
 } // namespace Gates
 

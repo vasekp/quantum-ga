@@ -2,7 +2,7 @@ namespace QGA {
 
 namespace internal {
   // Defined below
-  template<class, template<class> class, template<class> class...>
+  template<class, class, class...>
   class Visitors;
 }
 
@@ -19,7 +19,7 @@ namespace internal {
  * its template parameters. We can't simply directly ask for them here because
  * that would cause a recursive pattern. */
 
-template<class RealBase, template<class> class... Gates>
+template<class RealBase, class... Gates>
 class GateBase : public internal::Visitors<RealBase, Gates...> {
 
 public:
@@ -126,8 +126,7 @@ namespace internal {
  *
  * See: https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern */
 
-template<template<class, template<class> class...> class GateBase,
-  template<class> class... Gates>
+template<template<class, class...> class GateBase, class... Gates>
 class Gate : public GateBase<Gate<GateBase, Gates...>, Gates...> { };
 
 
@@ -147,7 +146,7 @@ class Gate : public GateBase<Gate<GateBase, Gates...>, Gates...> { };
  * if it actually modifies first and second but does not combine them into a
  * single gene. */
 
-template<class GateBase, template<class> class Gate>
+template<class GateBase, class Gate>
 class Visitor {
 
   using Pointer = std::shared_ptr<const GateBase>;
@@ -155,7 +154,7 @@ class Visitor {
 protected:
 
   virtual bool merge(Pointer& /*first*/, Pointer& /*second*/,
-      const Gate<GateBase>&) const {
+      const typename Gate::template Template<GateBase>&) const {
     return false;
   }
 
@@ -167,9 +166,7 @@ protected:
 /* Chain template dependency is used to generate the merge() methods one for
  * each of a list of derived classes. */
 
-template<class GateBase,
-  template<class> class Head,
-  template<class> class... Tail>
+template<class GateBase, class Head, class... Tail>
 class Visitors :
   public Visitor<GateBase, Head>,
   public Visitors<GateBase, Tail...>
@@ -182,8 +179,7 @@ public:
 
 }; // class Visitors
 
-template<class GateBase,
-  template<class> class Last>
+template<class GateBase, class Last>
 class Visitors<GateBase, Last> :
   public Visitor<GateBase, Last>
 {

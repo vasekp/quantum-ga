@@ -4,7 +4,7 @@
 
 using QGA::Backend::State;
 
-using Gene = QGA::Gene<QGA::Gates::XYZ, QGA::Gates::CNOT>;
+using Gene = QGA::Gene<QGA::Gates::XYZ<>, QGA::Gates::CNOT<>>;
 
 
 class Candidate : public QGA::CandidateBase<Candidate, Gene> {

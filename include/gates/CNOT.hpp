@@ -73,11 +73,13 @@ public:
 } // namespace internal
 
 
-template<class GateBase>
-using CNOT = internal::CNOT<GateBase, Controls::ONE>;
+template<Controls cc = Controls::ONE>
+struct CNOT {
 
-template<class GateBase>
-using CkNOT = internal::CNOT<GateBase, Controls::LEAST1>;
+  template<class GateBase>
+  using Template = internal::CNOT<GateBase, cc>;
+
+}; // struct CNOT
 
 } // namespace Gates
 

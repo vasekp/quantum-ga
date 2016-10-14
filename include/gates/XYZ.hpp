@@ -7,14 +7,15 @@ namespace Gates {
 
 using Tools::Controls;
 
-namespace internal {
-
 struct gate_struct_p {
   Backend::Gate(*fn)(double);
   char name;
 };
 
-static const std::vector<gate_struct_p> param_full {
+
+namespace internal {
+
+static const std::vector<gate_struct_p> gates_param {
   {Backend::xrot, 'X'},
   {Backend::yrot, 'Y'},
   {Backend::zrot, 'Z'}
@@ -108,11 +109,14 @@ public:
 } // namespace internal
 
 
-template<class GateBase>
-using CkXYZ = internal::Param<GateBase, &internal::param_full, Controls::ANY>;
+template<Controls cc = Controls::NONE,
+  const std::vector<gate_struct_p>* gates = &internal::gates_param>
+struct XYZ {
 
-template<class GateBase>
-using XYZ = internal::Param<GateBase, &internal::param_full, Controls::NONE>;
+  template<class GateBase>
+  using Template = internal::Param<GateBase, gates, cc>;
+
+}; // struct XYZ
 
 } // namespace Gates
 

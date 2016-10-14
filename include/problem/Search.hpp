@@ -7,7 +7,7 @@ using QGA::Backend::State;
 /* An extension of QGA::GateBase allowing us to count oracle calls and pass
  * an additional parameter to applyTo(). */
 
-template<class GateBase, template<class> class... Gates>
+template<class GateBase, class... Gates>
 class NewBase : public QGA::GateBase<GateBase, Gates...> {
 
   using QGA::GateBase<GateBase, Gates...>::applyTo;
@@ -25,10 +25,12 @@ public:
 };
 
 
-/* The oracle gene template. */
+/* The oracle gate. */
+
+struct Oracle {
 
 template<class GateBase>
-class Oracle : public GateBase {
+class Inner : public GateBase {
 
   using typename GateBase::Pointer;
   bool odd;  // parity of the power
@@ -36,7 +38,7 @@ class Oracle : public GateBase {
 public:
 
   static Pointer getNew() {
-    return std::make_shared<Oracle>();
+    return std::make_shared<Inner>();
   }
 
   State applyTo(const State&) const override {
@@ -67,9 +69,9 @@ public:
     return first->merge(first, second, *this);
   }
 
-  bool merge(Pointer& first, Pointer&, const Oracle& g) const override {
+  bool merge(Pointer& first, Pointer&, const Inner& g) const override {
     // oracle * oracle = oracle^2 → true ^ true = false
-    first = std::make_shared<Oracle>(odd ^ g.odd);
+    first = std::make_shared<Inner>(odd ^ g.odd);
     return true;
   }
 
@@ -77,16 +79,21 @@ public:
     return os << (odd ? "Oracle" : "[Id]");
   }
 
-  Oracle(bool odd_ = true): odd(odd_) { }
+  Inner(bool odd_ = true): odd(odd_) { }
 
-}; // class Oracle<GateBase>
+}; // class Oracle::Inner
+
+template<class GateBase>
+using Template = Inner<GateBase>;
+
+}; // struct Oracle
 
 
 /* Our Gene type will randomly choose between uncontrolled X/Y/Z, controlled
  * Phase, and Oracle and will support Gene::calls(). */
 
 using Gene = QGA::CustomGene<NewBase,
-        QGA::Gates::XYZ,
+        QGA::Gates::XYZ<>,
         QGA::Gates::CPhase,
         Oracle>;
 

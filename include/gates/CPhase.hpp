@@ -7,8 +7,10 @@ namespace Gates {
 
 using Tools::Controls;
 
+struct CPhase {
+
 template<class GateBase>
-class CPhase : public GateBase {
+class Inner : public GateBase {
 
   unsigned tgt;
   double angle;
@@ -41,7 +43,7 @@ public:
       tgt = i;
     }
     ctrl[tgt] = false;
-    return std::make_shared<CPhase>(tgt, dAng(gen::rng), ctrl);
+    return std::make_shared<Inner>(tgt, dAng(gen::rng), ctrl);
   }
 
   Backend::State applyTo(const Backend::State& psi) const override {
@@ -57,25 +59,25 @@ public:
   }
 
   void invert(Pointer& self) const override {
-    self = std::make_shared<CPhase>(tgt, -angle, ixs);
+    self = std::make_shared<Inner>(tgt, -angle, ixs);
   }
 
   void mutate(Pointer& self) const override {
     std::normal_distribution<> dAng{0.0, 0.1};
-    self = std::make_shared<CPhase>(tgt, angle + dAng(gen::rng), ixs);
+    self = std::make_shared<Inner>(tgt, angle + dAng(gen::rng), ixs);
   }
 
   void simplify(Pointer& self) const override {
-    self = std::make_shared<CPhase>(tgt, Tools::rationalize_angle(angle), ixs);
+    self = std::make_shared<Inner>(tgt, Tools::rationalize_angle(angle), ixs);
   }
 
   bool invite(Pointer& first, Pointer& second) const override {
     return first->merge(first, second, *this);
   }
 
-  bool merge(Pointer& first, Pointer&, const CPhase& g) const override {
+  bool merge(Pointer& first, Pointer&, const Inner& g) const override {
     if(g.tgt == tgt && g.ixs == ixs) {
-      first = std::make_shared<CPhase>(tgt, angle + g.angle, ixs);
+      first = std::make_shared<Inner>(tgt, angle + g.angle, ixs);
       return true;
     } else
       return false;
@@ -89,10 +91,15 @@ public:
     return os;
   }
 
-  CPhase(unsigned tgt_, double angle_, const Backend::Controls& ixs_):
+  Inner(unsigned tgt_, double angle_, const Backend::Controls& ixs_):
       tgt(tgt_), angle(angle_), ixs(ixs_), mat(Backend::phase(angle)) { }
 
-}; // class CPhase
+}; // class CPhase::Inner
+
+template<class GateBase>
+using Template = Inner<GateBase>;
+
+}; // struct CPhase
 
 } // namespace Gates
 

@@ -116,8 +116,13 @@ public:
 } // namespace internal
 
 
-template<class GateBase>
-using SU2 = internal::SU2<GateBase, Controls::NONE>;
+template<Controls cc = Controls::NONE>
+struct SU2 {
+
+  template<class GateBase>
+  using Template = internal::SU2<GateBase, cc>;
+
+}; // struct SU2
 
 } // namespace Gates
 
