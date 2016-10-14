@@ -2,8 +2,6 @@ namespace QGA {
 
 namespace Gates {
 
-using Tools::Controls;
-
 namespace internal {
 
 template<class GateBase, Controls cc>
@@ -25,7 +23,7 @@ public:
     std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
     // distribution of controls
     unsigned tgt = dTgt(gen::rng);
-    Tools::controls_distribution<cc> dCtrl{Config::nBit, tgt, Config::pControl};
+    controls_distribution<cc> dCtrl{Config::nBit, tgt, Config::pControl};
     // distribution of angle
     std::uniform_real_distribution<> dAng{-0.5*Const::pi, 0.5*Const::pi};
     return std::make_shared<SU2>(tgt,
@@ -59,9 +57,9 @@ public:
 
   Pointer simplify(const Pointer&) const override {
     return std::make_shared<SU2>(tgt,
-        Tools::rationalize_angle(angle1),
-        Tools::rationalize_angle(angle2),
-        Tools::rationalize_angle(angle3),
+        rationalize_angle(angle1),
+        rationalize_angle(angle2),
+        rationalize_angle(angle3),
         ixs);
   }
 

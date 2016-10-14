@@ -1,7 +1,5 @@
 namespace QGA {
 
-namespace Tools {
-
 /* Convert a floating-point number to a rational approximation. This is done
  * by finding a continued fraction expression, trimming it at a random point
  * with probability proportional to the magnitude of the corresponding term,
@@ -93,7 +91,5 @@ public:
   }
 
 }; // class controls_distribution<Controls>
-
-} // namespace Tools
 
 } // namespace QGA
