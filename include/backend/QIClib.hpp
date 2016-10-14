@@ -32,20 +32,32 @@ const Gate Si { 1, 0, 0, -i };
 /* Parametric gates */
 
 Gate xrot(double a) {
-  return { std::cos(a), i*std::sin(a), i*std::sin(a), std::cos(a) };
+  return {
+    std::cos(a/2.0),   i*std::sin(a/2.0),
+    i*std::sin(a/2.0), std::cos(a/2.0)
+  };
 }
 
 Gate yrot(double a) {
-  return { std::cos(a), -std::sin(a), std::sin(a), std::cos(a) };
+  return {
+    std::cos(a/2.0), -std::sin(a/2.0),
+    std::sin(a/2.0), std::cos(a/2.0)
+  };
 }
 
 Gate zrot(double a) {
-  return { std::exp(i*a), 0, 0, std::exp(-i*a) };
+  return {
+    std::exp(i*a/2.0), 0,
+    0, std::exp(-i*a/2.0)
+  };
 }
 
 // An assymetric version of zrot
 Gate phase(double a) {
-  return { 1, 0, 0, std::exp(i*a) };
+  return {
+    1, 0,
+    0, std::exp(i*a)
+  };
 }
 
 

@@ -33,10 +33,15 @@ double rationalize(double x) {
 }
 
 /* The same as above for angles: the variable is supposed to be 2π-periodical
- * and is replaced by a rational approximant multiple of π. */
+ * and is replaced by a rational approximant multiple of π between -π and +π
+ * (inclusive on right). */
 
 double rationalize_angle(double a) {
-  return rationalize(std::fmod(a / QGA::Const::pi, 2.0)) * QGA::Const::pi;
+  double b = a / QGA::Const::pi / 2.0 + 0.5;
+  b = rationalize(b - std::floor(b));
+  if(b == 0)
+    b = 1;
+  return (b - 0.5) * QGA::Const::pi * 2.0;
 }
 
 
