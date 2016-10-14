@@ -2,8 +2,6 @@ namespace QGA {
 
 namespace Gates {
 
-using Tools::Controls;
-
 struct gate_struct_p {
   Backend::Gate(*fn)(double);
   char name;
@@ -16,6 +14,18 @@ static const std::vector<gate_struct_p> gates_param {
   {Backend::xrot, 'X'},
   {Backend::yrot, 'Y'},
   {Backend::zrot, 'Z'}
+};
+
+static const std::vector<gate_struct_p> gates_x {
+  {Backend::xrot, 'X'},
+};
+
+static const std::vector<gate_struct_p> gates_y {
+  {Backend::yrot, 'Y'},
+};
+
+static const std::vector<gate_struct_p> gates_z {
+  {Backend::zrot, 'Z'},
 };
 
 
@@ -39,7 +49,7 @@ public:
     std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
     // distribution of controls
     unsigned tgt = dTgt(gen::rng);
-    Tools::controls_distribution<cc> dCtrl{Config::nBit, tgt, Config::pControl};
+    controls_distribution<cc> dCtrl{Config::nBit, tgt, Config::pControl};
     // distribution of angle
     std::uniform_real_distribution<> dAng{-0.5*Const::pi, 0.5*Const::pi};
     return std::make_shared<Param>(gates->size() == 1 ? 0 : dOp(gen::rng),
@@ -68,8 +78,7 @@ public:
   }
 
   Pointer simplify(const Pointer&) const override {
-    return std::make_shared<Param>(op, tgt,
-        Tools::rationalize_angle(angle), ixs);
+    return std::make_shared<Param>(op, tgt, rationalize_angle(angle), ixs);
   }
 
   Pointer invite(const Pointer& first) const override {
@@ -108,11 +117,27 @@ public:
 template<Controls cc = Controls::NONE,
   const std::vector<gate_struct_p>* gates = &internal::gates_param>
 struct XYZ {
-
   template<class GateBase>
   using Template = internal::Param<GateBase, gates, cc>;
+};
 
-}; // struct XYZ
+template<Controls cc = Controls::NONE>
+struct X {
+  template<class GateBase>
+  using Template = internal::Param<GateBase, &internal::gates_x, cc>;
+};
+
+template<Controls cc = Controls::NONE>
+struct Y {
+  template<class GateBase>
+  using Template = internal::Param<GateBase, &internal::gates_y, cc>;
+};
+
+template<Controls cc = Controls::NONE>
+struct Z {
+  template<class GateBase>
+  using Template = internal::Param<GateBase, &internal::gates_z, cc>;
+};
 
 } // namespace Gates
 

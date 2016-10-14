@@ -2,8 +2,6 @@ namespace QGA {
 
 namespace Gates {
 
-using Tools::Controls;
-
 namespace internal {
 
 template<class GateBase, Controls cc>
@@ -22,7 +20,7 @@ public:
     std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
     // distribution of controls
     unsigned tgt = dTgt(gen::rng);
-    Tools::controls_distribution<cc> dCtrl{Config::nBit, tgt, Config::pControl};
+    controls_distribution<cc> dCtrl{Config::nBit, tgt, Config::pControl};
     return std::make_shared<CNOT>(tgt, dCtrl(gen::rng));
   }
 

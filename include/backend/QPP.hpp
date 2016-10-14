@@ -30,26 +30,30 @@ const Gate Si = qpp::gt.S.conjugate();
 
 Gate xrot(double a) {
   Gate ret{2, 2};
-  ret << std::cos(a), i*std::sin(a), i*std::sin(a), std::cos(a);
+  ret << std::cos(a/2.0),   i*std::sin(a/2.0),
+         i*std::sin(a/2.0), std::cos(a/2.0);
   return ret;
 }
 
 Gate yrot(double a) {
   Gate ret{2, 2};
-  ret << std::cos(a), -std::sin(a), std::sin(a), std::cos(a);
+  ret << std::cos(a/2.0), -std::sin(a/2.0),
+         std::sin(a/2.0), std::cos(a/2.0);
   return ret;
 }
 
 Gate zrot(double a) {
   Gate ret{2, 2};
-  ret << std::exp(i*a), 0, 0, std::exp(-i*a);
+  ret << std::exp(i*a/2.0), 0,
+         0, std::exp(-i*a/2.0);
   return ret;
 }
 
 // An assymetric version of zrot
 Gate phase(double a) {
   Gate ret{2, 2};
-  ret << 1, 0, 0, std::exp(i*a);
+  ret << 1, 0,
+         0, std::exp(i*a);
   return ret;
 }
 

@@ -94,7 +94,7 @@ using Template = Inner<GateBase>;
  * Phase, and Oracle and will support Gene::calls(). */
 
 using Gene = QGA::CustomGene<NewBase,
-        QGA::Gates::XYZ<>,
+        QGA::Gates::X<>,
         QGA::Gates::CPhase,
         Oracle>;
 
