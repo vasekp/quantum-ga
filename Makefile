@@ -15,8 +15,9 @@ default: search
 
 CXXFLAGS += -std=c++11 -march=native
 CXXFLAGS += -pedantic -Wall -Wextra -Weffc++
-CXXFLAGS += -fno-diagnostics-show-caret -fopenmp
+CXXFLAGS += -fopenmp
 CXXFLAGS += -Iframework/include
+CXXFLAGS += -fno-diagnostics-show-caret -fmax-errors=3
 
 ifdef DEBUG
 	CXXFLAGS += -O0 -g
