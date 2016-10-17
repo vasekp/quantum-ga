@@ -96,12 +96,16 @@ public:
     std::smatch m{};
     if(!std::regex_match(s, m, re))
       return {};
-    // TODO overflow
     unsigned tgt = m[1].str()[0] - '1';
+    if(tgt < 0 || tgt >= Config::nBit)
+      return {};
     std::vector<bool> ctrl(Config::nBit, false);
     if(m[2].matched)
-      for(const char& c : m[3].str())
-        ctrl[c - '1'] = true;
+      for(const char& c : m[3].str()) {
+        size_t pos = c - '1';
+        if(pos >= 0 && pos < Config::nBit && pos != tgt)
+          ctrl[pos] = true;
+      }
     double angle1 = std::stod(m[4].str()) * Const::pi,
            angle2 = std::stod(m[5].str()) * Const::pi,
            angle3 = std::stod(m[6].str()) * Const::pi;

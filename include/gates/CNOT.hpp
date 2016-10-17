@@ -68,12 +68,16 @@ public:
       return {};
     if(m[1].matched)
       return std::make_shared<CNOT>(0, Backend::Controls{}, false);
-    // TODO overflow
     unsigned tgt = m[2].str()[0] - '1';
+    if(tgt < 0 || tgt >= Config::nBit)
+      return {};
     std::vector<bool> ctrl(Config::nBit, false);
     if(m[3].matched)
-      for(const char& c : m[4].str())
-        ctrl[c - '1'] = true;
+      for(const char& c : m[4].str()) {
+        size_t pos = c - '1';
+        if(pos >= 0 && pos < Config::nBit && pos != tgt)
+          ctrl[c - '1'] = true;
+      }
     return std::make_shared<CNOT>(tgt, Backend::Controls{ctrl});
   }
 

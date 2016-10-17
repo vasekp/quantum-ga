@@ -91,14 +91,17 @@ public:
     std::smatch m{};
     if(!std::regex_match(s, m, re))
       return {};
-    // TODO overflow
     std::vector<bool> ctrl(Config::nBit, false);
     unsigned tgt = (unsigned)(~0);
-    for(const char& c : m[1].str())
-      if(tgt == (unsigned)(~0))
-        tgt = c - '1';
-      else
-        ctrl[c - '1'] = true;
+    for(const char& c : m[1].str()) {
+      size_t pos = c - '1';
+      if(pos >= 0 && pos < Config::nBit && pos != tgt) {
+        if(tgt == (unsigned)(~0))
+          tgt = pos;
+        else
+          ctrl[pos] = true;
+      }
+    }
     double angle = std::stod(m[2].str()) * Const::pi;
     return std::make_shared<Inner>(tgt, angle, Backend::Controls{ctrl});
   }

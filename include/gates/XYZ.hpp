@@ -118,12 +118,16 @@ public:
     for(op = 0; op < num; op++)
       if(m[op + 1].matched)
         break;
-    // TODO overflow
     unsigned tgt = m[num + 1].str()[0] - '1';
+    if(tgt < 0 || tgt >= Config::nBit)
+      return {};
     std::vector<bool> ctrl(Config::nBit, false);
     if(m[num + 2].matched)
-      for(const char& c : m[num + 3].str())
-        ctrl[c - '1'] = true;
+      for(const char& c : m[num + 3].str()) {
+        size_t pos = c - '1';
+        if(pos >= 0 && pos < Config::nBit && pos != tgt)
+          ctrl[pos] = true;
+      }
     double angle = std::stod(m[num + 4].str()) * Const::pi;
     return std::make_shared<Param>(op, tgt, angle, Backend::Controls{ctrl});
   }
