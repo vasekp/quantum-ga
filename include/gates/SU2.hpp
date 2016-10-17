@@ -42,11 +42,11 @@ public:
     return ixs.size() * ixs.size();
   }
 
-  Pointer invert(Pointer&) const override {
+  Pointer invert(const Pointer&) const override {
     return std::make_shared<SU2>(tgt, -angle3, -angle2, -angle1, ixs);
   }
 
-  Pointer mutate(Pointer&) const override {
+  Pointer mutate(const Pointer&) const override {
     std::normal_distribution<> dAng{0.0, 0.1};
     return std::make_shared<SU2>(tgt,
         angle1 + dAng(gen::rng),
