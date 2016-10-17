@@ -224,11 +224,13 @@ void dumpResults(Population& pop, CandidateFactory::Selector& sel,
   std::chrono::time_point<std::chrono::steady_clock>
     now{std::chrono::steady_clock::now()};
   std::chrono::duration<double> dur = now - start - SigComm::timeOut;
-  std::cout << "\nRun took " << dur.count() << " s ("
-    << Colours::blue() << dur.count()/gen
-    << " s/gen " << Colours::reset() << "avg), "
+  std::cout << "\nRun took " << dur.count() << " s, "
     << Colours::blue() << QGA::counter.total() << Colours::reset()
-    << " candidates tested\n";
+    << " candidates tested in "
+    << Colours::blue() << gen << Colours::reset()
+    << " generations ("
+    << Colours::blue() << dur.count()/gen << " s/gen" << Colours::reset()
+    << " avg)\n";
 }
 
 
