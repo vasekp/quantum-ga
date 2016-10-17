@@ -104,6 +104,30 @@ public:
     return os;
   }
 
+  static Pointer read(const std::string& s) {
+    std::string reS{};
+    for(const gate_struct_p& g : *gates)
+      reS = reS + "|(" + g.name + ")";
+    std::regex re{"(?:" + reS.substr(1) + ")" +
+      "(\\d)(\\[(\\d+)\\])?\\((-?[0-9.]+)(?:π)?\\)"};
+    std::smatch m{};
+    if(!std::regex_match(s, m, re))
+      return {};
+    size_t num = gates->size();
+    size_t op;
+    for(op = 0; op < num; op++)
+      if(m[op + 1].matched)
+        break;
+    // TODO overflow
+    unsigned tgt = m[num + 1].str()[0] - '1';
+    std::vector<bool> ctrl(Config::nBit, false);
+    if(m[num + 2].matched)
+      for(const char& c : m[num + 3].str())
+        ctrl[c - '1'] = true;
+    double angle = std::stod(m[num + 4].str()) * Const::pi;
+    return std::make_shared<Param>(op, tgt, angle, Backend::Controls{ctrl});
+  }
+
   Param(size_t op_, unsigned tgt_, double angle_,
       const Backend::Controls& ixs_):
     op(op_), tgt(tgt_), angle(angle_), ixs(ixs_), mat((*gates)[op].fn(angle))

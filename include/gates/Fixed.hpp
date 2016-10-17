@@ -91,6 +91,28 @@ public:
     return os;
   }
 
+  static Pointer read(const std::string& s) {
+    std::string reS{};
+    for(const gate_struct_f& g : *gates)
+      reS = reS + "|(" + g.name + ")";
+    std::regex re{"(?:" + reS.substr(1) + ")(\\d)(\\[(\\d+)\\])?"};
+    std::smatch m{};
+    if(!std::regex_match(s, m, re))
+      return {};
+    size_t num = gates->size();
+    size_t op;
+    for(op = 0; op < num; op++)
+      if(m[op + 1].matched)
+        break;
+    // TODO overflow
+    unsigned tgt = m[num + 1].str()[0] - '1';
+    std::vector<bool> ctrl(Config::nBit, false);
+    if(m[num + 2].matched)
+      for(const char& c : m[num + 3].str())
+        ctrl[c - '1'] = true;
+    return std::make_shared<Fixed>(op, tgt, Backend::Controls{ctrl});
+  }
+
   Fixed(size_t op_, unsigned tgt_, const Backend::Controls& ixs_):
     op(op_), tgt(tgt_), ixs(ixs_) { }
 

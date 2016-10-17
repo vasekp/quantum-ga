@@ -80,6 +80,14 @@ public:
     return os << (odd ? "Oracle" : "[Id]");
   }
 
+  static Pointer read(const std::string& s) {
+    std::regex re{"\\[Id\\]|(Oracle)"};
+    std::smatch m{};
+    if(!std::regex_match(s, m, re))
+      return {};
+    return std::make_shared<Inner>(m[1].matched);
+  }
+
   Inner(bool odd_ = true): odd(odd_) { }
 
 }; // class Oracle::Inner

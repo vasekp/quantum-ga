@@ -85,6 +85,24 @@ public:
     return os;
   }
 
+  static Pointer read(const std::string& s) {
+    std::string reS{};
+    std::regex re{"P\\[(\\d+)\\]\\((-?[0-9.]+)(π)?\\)"};
+    std::smatch m{};
+    if(!std::regex_match(s, m, re))
+      return {};
+    // TODO overflow
+    std::vector<bool> ctrl(Config::nBit, false);
+    unsigned tgt = (unsigned)(~0);
+    for(const char& c : m[1].str())
+      if(tgt == (unsigned)(~0))
+        tgt = c - '1';
+      else
+        ctrl[c - '1'] = true;
+    double angle = std::stod(m[2].str()) * Const::pi;
+    return std::make_shared<Inner>(tgt, angle, Backend::Controls{ctrl});
+  }
+
   Inner(unsigned tgt_, double angle_, const Backend::Controls& ixs_):
       tgt(tgt_), angle(angle_), ixs(ixs_), mat(Backend::phase(angle)) { }
 
