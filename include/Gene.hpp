@@ -4,6 +4,9 @@ namespace internal {
   // Defined below
   template<class, class, class...>
   class Chooser;
+
+  template<class, class, class...>
+  class Reader;
 }
 
 
@@ -27,6 +30,8 @@ class CustomGene : internal::Gate<GateBase, Gates...>::Pointer {
 
 public:
 
+  CustomGene() = default; // Needed in CandidateBase::read()
+
   CustomGene(const Pointer& ptr): Pointer(ptr) { }
 
   CustomGene(Pointer&& ptr): Pointer(std::move(ptr)) { }
@@ -41,6 +46,19 @@ public:
 
   friend std::ostream& operator<<(std::ostream& os, const CustomGene& g) {
     return os << *g;
+  }
+
+  friend std::istream& operator>>(std::istream& is, CustomGene& g) {
+    std::string gene{};
+    if(!(is >> gene))
+      return is;
+    Pointer ptr = internal::Reader<CGate, Gates...>::read(gene);
+    if(!ptr) {
+      is.setstate(std::ios::failbit);
+      return is;
+    }
+    g = {ptr};
+    return is;
   }
 
   /* These helper functions simplify the call pattern of the pointer-passing
@@ -145,6 +163,34 @@ public:
 #endif
 
 }; // class Chooser<GateBase, Last>
+
+
+template<class GateBase, class Head, class... Tail>
+class Reader {
+
+  using Pointer = typename GateBase::Pointer;
+
+public:
+
+  static Pointer read(std::string input) {
+    if(Pointer ret = Head::template Template<GateBase>::read(input))
+      return ret;
+    else
+      return Reader<GateBase, Tail...>::read(input);
+  }
+
+}; // class Reader<GateBase, Head, Tail...>
+
+template<class GateBase, class Last>
+class Reader<GateBase, Last> {
+
+public:
+
+  static typename GateBase::Pointer read(std::string input) {
+    return Last::template Template<GateBase>::read(input);
+  }
+
+}; // class Reader<GateBase, Last>
 
 } // namespace internal
 

@@ -114,6 +114,13 @@ protected:
 
   virtual std::ostream& write(std::ostream&) const = 0;
 
+  /* Finally, the derived classes need to provide the following static method:
+   *
+   *   static Pointer read(const std::string& s);
+   *
+   * This can not be enforced or default-implemented by an abstract base
+   * class. A no-op can return Pointer{}. */
+
 }; // virtual class GateBase<RealBase, Gates...>
 
 

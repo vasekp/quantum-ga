@@ -49,6 +49,18 @@ public:
     return os;
   }
 
+  static Derived read(std::istream&& is) {
+    std::vector<Gene> gt{};
+    Gene gene{};
+    while(is >> gene)
+      gt.push_back(std::move(gene));
+    return {std::move(gt)};
+  }
+
+  static Derived read(const std::string s) {
+    return read(std::istringstream{s});
+  }
+
   const std::vector<Gene>& genotype() const {
     return gt;
   }

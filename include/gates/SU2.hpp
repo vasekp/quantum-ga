@@ -89,6 +89,31 @@ public:
     return os;
   }
 
+  static Pointer read(const std::string& s) {
+    std::string reS{};
+    std::regex re{"U(\\d)(\\[(\\d+)\\])?"
+      "\\((-?[0-9.]+)(?:π)?,(-?[0-9.]+)(?:π)?,(-?[0-9.]+)(?:π)?\\)"};
+    std::smatch m{};
+    if(!std::regex_match(s, m, re))
+      return {};
+    unsigned tgt = m[1].str()[0] - '1';
+    if(tgt < 0 || tgt >= Config::nBit)
+      return {};
+    std::vector<bool> ctrl(Config::nBit, false);
+    if(m[2].matched)
+      for(const char& c : m[3].str()) {
+        size_t pos = c - '1';
+        if(pos >= 0 && pos < Config::nBit && pos != tgt)
+          ctrl[pos] = true;
+      }
+    double angle1 = std::stod(m[4].str()) * Const::pi,
+           angle2 = std::stod(m[5].str()) * Const::pi,
+           angle3 = std::stod(m[6].str()) * Const::pi;
+    return std::make_shared<SU2>(tgt,
+        angle1, angle2, angle3,
+        Backend::Controls{ctrl});
+  }
+
   SU2(unsigned tgt_, double angle1_, double angle2_, double angle3_,
       const Backend::Controls& ixs_):
     tgt(tgt_), angle1(angle1_), angle2(angle2_), angle3(angle3_), ixs(ixs_),

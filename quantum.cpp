@@ -74,6 +74,7 @@ namespace SigComm {
     DUMP,
     RESTART,
     LIST,
+    INJECT,
     STOP
   };
 
@@ -100,6 +101,7 @@ int int_response();
 void dumpResults(Population&, CandidateFactory::Selector&,
     std::chrono::time_point<std::chrono::steady_clock>, unsigned long);
 void listRandom(Population&);
+void inject(Population&, unsigned long);
 
 
 int main() {
@@ -175,6 +177,9 @@ int main() {
         case SigComm::DUMP:
           dumpResults(pop, sel, start, gen);
           break;
+        case SigComm::INJECT:
+          inject(pop, gen);
+          break;
         case SigComm::LIST:
           listRandom(pop);
           break;
@@ -242,6 +247,20 @@ void listRandom(Population& pop) {
 }
 
 
+void inject(Population& pop, unsigned long gen) {
+  std::cout << "Enter a candidate:\n";
+  std::string s{};
+  std::getline(std::cin, s);
+  Candidate c{Candidate::read(s)};
+  c.setGen(gen);
+  pop.add(c);
+  std::cout << "Parsed: "
+    << Colours::green() << c.fitness() << Colours::reset()
+    << " [" << Colours::blue() << 'g' << c.getGen() << Colours::reset()
+    << "] " << c << '\n';
+}
+
+
 void int_handler(int) {
   if(SigComm::state != SigComm::RUNNING)
     // we got stuck while processing another signal (e.g., popSize too large
@@ -261,6 +280,8 @@ int int_response() {
       << "continue,\n"
     << Colours::blue() << "d: " << Colours::reset()
       << "diagnose / list current results,\n"
+    << Colours::blue() << "i: " << Colours::reset()
+      << "evaluate / inject a candidate,\n"
     << Colours::blue() << "l: " << Colours::reset()
       << "list " << Config::nIntList << " random candidates,\n"
     << Colours::blue() << "r: " << Colours::reset()
@@ -284,6 +305,9 @@ int int_response() {
         break;
       case 'd':
         ret = SigComm::DUMP;
+        break;
+      case 'i':
+        ret = SigComm::INJECT;
         break;
       case 'l':
         ret = SigComm::LIST;
