@@ -28,6 +28,10 @@ static const std::vector<gate_struct_p> gates_z {
   {func::zrot, 'Z'},
 };
 
+static const std::vector<gate_struct_p> gates_r {
+  {func::rrot, 'R'},
+};
+
 
 template<class GateBase, const std::vector<gate_struct_p>* gates, Controls cc>
 class Param : public GateBase {
@@ -165,6 +169,12 @@ template<Controls cc = Controls::NONE>
 struct Z {
   template<class GateBase>
   using Template = internal::Param<GateBase, &internal::gates_z, cc>;
+};
+
+template<Controls cc = Controls::NONE>
+struct R {
+  template<class GateBase>
+  using Template = internal::Param<GateBase, &internal::gates_r, cc>;
 };
 
 } // namespace Gates

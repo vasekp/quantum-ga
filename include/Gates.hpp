@@ -28,6 +28,14 @@ Backend::Gate zrot(double a) {
   };
 }
 
+// Det -1 version of yrot (covers Hadamard)
+Backend::Gate rrot(double a) {
+  return {
+    std::cos(a/2.0), std::sin(a/2.0),
+    std::sin(a/2.0), -std::cos(a/2.0)
+  };
+}
+
 // An assymetric version of zrot
 Backend::Gate phase(double a) {
   return {
