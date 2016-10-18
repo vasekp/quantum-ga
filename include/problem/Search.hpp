@@ -16,10 +16,6 @@ class NewBase : public QGA::GateBase<GateBase, Gates...> {
 
 public:
 
-  virtual unsigned calls() const {
-    return 0;
-  }
-
   virtual State applyTo(const State& psi, unsigned) const {
     return this->applyTo(psi);
   }
@@ -65,10 +61,6 @@ public:
     return 1;
   }
 
-  unsigned calls() const override {
-    return 1;
-  }
-
   void hit(Counter& c) const {
     c.hit(this);
   }
@@ -105,45 +97,12 @@ using Template = Inner<GateBase>;
 
 
 /* Our Gene type will randomly choose between uncontrolled X/Y/Z, controlled
- * Phase, and Oracle and will support Gene::calls(). */
+ * Phase, and Oracle and will support applyTo(const State&, unsigned) */
 
 using Gene = QGA::CustomGene<NewBase,
         QGA::Gates::X<>,
         QGA::Gates::CPhase,
         Oracle>;
-
-
-struct Fitness {
-
-  double error;
-  size_t length;
-  size_t ocalls;
-
-  friend std::ostream& operator<< (std::ostream& os, const Fitness& f) {
-    return os << '{'
-       << f.error << ','
-       << f.length << ','
-       << f.ocalls << '}';
-  }
-
-  friend bool operator< (const Fitness& a, const Fitness& b) {
-    return a.error < b.error || (a.error == b.error && a.ocalls < b.ocalls);
-  }
-
-  friend bool operator<< (const Fitness& a, const Fitness& b) {
-    return a.error <= b.error
-        && a.length <= b.length
-        && a.ocalls <= b.ocalls
-        && !(a == b);
-  }
-
-  friend bool operator== (const Fitness& a, const Fitness& b) {
-    return a.error == b.error
-        && a.length == b.length
-        && a.ocalls == b.ocalls;
-  }
-
-}; // struct Fitness
 
 
 class Candidate : public QGA::CandidateBase<Candidate, Gene> {
@@ -153,14 +112,6 @@ class Candidate : public QGA::CandidateBase<Candidate, Gene> {
 public:
 
   using Base::Base;
-
-  Fitness fitness() const {
-    size_t ocalls = 0;
-    for(const auto& g : gt)
-      ocalls += g->calls();
-    QGA::counter.hit();
-    return {trimError(error()), gt.size(), ocalls};
-  }
 
   double error() const {
     if(gt.size() > 1000)
