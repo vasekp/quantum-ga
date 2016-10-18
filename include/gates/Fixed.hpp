@@ -32,8 +32,7 @@ class Fixed : public GateBase {
   Backend::Controls ixs;
 
   using typename GateBase::Pointer;
-  using typename GateBase::Counter;
-  using typename GateBase::Context;
+  using Ctx = typename GateBase::Context;
 
 public:
 
@@ -50,8 +49,7 @@ public:
         dOp(gen::rng), tgt, dCtrl(gen::rng));
   }
 
-  Backend::State applyTo(const Backend::State& psi, const Context*) const
-  override {
+  Backend::State applyTo(const Backend::State& psi, const Ctx*) const override {
     return psi.apply_ctrl((*gates)[op].op, ixs, tgt);
   }
 
@@ -71,7 +69,7 @@ public:
       return self;
   }
 
-  void hit(Counter& c) const {
+  void hit(typename GateBase::Counter& c) const {
     c.hit(this);
   }
 

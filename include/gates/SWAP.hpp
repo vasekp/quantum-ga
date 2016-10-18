@@ -12,8 +12,7 @@ class Inner : public GateBase {
   bool odd;  // parity of the power
 
   using typename GateBase::Pointer;
-  using typename GateBase::Counter;
-  using typename GateBase::Context;
+  using Ctx = typename GateBase::Context;
 
 public:
 
@@ -28,8 +27,7 @@ public:
     return std::make_shared<Inner>(s1, s2);
   }
 
-  Backend::State applyTo(const Backend::State& psi, const Context*) const
-  override {
+  Backend::State applyTo(const Backend::State& psi, const Ctx*) const override {
     return odd ? psi.swap(ixs) : psi;
   }
 
@@ -42,7 +40,7 @@ public:
     return 0;
   }
 
-  void hit(Counter& c) const {
+  void hit(typename GateBase::Counter& c) const {
     c.hit(this);
   }
 

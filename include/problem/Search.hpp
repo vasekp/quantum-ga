@@ -21,7 +21,6 @@ template<class GateBase>
 class Inner : public GateBase {
 
   using typename GateBase::Pointer;
-  using typename GateBase::Counter;
   using typename GateBase::Context;
 
   bool odd;  // parity of the power
@@ -49,7 +48,7 @@ public:
     return 1;
   }
 
-  void hit(Counter& c) const {
+  void hit(typename GateBase::Counter& c) const {
     c.hit(this);
   }
 

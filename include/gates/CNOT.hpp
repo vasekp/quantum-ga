@@ -12,8 +12,7 @@ class CNOT : public GateBase {
   bool odd;  // parity of the power
 
   using typename GateBase::Pointer;
-  using typename GateBase::Counter;
-  using typename GateBase::Context;
+  using Ctx = typename GateBase::Context;
 
 public:
 
@@ -26,8 +25,7 @@ public:
     return std::make_shared<CNOT>(tgt, dCtrl(gen::rng));
   }
 
-  Backend::State applyTo(const Backend::State& psi, const Context*) const
-  override {
+  Backend::State applyTo(const Backend::State& psi, const Ctx*) const override {
     return odd ? psi.apply_ctrl(Backend::X, ixs, tgt) : psi;
   }
 
@@ -40,7 +38,7 @@ public:
     return ixs.size() * ixs.size();
   }
 
-  void hit(Counter& c) const {
+  void hit(typename GateBase::Counter& c) const {
     c.hit(this);
   }
 

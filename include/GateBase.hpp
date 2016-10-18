@@ -89,7 +89,7 @@ public:
    * Counter can recognize the type the hit request came from. Therefore each
    * gate must implement this verbatim:
    *
-   *   void hit(Counter& c) const {
+   *   void hit(typename GateBase::Counter& c) const {
    *     c.hit(this);
    *   }
    */
