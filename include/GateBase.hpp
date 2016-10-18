@@ -8,16 +8,7 @@ namespace internal {
 
 
 /* The base class for all genes. Defines methods derived classes have to
- * implement, and provides default (no-op) definition for some of them.
- *
- * The reason for the template construction is that we may want to extend
- * GateBase before deriving from it, retaining the option of adding more
- * virtual functions (with default implementations). The Gates will then
- * derive from the RealBase.
- *
- * Ultimately, this will be internal::Gate, defined below, but we don't know
- * its template parameters. We can't simply directly ask for them here because
- * that would cause a recursive pattern. */
+ * implement, and provides default (no-op) definition for some of them. */
 
 template<class ContextParm, class... Gates>
 class GateBase :
@@ -92,13 +83,23 @@ public:
 
   using internal::Visitors<GateBase, Gates...>::merge;
 
+  /* This function allows us to count the number of each gate type using
+   * QGA::internal::Counter. However each gate must call it itself so that the
+   * Counter can recognize the type the hit request came from. Therefore each
+   * gate must implement this verbatim:
+   *
+   *   void hit(Counter& c) const {
+   *     c.hit(this);
+   *   }
+   */
+
+  virtual void hit(Counter& c) const = 0;
+
   friend std::ostream& operator<< (std::ostream& os, const GateBase& g) {
     return g.write(os);
   }
 
   virtual ~GateBase() { }
-
-  virtual void hit(Counter& c) const = 0;
 
 protected:
 

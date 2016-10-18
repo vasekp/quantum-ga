@@ -10,17 +10,14 @@ namespace internal {
 }
 
 
-/* Given QGA::GateBase or its subclass of the same template parameters,
- * along with a selection of gene templates, construct a gene ready for use
- * with a CandidateBase.
+/* The Gene type ready for use with a CandidateBase.
  *
  * This holds a shared pointer to GateBase (as typedef'd in GateBase.hpp) and
  * as such can refer to different gates polymorphically.
  *
  * Implements a static getNew() function which randomly picks from the given
  * Gates, along with several shortcuts to functions of the GateBase.  Other
- * functions (like complexity() or functions added by extensions to the
- * original QGA::GateBase) are redirected using a ->. */
+ * functions like applyTo() or hit() are redirected using a ->. */
 
 template<class Context, class... Gates>
 class CustomGene : GateBase<Context, Gates...>::Pointer {
@@ -106,10 +103,10 @@ private:
 }; // class CustomGene<Context, Gates...>
 
 
-/* Unless the application intends to extend QGA::GateBase we use it as the
- * default parameter. It can then simply refer to QGA::Gene<Genes...>. If an
- * extended functionality is requested of the GateBase this becomes
- * QGA::CustomGene<NewBase, Genes...>. */
+/* The default value for Context (additional data passed to GateBase::applyTo)
+ * is void. Unfortunately there's no way of providing default values for
+ * template parameters before the parameter pack without invalidating the use
+ * of the pack so we use a template class alias instead. */
 
 template<class... Gates>
 using Gene = CustomGene<void, Gates...>;
