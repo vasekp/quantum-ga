@@ -25,6 +25,7 @@ class GateBase : public internal::Visitors<RealBase, Gates...> {
 public:
 
   using Pointer = std::shared_ptr<const RealBase>;
+  using Counter = internal::Counter<RealBase, Gates...>;
 
   // apply this gene to a state vector
   virtual Backend::State applyTo(const Backend::State&) const = 0;
@@ -92,6 +93,8 @@ public:
   }
 
   virtual ~GateBase() { }
+
+  virtual void hit(Counter& c) const = 0;
 
 protected:
 

@@ -35,6 +35,8 @@ template<class GateBase>
 class Inner : public GateBase {
 
   using typename GateBase::Pointer;
+  using typename GateBase::Counter;
+
   bool odd;  // parity of the power
 
 public:
@@ -65,6 +67,10 @@ public:
 
   unsigned calls() const override {
     return 1;
+  }
+
+  void hit(Counter& c) const {
+    c.hit(this);
   }
 
   Pointer invite(const Pointer& first) const override {

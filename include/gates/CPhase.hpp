@@ -13,6 +13,7 @@ class Inner : public GateBase {
   Backend::Gate mat;
 
   using typename GateBase::Pointer;
+  using typename GateBase::Counter;
 
 public:
 
@@ -64,6 +65,10 @@ public:
 
   Pointer simplify(const Pointer&) const override {
     return std::make_shared<Inner>(tgt, rationalize_angle(angle), ixs);
+  }
+
+  void hit(Counter& c) const {
+    c.hit(this);
   }
 
   Pointer invite(const Pointer& first) const override {

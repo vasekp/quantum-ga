@@ -15,6 +15,7 @@ class SU2 : public GateBase {
   Backend::Gate mat;
 
   using typename GateBase::Pointer;
+  using typename GateBase::Counter;
 
 public:
 
@@ -61,6 +62,10 @@ public:
         rationalize_angle(angle2),
         rationalize_angle(angle3),
         ixs);
+  }
+
+  void hit(Counter& c) const {
+    c.hit(this);
   }
 
   Pointer invite(const Pointer& first) const override {

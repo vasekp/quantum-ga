@@ -12,6 +12,7 @@ class Inner : public GateBase {
   bool odd;  // parity of the power
 
   using typename GateBase::Pointer;
+  using typename GateBase::Counter;
 
 public:
 
@@ -37,6 +38,10 @@ public:
 
   unsigned complexity() const override {
     return 0;
+  }
+
+  void hit(Counter& c) const {
+    c.hit(this);
   }
 
   Pointer invite(const Pointer& first) const override {

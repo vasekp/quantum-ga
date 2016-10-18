@@ -55,6 +55,7 @@ namespace QGA {
   #error Either USE_QPP or USE_QICLIB needed.
 #endif
 
+#include "Counter.hpp"
 #include "GateBase.hpp"
 #include "Gene.hpp"     // uses GateBase.hpp
 #include "Tools.hpp"

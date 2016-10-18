@@ -32,6 +32,7 @@ class Fixed : public GateBase {
   Backend::Controls ixs;
 
   using typename GateBase::Pointer;
+  using typename GateBase::Counter;
 
 public:
 
@@ -66,6 +67,10 @@ public:
       return std::make_shared<Fixed>(op + dIx, tgt, ixs);
     else
       return self;
+  }
+
+  void hit(Counter& c) const {
+    c.hit(this);
   }
 
   Pointer invite(const Pointer& first) const override {

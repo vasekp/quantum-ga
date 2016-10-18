@@ -1,16 +1,17 @@
 namespace QGA {
 
+template<class Counter>
 struct Fitness {
 
   double error;
-  size_t length;
   unsigned cplx;
+  Counter cc;
 
   friend std::ostream& operator<< (std::ostream& os, const Fitness& f) {
     return os << '{'
        << f.error << ','
-       << f.length << ','
-       << f.cplx << '}';
+       << f.cplx << ','
+       << f.cc << '}';
   }
 
   friend bool operator< (const Fitness& a, const Fitness& b) {
@@ -19,15 +20,15 @@ struct Fitness {
 
   friend bool operator<< (const Fitness& a, const Fitness& b) {
     return a.error <= b.error
-        && a.length <= b.length
         && a.cplx <= b.cplx
+        && (a.cc <<= b.cc)
         && !(a == b);
   }
 
   friend bool operator== (const Fitness& a, const Fitness& b) {
     return a.error == b.error
-        && a.length == b.length
-        && a.cplx == b.cplx;
+        && a.cplx == b.cplx
+        && (a.cc == b.cc);
   }
 
 }; // struct Fitness

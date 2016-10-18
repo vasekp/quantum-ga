@@ -30,6 +30,8 @@ class CustomGene : internal::Gate<GateBase, Gates...>::Pointer {
 
 public:
 
+  using Counter = typename CGate::Counter;
+
   CustomGene() = default; // Needed in CandidateBase::read()
 
   CustomGene(const Pointer& ptr): Pointer(ptr) { }
