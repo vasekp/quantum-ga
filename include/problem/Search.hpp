@@ -6,11 +6,11 @@ namespace {
 
 using QGA::Backend::State;
 
-/* An extension of QGA::GateBase allowing us to count oracle calls and pass
- * an additional parameter to applyTo(). */
 
-template<class GateBase, class Context, class... Gates>
-using NewBase = QGA::GateBase<GateBase, Context, Gates...>;
+/* The Context to be used in CustomGene, holding a mark for the Oracle */
+struct Context {
+  unsigned mark;
+};
 
 
 /* The oracle gate. */
@@ -33,7 +33,7 @@ public:
   }
 
   State applyTo(const State& psi, const Context* pMark) const override {
-    unsigned mark = static_cast<unsigned>(*pMark);
+    unsigned mark = pMark->mark;
     State ret{psi};
     if(odd)
       ret[mark] = -ret[mark];
@@ -84,14 +84,8 @@ using Template = Inner<GateBase>;
 }; // struct Oracle
 
 
-/* Our Gene type will randomly choose between uncontrolled X/Y/Z, controlled
- * Phase, and Oracle and will support applyTo(const State&, unsigned) */
-
-using Gene = QGA::CustomGene<NewBase,
-        unsigned,
-        QGA::Gates::X<>,
-        QGA::Gates::CPhase,
-        Oracle>;
+using Gene = QGA::CustomGene<Context,
+        QGA::Gates::X<>, QGA::Gates::CPhase, Oracle>;
 
 
 class Candidate : public QGA::CandidateBase<Candidate, Gene> {
@@ -134,8 +128,9 @@ private:
 
   State sim(const State& psi, unsigned mark) const {
     State ret{psi};
+    Context c{mark};
     for(const auto& g : gt)
-      ret = ret.apply(g, &mark);
+      ret = ret.apply(g, &c);
     return ret;
   }
 

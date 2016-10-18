@@ -19,13 +19,15 @@ namespace internal {
  * its template parameters. We can't simply directly ask for them here because
  * that would cause a recursive pattern. */
 
-template<class RealBase, class ContextParm, class... Gates>
-class GateBase : public internal::Visitors<RealBase, Gates...> {
+template<class ContextParm, class... Gates>
+class GateBase :
+  public internal::Visitors<GateBase<ContextParm, Gates...>, Gates...>
+{
 
 public:
 
-  using Pointer = std::shared_ptr<const RealBase>;
-  using Counter = internal::Counter<RealBase, Gates...>;
+  using Pointer = std::shared_ptr<const GateBase>;
+  using Counter = internal::Counter<GateBase, Gates...>;
   using Context = ContextParm;
 
   // apply this gene to a state vector
@@ -88,7 +90,7 @@ public:
       return second->invite(first);
   }
 
-  using internal::Visitors<RealBase, Gates...>::merge;
+  using internal::Visitors<GateBase, Gates...>::merge;
 
   friend std::ostream& operator<< (std::ostream& os, const GateBase& g) {
     return g.write(os);
@@ -126,22 +128,10 @@ protected:
    * This can not be enforced or default-implemented by an abstract base
    * class. A no-op can return Pointer{}. */
 
-}; // virtual class GateBase<RealBase, Context, Gates...>
+}; // virtual class GateBase<Context, Gates...>
 
 
 namespace internal {
-
-/* This class alias takes a name of a template possibly extending GateBase and
- * constructs the final RealBase to pass to it. Note that the first template
- * parameter equals the class being defined, resulting in an interesting
- * cyclic graph. Luckily the C++ standard deals with this all right as part of
- * the curiously recurring template pattern (CRTP).
- *
- * See: https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern */
-
-template<template<class, class, class...> class GateBase, class Context, class... Gates>
-class Gate : public GateBase<Gate<GateBase, Context, Gates...>, Context, Gates...> { };
-
 
 /* The purpose of this helper class is to inject a virtual method for calling
  * a particular gene class, for the purposes of the merge() call pattern. Note
