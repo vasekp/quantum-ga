@@ -67,7 +67,7 @@ public:
     if(!std::regex_match(s, m, re))
       return {};
     if(m[1].matched)
-      return std::make_shared<CNOT>(0, Backend::Controls{}, false);
+      return std::make_shared<CNOT>(false);
     unsigned tgt = m[2].str()[0] - '1';
     if(tgt >= Config::nBit)
       return {};
@@ -83,6 +83,8 @@ public:
 
   CNOT(unsigned tgt_, const Backend::Controls& ixs_, bool odd_ = true):
       tgt(tgt_), ixs(ixs_), odd(odd_) { }
+
+  CNOT(bool): tgt(), ixs(), odd(false) { }
 
 }; // class CNOT
 
