@@ -13,6 +13,7 @@ class CNOT : public GateBase {
 
   using typename GateBase::Pointer;
   using typename GateBase::Counter;
+  using typename GateBase::Context;
 
 public:
 
@@ -25,7 +26,8 @@ public:
     return std::make_shared<CNOT>(tgt, dCtrl(gen::rng));
   }
 
-  Backend::State applyTo(const Backend::State& psi) const override {
+  Backend::State applyTo(const Backend::State& psi, const Context*) const
+  override {
     return odd ? psi.apply_ctrl(Backend::X, ixs, tgt) : psi;
   }
 

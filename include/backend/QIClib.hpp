@@ -120,9 +120,9 @@ public:
     return arma::cdot(lhs.rep(), rhs.rep());
   }
 
-  template<class Gene, class... Args>
-  State apply(const Gene& g, Args... args) {
-    return g->applyTo(*this, args...);
+  template<class Gene, class Context = void>
+  State apply(const Gene& g, const Context* c = nullptr) {
+    return g->applyTo(*this, c);
   }
 
   State apply_ctrl(const Gate& gate, const Controls& ixs, unsigned tgt) const {

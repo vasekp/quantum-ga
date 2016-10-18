@@ -22,10 +22,10 @@ namespace internal {
  * functions (like complexity() or functions added by extensions to the
  * original QGA::GateBase) are redirected using a ->. */
 
-template<template<class, class...> class GateBase, class... Gates>
-class CustomGene : internal::Gate<GateBase, Gates...>::Pointer {
+template<template<class, class, class...> class GateBase, class Context, class... Gates>
+class CustomGene : internal::Gate<GateBase, Context, Gates...>::Pointer {
 
-  using CGate = internal::Gate<GateBase, Gates...>;
+  using CGate = internal::Gate<GateBase, Context, Gates...>;
   using Pointer = typename CGate::Pointer;
 
 public:
@@ -103,7 +103,7 @@ private:
     return static_cast<const Pointer&>(*this);
   }
 
-}; // class CustomGene<GateBase, Gates...>
+}; // class CustomGene<GateBase, Context, Gates...>
 
 
 /* Unless the application intends to extend QGA::GateBase we use it as the
@@ -112,7 +112,7 @@ private:
  * QGA::CustomGene<NewBase, Genes...>. */
 
 template<class... Gates>
-using Gene = CustomGene<GateBase, Gates...>;
+using Gene = CustomGene<GateBase, void, Gates...>;
 
 
 namespace internal {

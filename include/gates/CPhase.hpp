@@ -14,6 +14,7 @@ class Inner : public GateBase {
 
   using typename GateBase::Pointer;
   using typename GateBase::Counter;
+  using typename GateBase::Context;
 
 public:
 
@@ -42,7 +43,8 @@ public:
     return std::make_shared<Inner>(tgt, dAng(gen::rng), ctrl);
   }
 
-  Backend::State applyTo(const Backend::State& psi) const override {
+  Backend::State applyTo(const Backend::State& psi, const Context*) const
+  override {
     return psi.apply_ctrl(mat, ixs, tgt);
   }
 

@@ -19,16 +19,18 @@ namespace internal {
  * its template parameters. We can't simply directly ask for them here because
  * that would cause a recursive pattern. */
 
-template<class RealBase, class... Gates>
+template<class RealBase, class ContextParm, class... Gates>
 class GateBase : public internal::Visitors<RealBase, Gates...> {
 
 public:
 
   using Pointer = std::shared_ptr<const RealBase>;
   using Counter = internal::Counter<RealBase, Gates...>;
+  using Context = ContextParm;
 
   // apply this gene to a state vector
-  virtual Backend::State applyTo(const Backend::State&) const = 0;
+  virtual Backend::State applyTo(const Backend::State&, const Context*) const
+    = 0;
 
   // return an arbitrary notion of complexity of this operation (accumulative)
   virtual unsigned complexity() const = 0;
@@ -124,7 +126,7 @@ protected:
    * This can not be enforced or default-implemented by an abstract base
    * class. A no-op can return Pointer{}. */
 
-}; // virtual class GateBase<RealBase, Gates...>
+}; // virtual class GateBase<RealBase, Context, Gates...>
 
 
 namespace internal {
@@ -137,8 +139,8 @@ namespace internal {
  *
  * See: https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern */
 
-template<template<class, class...> class GateBase, class... Gates>
-class Gate : public GateBase<Gate<GateBase, Gates...>, Gates...> { };
+template<template<class, class, class...> class GateBase, class Context, class... Gates>
+class Gate : public GateBase<Gate<GateBase, Context, Gates...>, Context, Gates...> { };
 
 
 /* The purpose of this helper class is to inject a virtual method for calling

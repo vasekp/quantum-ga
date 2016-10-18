@@ -9,18 +9,8 @@ using QGA::Backend::State;
 /* An extension of QGA::GateBase allowing us to count oracle calls and pass
  * an additional parameter to applyTo(). */
 
-template<class GateBase, class... Gates>
-class NewBase : public QGA::GateBase<GateBase, Gates...> {
-
-  using QGA::GateBase<GateBase, Gates...>::applyTo;
-
-public:
-
-  virtual State applyTo(const State& psi, unsigned) const {
-    return this->applyTo(psi);
-  }
-
-};
+template<class GateBase, class Context, class... Gates>
+using NewBase = QGA::GateBase<GateBase, Context, Gates...>;
 
 
 /* The oracle gate. */
@@ -32,6 +22,7 @@ class Inner : public GateBase {
 
   using typename GateBase::Pointer;
   using typename GateBase::Counter;
+  using typename GateBase::Context;
 
   bool odd;  // parity of the power
 
@@ -41,11 +32,8 @@ public:
     return std::make_shared<Inner>();
   }
 
-  State applyTo(const State&) const override {
-    throw std::logic_error("Oracle::applyTo called without mark");
-  }
-
-  State applyTo(const State& psi, unsigned mark) const override {
+  State applyTo(const State& psi, const Context* pMark) const override {
+    unsigned mark = static_cast<unsigned>(*pMark);
     State ret{psi};
     if(odd)
       ret[mark] = -ret[mark];
@@ -100,6 +88,7 @@ using Template = Inner<GateBase>;
  * Phase, and Oracle and will support applyTo(const State&, unsigned) */
 
 using Gene = QGA::CustomGene<NewBase,
+        unsigned,
         QGA::Gates::X<>,
         QGA::Gates::CPhase,
         Oracle>;
@@ -146,7 +135,7 @@ private:
   State sim(const State& psi, unsigned mark) const {
     State ret{psi};
     for(const auto& g : gt)
-      ret = ret.apply(g, mark);
+      ret = ret.apply(g, &mark);
     return ret;
   }
 

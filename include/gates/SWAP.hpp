@@ -13,6 +13,7 @@ class Inner : public GateBase {
 
   using typename GateBase::Pointer;
   using typename GateBase::Counter;
+  using typename GateBase::Context;
 
 public:
 
@@ -27,7 +28,8 @@ public:
     return std::make_shared<Inner>(s1, s2);
   }
 
-  Backend::State applyTo(const Backend::State& psi) const override {
+  Backend::State applyTo(const Backend::State& psi, const Context*) const
+  override {
     return odd ? psi.swap(ixs) : psi;
   }
 
