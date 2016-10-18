@@ -65,10 +65,6 @@ namespace QGA {
 #include "Colours.hpp"
 
 #include "Tools.hpp"
-#include "gates/Fixed.hpp"
-#include "gates/XYZ.hpp"
-#include "gates/CPhase.hpp"
-#include "gates/CNOT.hpp"
-#include "gates/SU2.hpp"
+#include "Gates.hpp"
 
 #endif // !defined QGA_COMMONS_HPP

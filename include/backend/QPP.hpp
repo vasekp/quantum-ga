@@ -9,53 +9,33 @@ namespace QGA {
 
 namespace Backend {
 
-using Gate = qpp::cmat;
+class Gate : public Eigen::Matrix2cd {
 
-using QGA::Const::i;
-using QGA::Const::pi;
+  using Base = Eigen::Matrix2cd;
+  using cxd = std::complex<double>;
+
+public:
+
+  Gate(const Base& mat) : Base(mat) { }
+
+  Gate(cxd u11, cxd u12, cxd u21, cxd u22) : Base(2, 2) {
+    *this << u11, u12, u21, u22;
+  }
+
+}; // class Gate
+
 
 /* Fixed gates */
 
-const Gate I = qpp::gt.Id2;
-const Gate H = qpp::gt.H;
-const Gate X = qpp::gt.X;
-const Gate Y = qpp::gt.Y;
-const Gate Z = qpp::gt.Z;
-const Gate T = qpp::gt.T;
-const Gate Ti = qpp::gt.T.conjugate();
-const Gate S = qpp::gt.S;
-const Gate Si = qpp::gt.S.conjugate();
-
-/* Parametric gates */
-
-Gate xrot(double a) {
-  Gate ret{2, 2};
-  ret << std::cos(a/2.0),   i*std::sin(a/2.0),
-         i*std::sin(a/2.0), std::cos(a/2.0);
-  return ret;
-}
-
-Gate yrot(double a) {
-  Gate ret{2, 2};
-  ret << std::cos(a/2.0), -std::sin(a/2.0),
-         std::sin(a/2.0), std::cos(a/2.0);
-  return ret;
-}
-
-Gate zrot(double a) {
-  Gate ret{2, 2};
-  ret << std::exp(i*a/2.0), 0,
-         0, std::exp(-i*a/2.0);
-  return ret;
-}
-
-// An assymetric version of zrot
-Gate phase(double a) {
-  Gate ret{2, 2};
-  ret << 1, 0,
-         0, std::exp(i*a);
-  return ret;
-}
+const Gate I { qpp::gt.Id2 };
+const Gate H { qpp::gt.H };
+const Gate X { qpp::gt.X };
+const Gate Y { qpp::gt.Y };
+const Gate Z { qpp::gt.Z };
+const Gate T { qpp::gt.T };
+const Gate Ti { qpp::gt.T.conjugate() };
+const Gate S { qpp::gt.S };
+const Gate Si { qpp::gt.S.conjugate() };
 
 
 class Controls : public std::vector<qpp::idx> {

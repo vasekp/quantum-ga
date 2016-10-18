@@ -11,21 +11,21 @@ struct gate_struct_p {
 namespace internal {
 
 static const std::vector<gate_struct_p> gates_param {
-  {Backend::xrot, 'X'},
-  {Backend::yrot, 'Y'},
-  {Backend::zrot, 'Z'}
+  {func::xrot, 'X'},
+  {func::yrot, 'Y'},
+  {func::zrot, 'Z'}
 };
 
 static const std::vector<gate_struct_p> gates_x {
-  {Backend::xrot, 'X'},
+  {func::xrot, 'X'},
 };
 
 static const std::vector<gate_struct_p> gates_y {
-  {Backend::yrot, 'Y'},
+  {func::yrot, 'Y'},
 };
 
 static const std::vector<gate_struct_p> gates_z {
-  {Backend::zrot, 'Z'},
+  {func::zrot, 'Z'},
 };
 
 

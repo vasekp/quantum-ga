@@ -107,7 +107,7 @@ public:
   }
 
   Inner(unsigned tgt_, double angle_, const Backend::Controls& ixs_):
-      tgt(tgt_), angle(angle_), ixs(ixs_), mat(Backend::phase(angle)) { }
+      tgt(tgt_), angle(angle_), ixs(ixs_), mat(func::phase(angle)) { }
 
 }; // class CPhase::Inner
 

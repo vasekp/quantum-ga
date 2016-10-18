@@ -11,13 +11,26 @@ namespace QGA {
 
 namespace Backend {
 
-using Gate = arma::cx_mat22;
+class Gate : public arma::cx_mat22 {
+
+  using Base = arma::cx_mat22;
+  using cxd = std::complex<double>;
+
+public:
+
+  Gate(const Base& mat) : Base(mat) { }
+
+  Gate(cxd u11, cxd u12, cxd u21, cxd u22) :
+    Base{u11, u12, u21, u22} { }
+
+}; // class Gate
+
+
+/* Fixed gates */
 
 using QGA::Const::i;
 using QGA::Const::pi;
 using QGA::Const::v12;
-
-/* Fixed gates */
 
 const Gate I { 1, 0, 0, 1 };
 const Gate H { v12, v12, v12, -v12 };
@@ -28,37 +41,6 @@ const Gate T { 1, 0, 0, std::exp(i*pi/4.) };
 const Gate Ti { 1, 0, 0, std::exp(-i*pi/4.) };
 const Gate S { 1, 0, 0, i };
 const Gate Si { 1, 0, 0, -i };
-
-/* Parametric gates */
-
-Gate xrot(double a) {
-  return {
-    std::cos(a/2.0),   i*std::sin(a/2.0),
-    i*std::sin(a/2.0), std::cos(a/2.0)
-  };
-}
-
-Gate yrot(double a) {
-  return {
-    std::cos(a/2.0), -std::sin(a/2.0),
-    std::sin(a/2.0), std::cos(a/2.0)
-  };
-}
-
-Gate zrot(double a) {
-  return {
-    std::exp(i*a/2.0), 0,
-    0, std::exp(-i*a/2.0)
-  };
-}
-
-// An assymetric version of zrot
-Gate phase(double a) {
-  return {
-    1, 0,
-    0, std::exp(i*a)
-  };
-}
 
 
 class Controls : public arma::uvec {
@@ -132,8 +114,8 @@ public:
     return g->applyTo(*this, args...);
   }
 
-  State apply_ctrl(const Gate& mat, const Controls& ixs, unsigned tgt) const {
-    return {qic::apply_ctrl(rep(), mat, ixs, {tgt + 1})};
+  State apply_ctrl(const Gate& gate, const Controls& ixs, unsigned tgt) const {
+    return {qic::apply_ctrl(rep(), gate, ixs, {tgt + 1})};
   }
 
   friend std::ostream& operator<< (std::ostream& os, const State& state) {
