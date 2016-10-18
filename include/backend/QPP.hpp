@@ -56,6 +56,19 @@ public:
     return static_cast<const Base&>(*this);
   }
 
+  static Controls swap(unsigned s1, unsigned s2) {
+    Base ret(Config::nBit);
+    for(unsigned i = 0; i < Config::nBit; i++)
+      ret[i] = i;
+    ret[s1] = s2;
+    ret[s2] = s1;
+    return {std::move(ret)};
+  }
+
+private:
+
+  Controls(Base&& vec): Base(std::move(vec)) { }
+
 }; // class Controls
 
 
@@ -99,6 +112,10 @@ public:
 
   State apply_ctrl(const Gate& mat, const Controls& ixs, unsigned tgt) const {
     return {qpp::applyCTRL(*this, mat, ixs, {tgt})};
+  }
+
+  State swap(const Controls& ixs) const {
+    return {qpp::syspermute(*this, ixs)};
   }
 
   friend std::ostream& operator<< (std::ostream& os, const State& state) {

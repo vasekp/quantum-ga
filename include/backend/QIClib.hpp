@@ -63,7 +63,18 @@ public:
     return ret;
   }
 
+  static Controls swap(unsigned s1, unsigned s2) {
+    std::vector<arma::uword> ret(Config::nBit);
+    for(unsigned i = 0; i < Config::nBit; i++)
+      ret[i] = i + 1;
+    ret[s1] = s2 + 1;
+    ret[s2] = s1 + 1;
+    return {std::move(ret)};
+  }
+
 private:
+
+  Controls(arma::uvec&& vec): arma::uvec(std::move(vec)) { }
 
   const arma::uvec& rep() const {
     return static_cast<const arma::uvec&>(*this);
@@ -116,6 +127,10 @@ public:
 
   State apply_ctrl(const Gate& gate, const Controls& ixs, unsigned tgt) const {
     return {qic::apply_ctrl(rep(), gate, ixs, {tgt + 1})};
+  }
+
+  State swap(const Controls& ixs) const {
+    return {qic::sysperm(rep(), ixs)};
   }
 
   friend std::ostream& operator<< (std::ostream& os, const State& state) {

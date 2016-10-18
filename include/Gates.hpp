@@ -53,3 +53,4 @@ Backend::Gate phase(double a) {
 #include "gates/CPhase.hpp"
 #include "gates/CNOT.hpp"
 #include "gates/SU2.hpp"
+#include "gates/SWAP.hpp"
