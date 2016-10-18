@@ -1,5 +1,5 @@
 hist/
-*.res
+results/
 *.sed
 .*
 search
