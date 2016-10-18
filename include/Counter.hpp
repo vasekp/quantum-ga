@@ -6,8 +6,8 @@ namespace internal {
  * number of zero-initialized counters. It defines functions hit(Type_k*) for
  * each type which bump the respective counter. */
 
-template<class GateBase, class Head, class... Tail>
-class Counter: public Counter<GateBase, Tail...> {
+template<class Head, class... Tail>
+class Counter: public Counter<Tail...> {
 
   unsigned cnt = 0;
 
@@ -15,11 +15,11 @@ public:
 
   Counter() = default;
 
-  void hit(const typename Head::template Template<GateBase>*) {
+  void hit(const Head*) {
     cnt++;
   }
 
-  using Counter<GateBase, Tail...>::hit;
+  using Counter<Tail...>::hit;
 
   friend std::ostream& operator<< (std::ostream& os, const Counter& c) {
     return os << c.cnt << ',' << c.next();
@@ -39,15 +39,15 @@ public:
 
 private:
 
-  const Counter<GateBase, Tail...>& next() const {
-    return static_cast<const Counter<GateBase, Tail...>&>(*this);
+  const Counter<Tail...>& next() const {
+    return static_cast<const Counter<Tail...>&>(*this);
   }
 
-}; // class Counter<GateBase, Head, Tail...>
+}; // class Counter<Head, Tail...>
 
 
-template<class GateBase, class Last>
-class Counter<GateBase, Last> {
+template<class Last>
+class Counter<Last> {
 
   unsigned cnt = 0;
 
@@ -55,7 +55,7 @@ public:
 
   Counter() = default;
 
-  void hit(const typename Last::template Template<GateBase>*) {
+  void hit(const Last*) {
     cnt++;
   }
 
@@ -75,7 +75,7 @@ public:
     return c1 < c2;
   }
 
-}; // class Counter<GateBase, Last>
+}; // class Counter<Last>
 
 } // namespace internal
 

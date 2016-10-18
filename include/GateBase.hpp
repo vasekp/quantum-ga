@@ -18,7 +18,8 @@ class GateBase :
 public:
 
   using Pointer = std::shared_ptr<const GateBase>;
-  using Counter = internal::Counter<GateBase, Gates...>;
+  using Counter = internal::Counter<
+    typename Gates::template Template<GateBase>...>;
   using Context = ContextParm;
 
   // apply this gene to a state vector

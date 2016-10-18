@@ -36,7 +36,9 @@ public:
   CustomGene(Pointer&& ptr): Pointer(std::move(ptr)) { }
 
   static Pointer getNew() {
-    return internal::Chooser<CGate, Gates...>::getNew();
+    return internal::Chooser<
+      Pointer, typename Gates::template Template<CGate>...
+    >::getNew();
   }
 
   const CGate* operator->() const {
@@ -51,7 +53,9 @@ public:
     std::string gene{};
     if(!(is >> gene))
       return is;
-    Pointer ptr = internal::Reader<CGate, Gates...>::read(gene);
+    Pointer ptr = internal::Reader<
+      Pointer, typename Gates::template Template<CGate>...
+    >::read(gene);
     if(!ptr) {
       is.setstate(std::ios::failbit);
       return is;
@@ -114,82 +118,80 @@ using Gene = CustomGene<void, Gates...>;
 
 namespace internal {
 
-/* Called as Chooser<Base, A, B, C, ...>::getNew(i) returns:
- * i = 0: A<Base>::getNew()
- * i = 1: B<Base>::getNew()
- * i = 2: C<Base>::getNew()
+/* Called as Chooser<Pointer, A, B, C, ...>::getNew(i) returns:
+ * i = 0: A::getNew()
+ * i = 1: B::getNew()
+ * i = 2: C::getNew()
  * etc. */
 
-template<class GateBase, class Head, class... Tail>
+template<class Pointer, class Head, class... Tail>
 class Chooser {
 
   template<class, class, class...>
   friend class Chooser;
 
-  static typename GateBase::Pointer getNew(unsigned index) {
+  static Pointer getNew(unsigned index) {
     if(index == 0)
-      return Head::template Template<GateBase>::getNew();
+      return Head::getNew();
     else
-      return Chooser<GateBase, Tail...>::getNew(index - 1);
+      return Chooser<Pointer, Tail...>::getNew(index - 1);
   }
 
 public:
 
-  static typename GateBase::Pointer getNew() {
+  static Pointer getNew() {
     // upper bound inclusive: no need to add 1 for Head
     std::uniform_int_distribution<> dist(0, sizeof...(Tail));
     return getNew(dist(gen::rng));
   }
 
-}; // class Chooser<GateBase, Head, Tail...>
+}; // class Chooser<Pointer, Head, Tail...>
 
-template<class GateBase, class Last>
-class Chooser<GateBase, Last> {
+template<class Pointer, class Last>
+class Chooser<Pointer, Last> {
 
 public:
 
 #ifdef DEBUG
-  static typename GateBase::Pointer getNew(unsigned index = 0) {
+  static Pointer getNew(unsigned index = 0) {
     if(index == 0)
-      return Last::template Template<GateBase>::getNew();
+      return Last::getNew();
     else
       throw std::logic_error("Index too large in Chooser!");
   }
 #else
-  static typename GateBase::Pointer getNew(unsigned = 0) {
-    return Last::template Template<GateBase>::getNew();
+  static Pointer getNew(unsigned = 0) {
+    return Last::getNew();
   }
 #endif
 
-}; // class Chooser<GateBase, Last>
+}; // class Chooser<Pointer, Last>
 
 
-template<class GateBase, class Head, class... Tail>
+template<class Pointer, class Head, class... Tail>
 class Reader {
-
-  using Pointer = typename GateBase::Pointer;
 
 public:
 
   static Pointer read(std::string input) {
-    if(Pointer ret = Head::template Template<GateBase>::read(input))
+    if(Pointer ret = Head::read(input))
       return ret;
     else
-      return Reader<GateBase, Tail...>::read(input);
+      return Reader<Pointer, Tail...>::read(input);
   }
 
-}; // class Reader<GateBase, Head, Tail...>
+}; // class Reader<Pointer, Head, Tail...>
 
-template<class GateBase, class Last>
-class Reader<GateBase, Last> {
+template<class Pointer, class Last>
+class Reader<Pointer, Last> {
 
 public:
 
-  static typename GateBase::Pointer read(std::string input) {
-    return Last::template Template<GateBase>::read(input);
+  static Pointer read(std::string input) {
+    return Last::read(input);
   }
 
-}; // class Reader<GateBase, Last>
+}; // class Reader<Pointer, Last>
 
 } // namespace internal
 
