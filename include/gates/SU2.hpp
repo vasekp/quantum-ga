@@ -98,7 +98,7 @@ public:
     if(!std::regex_match(s, m, re))
       return {};
     unsigned tgt = m[1].str()[0] - '1';
-    if(tgt < 0 || tgt >= Config::nBit)
+    if(tgt >= Config::nBit)
       return {};
     std::vector<bool> ctrl(Config::nBit, false);
     if(m[2].matched)

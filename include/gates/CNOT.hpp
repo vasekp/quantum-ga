@@ -69,7 +69,7 @@ public:
     if(m[1].matched)
       return std::make_shared<CNOT>(0, Backend::Controls{}, false);
     unsigned tgt = m[2].str()[0] - '1';
-    if(tgt < 0 || tgt >= Config::nBit)
+    if(tgt >= Config::nBit)
       return {};
     std::vector<bool> ctrl(Config::nBit, false);
     if(m[3].matched)
