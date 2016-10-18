@@ -2,10 +2,10 @@ namespace QGA {
 
 namespace internal {
   // Defined below
-  template<class, class, class...>
+  template<class, class...>
   class Chooser;
 
-  template<class, class, class...>
+  template<class, class...>
   class Reader;
 }
 
@@ -37,7 +37,7 @@ public:
 
   static Pointer getNew() {
     return internal::Chooser<
-      Pointer, typename Gates::template Template<CGate>...
+      typename Gates::template Template<CGate>...
     >::getNew();
   }
 
@@ -54,7 +54,7 @@ public:
     if(!(is >> gene))
       return is;
     Pointer ptr = internal::Reader<
-      Pointer, typename Gates::template Template<CGate>...
+      typename Gates::template Template<CGate>...
     >::read(gene);
     if(!ptr) {
       is.setstate(std::ios::failbit);
@@ -118,80 +118,84 @@ using Gene = CustomGene<void, Gates...>;
 
 namespace internal {
 
-/* Called as Chooser<Pointer, A, B, C, ...>::getNew(i) returns:
+/* Called as Chooser<A, B, C, ...>::getNew(i), returns:
  * i = 0: A::getNew()
  * i = 1: B::getNew()
  * i = 2: C::getNew()
  * etc. */
 
-template<class Pointer, class Head, class... Tail>
+template<class Head, class... Tail>
 class Chooser {
 
-  template<class, class, class...>
+  template<class, class...>
   friend class Chooser;
 
-  static Pointer getNew(unsigned index) {
+  static auto getNew(unsigned index) -> decltype(Head::getNew()) {
     if(index == 0)
       return Head::getNew();
     else
-      return Chooser<Pointer, Tail...>::getNew(index - 1);
+      return Chooser<Tail...>::getNew(index - 1);
   }
 
 public:
 
-  static Pointer getNew() {
+  static auto getNew() -> decltype(Head::getNew()) {
     // upper bound inclusive: no need to add 1 for Head
     std::uniform_int_distribution<> dist(0, sizeof...(Tail));
     return getNew(dist(gen::rng));
   }
 
-}; // class Chooser<Pointer, Head, Tail...>
+}; // class Chooser<Head, Tail...>
 
-template<class Pointer, class Last>
-class Chooser<Pointer, Last> {
+template<class Last>
+class Chooser<Last> {
 
 public:
 
 #ifdef DEBUG
-  static Pointer getNew(unsigned index = 0) {
+  static auto getNew(unsigned index = 0) -> decltype(Last::getNew()) {
     if(index == 0)
       return Last::getNew();
     else
       throw std::logic_error("Index too large in Chooser!");
   }
 #else
-  static Pointer getNew(unsigned = 0) {
+  static auto getNew(unsigned = 0) -> decltype(Last::getNew()) {
     return Last::getNew();
   }
 #endif
 
-}; // class Chooser<Pointer, Last>
+}; // class Chooser<Last>
 
 
-template<class Pointer, class Head, class... Tail>
+/* Called as Reader<A, B, C, ...>::read(input), this helper tries calling
+ * A::read(input), B::read(input), C::read(input)... until the first returns a
+ * value convertible to boolean true. */
+
+template<class Head, class... Tail>
 class Reader {
 
 public:
 
-  static Pointer read(std::string input) {
-    if(Pointer ret = Head::read(input))
+  static auto read(std::string input) -> decltype(Head::read(input)) {
+    if(auto ret = Head::read(input))
       return ret;
     else
-      return Reader<Pointer, Tail...>::read(input);
+      return Reader<Tail...>::read(input);
   }
 
-}; // class Reader<Pointer, Head, Tail...>
+}; // class Reader<Head, Tail...>
 
-template<class Pointer, class Last>
-class Reader<Pointer, Last> {
+template<class Last>
+class Reader<Last> {
 
 public:
 
-  static Pointer read(std::string input) {
+  static auto read(std::string input) -> decltype(Last::read(input)) {
     return Last::read(input);
   }
 
-}; // class Reader<Pointer, Last>
+}; // class Reader<Last>
 
 } // namespace internal
 
