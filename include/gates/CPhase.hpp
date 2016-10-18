@@ -78,16 +78,16 @@ public:
   }
 
   std::ostream& write(std::ostream& os) const override {
-    os << "P[" << tgt + 1;
+    os << "P" << tgt + 1;
     for(auto ctrl : ixs.as_vector())
       os << ctrl + 1;
-    os << "](" << angle / Const::pi << "π)";
+    os << "(" << angle / Const::pi << "π)";
     return os;
   }
 
   static Pointer read(const std::string& s) {
     std::string reS{};
-    std::regex re{"P\\[(\\d+)\\]\\((-?[0-9.]+)(π)?\\)"};
+    std::regex re{"P(\\d+)\\((-?[0-9.]+)(π)?\\)"};
     std::smatch m{};
     if(!std::regex_match(s, m, re))
       return {};
@@ -107,7 +107,7 @@ public:
   }
 
   Inner(unsigned tgt_, double angle_, const Backend::Controls& ixs_):
-      tgt(tgt_), angle(angle_), ixs(ixs_), mat(Backend::phase(angle)) { }
+      tgt(tgt_), angle(angle_), ixs(ixs_), mat(func::phase(angle)) { }
 
 }; // class CPhase::Inner
 

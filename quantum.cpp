@@ -20,7 +20,7 @@
 namespace Config {
 
   // Circuit width (constant)
-  const unsigned nBit = 3;
+  const unsigned nBit = 4;
 
   // strength parameter of NSGA selection
   const double selectBias = 0.2;

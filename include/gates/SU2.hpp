@@ -69,7 +69,8 @@ public:
 
   Pointer merge(const SU2& g) const override {
     if(g.tgt == tgt && g.ixs == ixs)
-      return std::make_shared<SU2>(tgt, ixs, static_cast<Backend::Gate>(g.mat * mat));
+      return std::make_shared<SU2>(tgt, ixs,
+          static_cast<Backend::Gate>(g.mat * mat));
     else
       return {};
   }
@@ -97,7 +98,7 @@ public:
     if(!std::regex_match(s, m, re))
       return {};
     unsigned tgt = m[1].str()[0] - '1';
-    if(tgt < 0 || tgt >= Config::nBit)
+    if(tgt >= Config::nBit)
       return {};
     std::vector<bool> ctrl(Config::nBit, false);
     if(m[2].matched)
@@ -117,7 +118,7 @@ public:
   SU2(unsigned tgt_, double angle1_, double angle2_, double angle3_,
       const Backend::Controls& ixs_):
     tgt(tgt_), angle1(angle1_), angle2(angle2_), angle3(angle3_), ixs(ixs_),
-    mat(Backend::zrot(angle3) * Backend::yrot(angle2) * Backend::zrot(angle1))
+    mat(func::zrot(angle3) * func::yrot(angle2) * func::zrot(angle1))
   { }
 
   SU2(unsigned tgt_, const Backend::Controls& ixs_, Backend::Gate&& mat_):

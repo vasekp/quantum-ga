@@ -56,19 +56,14 @@ namespace QGA {
 #endif
 
 #include "GateBase.hpp"
-#include "Gene.hpp"
+#include "Gene.hpp"     // uses GateBase.hpp
+#include "Tools.hpp"
+#include "Gates.hpp"    // uses Tools.hpp and GateBase.hpp
 #include "Fitness.hpp"
 #include "CandidateCounter.hpp"
 #include "CandidateBase.hpp"
 #include "CandidateFactory.hpp"
 
 #include "Colours.hpp"
-
-#include "Tools.hpp"
-#include "gates/Fixed.hpp"
-#include "gates/XYZ.hpp"
-#include "gates/CPhase.hpp"
-#include "gates/CNOT.hpp"
-#include "gates/SU2.hpp"
 
 #endif // !defined QGA_COMMONS_HPP
