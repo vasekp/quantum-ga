@@ -114,7 +114,7 @@ template<>
 struct angle_distribution<true> : std::normal_distribution<> {
 
   angle_distribution():
-    std::normal_distribution<>(0.0, 0.1) { } // TODO
+    std::normal_distribution<>(0.0, Config::dAlpha) { }
 
 }; // class angle_distribution<true>
 
