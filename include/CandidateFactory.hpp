@@ -93,7 +93,8 @@ private:
     auto &gtOrig = parent.genotype();
     auto sz = gtOrig.size();
     std::uniform_real_distribution<> dUni{0, 1};
-    size_t pos = gen::rng() % (sz + 1);
+    std::uniform_int_distribution<size_t> dPos{0, sz};
+    size_t pos = dPos(gen::rng);
     std::vector<Gene> ins{};
     ins.reserve(2*Config::expMutationCount);
     double probTerm = 1/Config::expMutationCount;
@@ -113,8 +114,9 @@ private:
     auto &gtOrig = parent.genotype();
     auto sz = gtOrig.size();
     std::uniform_real_distribution<> dUni{0, 1};
-    size_t pos1 = gen::rng() % (sz + 1),
-           pos2 = gen::rng() % (sz + 1);
+    std::uniform_int_distribution<size_t> dPos{0, sz};
+    size_t pos1 = dPos(gen::rng),
+           pos2 = dPos(gen::rng);
     if(pos2 < pos1)
       std::swap(pos1, pos2);
     std::vector<Gene> ins{};
@@ -144,7 +146,8 @@ private:
     std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
     if(sz == 0)
       return parent;
-    size_t pos1 = gen::rng() % (sz + 1),
+    std::uniform_int_distribution<size_t> dPos{0, sz};
+    size_t pos1 = dPos(gen::rng),
            len = 1 + dGeom(gen::rng),
            pos2 = pos1 + len > sz ? sz : pos1 + len;
     std::vector<Gene> gtNew{};
@@ -175,9 +178,10 @@ private:
     auto sz = gtOrig.size();
     if(sz < 2)
       return parent;
+    std::uniform_int_distribution<size_t> dPos{0, sz - 2};
     std::array<size_t, 4> pos;
     for(auto& p : pos)
-      p = gen::rng() % (sz - 1);
+      p = dPos(gen::rng);
     std::sort(pos.begin(), pos.end());
     // ensure that pos[1]-pos[0] and pos[3]-pos[2] are nonzero
     pos[1]++, pos[2]++, pos[3] += 2;
@@ -201,8 +205,9 @@ private:
     auto sz = gtOrig.size();
     if(sz < 2)
       return parent;
-    size_t pos1 = gen::rng() % (sz - 1),
-           pos2 = gen::rng() % (sz - 1);
+    std::uniform_int_distribution<size_t> dPos{0, sz - 2};
+    size_t pos1 = dPos(gen::rng),
+           pos2 = dPos(gen::rng);
     if(pos2 < pos1)
       std::swap(pos1, pos2);
     // ensure that pos2-pos1 is at least 2
@@ -228,8 +233,9 @@ private:
     auto sz = gtOrig.size();
     if(sz < 2)
       return parent;
-    size_t pos1 = gen::rng() % (sz - 1),
-           pos2 = gen::rng() % (sz - 1);
+    std::uniform_int_distribution<size_t> dPos{0, sz - 2};
+    size_t pos1 = dPos(gen::rng),
+           pos2 = dPos(gen::rng);
     if(pos2 < pos1)
       std::swap(pos1, pos2);
     // ensure that pos2-pos1 is at least 2
@@ -245,8 +251,9 @@ private:
     auto sz = gtOrig.size();
     if(sz < 2)
       return parent;
-    size_t pos1 = gen::rng() % sz,
-           pos2 = gen::rng() % sz;
+    std::uniform_int_distribution<size_t> dPos{0, sz - 1};
+    size_t pos1 = dPos(gen::rng),
+           pos2 = dPos(gen::rng);
     if(pos2 < pos1)
       std::swap(pos1, pos2);
     // ensure that pos2-pos1 is at least 1
