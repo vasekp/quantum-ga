@@ -37,13 +37,13 @@ public:
 
   Fitness<typename Gene::Counter> fitness() const {
     typename Gene::Counter cc{};
-    unsigned cplx{0};
+    unsigned controls{0};
     for(const auto& g : gt) {
       g->hit(cc);
-      cplx += g->complexity();
+      controls += g->controls();
     }
     counter.hit();
-    return {trimError(derived().error()), cplx, cc};
+    return {trimError(derived().error()), cc, controls};
   }
 
   friend std::ostream& operator<< (std::ostream& os, const CandidateBase& c) {

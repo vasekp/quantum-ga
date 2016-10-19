@@ -34,8 +34,8 @@ public:
     return !odd;
   }
 
-  unsigned complexity() const override {
-    return ixs.size() * ixs.size();
+  unsigned controls() const override {
+    return ixs.size();
   }
 
   void hit(typename GateBase::Counter& c) const {

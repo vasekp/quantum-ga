@@ -22,12 +22,12 @@ namespace internal {
 template<class Context, class... Gates>
 class CustomGene : GateBase<Context, Gates...>::Pointer {
 
-  using CGate = GateBase<Context, Gates...>;
-  using Pointer = typename CGate::Pointer;
+  using GBase = GateBase<Context, Gates...>;
+  using Pointer = typename GBase::Pointer;
 
 public:
 
-  using Counter = typename CGate::Counter;
+  using Counter = typename GBase::Counter;
 
   CustomGene() = default; // Needed in CandidateBase::read()
 
@@ -37,11 +37,11 @@ public:
 
   static Pointer getNew() {
     return internal::Chooser<
-      typename Gates::template Template<CGate>...
+      typename Gates::template Template<GBase>...
     >::getNew();
   }
 
-  const CGate* operator->() const {
+  const GBase* operator->() const {
     return Pointer::operator->();
   }
 
@@ -54,7 +54,7 @@ public:
     if(!(is >> gene))
       return is;
     Pointer ptr = internal::Reader<
-      typename Gates::template Template<CGate>...
+      typename Gates::template Template<GBase>...
     >::read(gene);
     if(!ptr) {
       is.setstate(std::ios::failbit);

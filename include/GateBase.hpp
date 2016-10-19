@@ -26,8 +26,10 @@ public:
   virtual Backend::State applyTo(const Backend::State&, const Context*) const
     = 0;
 
-  // return an arbitrary notion of complexity of this operation (accumulative)
-  virtual unsigned complexity() const = 0;
+  // return the number of control qubits of this gate
+  virtual unsigned controls() const {
+    return 0;
+  }
 
   // return whether this gate has degenerated to the identity (e.g., by means
   // of simplification or merge)

@@ -36,10 +36,6 @@ public:
     return !odd;
   }
 
-  unsigned complexity() const override {
-    return 0;
-  }
-
   void hit(typename GateBase::Counter& c) const {
     c.hit(this);
   }

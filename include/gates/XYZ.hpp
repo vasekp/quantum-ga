@@ -69,8 +69,8 @@ public:
     return angle == 0;
   }
 
-  unsigned complexity() const override {
-    return ixs.size() * ixs.size();
+  unsigned controls() const override {
+    return ixs.size();
   }
 
   Pointer invert(const Pointer&) const override {

@@ -4,14 +4,14 @@ template<class Counter>
 struct Fitness {
 
   double error;
-  unsigned cplx;
   Counter cc;
+  unsigned controls;
 
   friend std::ostream& operator<< (std::ostream& os, const Fitness& f) {
     return os << '{'
        << f.error << ','
-       << f.cplx << ','
-       << f.cc << '}';
+       << f.cc << ','
+       << f.controls << '}';
   }
 
   friend bool operator< (const Fitness& a, const Fitness& b) {
@@ -20,15 +20,15 @@ struct Fitness {
 
   friend bool operator<< (const Fitness& a, const Fitness& b) {
     return a.error <= b.error
-        && a.cplx <= b.cplx
         && (a.cc <<= b.cc)
+        && a.controls <= b.controls
         && !(a == b);
   }
 
   friend bool operator== (const Fitness& a, const Fitness& b) {
     return a.error == b.error
-        && a.cplx == b.cplx
-        && (a.cc == b.cc);
+        && (a.cc == b.cc)
+        && a.controls == b.controls;
   }
 
 }; // struct Fitness
