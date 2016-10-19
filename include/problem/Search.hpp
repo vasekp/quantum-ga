@@ -80,7 +80,7 @@ using Template = Inner<GateBase>;
 
 
 using Gene = QGA::CustomGene<Context,
-        QGA::Gates::X<>, QGA::Gates::CPhase, Oracle>;
+        Oracle, QGA::Gates::X<>, QGA::Gates::CPhase>;
 
 
 class Candidate : public QGA::CandidateBase<Candidate, Gene> {
