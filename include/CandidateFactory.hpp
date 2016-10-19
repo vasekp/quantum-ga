@@ -141,14 +141,12 @@ private:
     auto &parent = get();
     auto &gtOrig = parent.genotype();
     auto sz = gtOrig.size();
-    std::uniform_real_distribution<> dUni{0, 1};
+    std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
     if(sz == 0)
       return parent;
-    size_t pos1 = gen::rng() % (sz + 1);
-    /* Integer with the same distribution in mAddSlice */
-    size_t len = 1 + floor(log(dUni(gen::rng))
-        / log(1 - 1/Config::expMutationCount));
-    size_t pos2 = pos1 + len > sz ? sz : pos1 + len;
+    size_t pos1 = gen::rng() % (sz + 1),
+           len = 1 + dGeom(gen::rng),
+           pos2 = pos1 + len > sz ? sz : pos1 + len;
     std::vector<Gene> gtNew{};
     gtNew.reserve(sz - (pos2 - pos1));
     gtNew.insert(gtNew.end(), gtOrig.begin(), gtOrig.begin() + pos1);
