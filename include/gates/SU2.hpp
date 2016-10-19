@@ -15,6 +15,7 @@ class SU2 : public GateBase {
   Backend::Gate mat;
 
   using typename GateBase::Pointer;
+  using Ctx = typename GateBase::Context;
 
 public:
 
@@ -30,7 +31,7 @@ public:
         dAng(gen::rng), dAng(gen::rng), dAng(gen::rng), dCtrl(gen::rng));
   }
 
-  Backend::State applyTo(const Backend::State& psi) const override {
+  Backend::State applyTo(const Backend::State& psi, const Ctx*) const override {
     return psi.apply_ctrl(mat, ixs, tgt);
   }
 
@@ -38,8 +39,8 @@ public:
     return angle2 == 0 && angle1 + angle3 == 0;
   }
 
-  unsigned complexity() const override {
-    return ixs.size() * ixs.size();
+  unsigned controls() const override {
+    return ixs.size();
   }
 
   Pointer invert(const Pointer&) const override {
@@ -61,6 +62,10 @@ public:
         rationalize_angle(angle2),
         rationalize_angle(angle3),
         ixs);
+  }
+
+  void hit(typename GateBase::Counter& c) const {
+    c.hit(this);
   }
 
   Pointer invite(const Pointer& first) const override {

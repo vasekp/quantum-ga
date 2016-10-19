@@ -55,11 +55,11 @@ namespace QGA {
   #error Either USE_QPP or USE_QICLIB needed.
 #endif
 
-#include "GateBase.hpp"
+#include "Fitness.hpp"
+#include "GateBase.hpp" // uses Fitness.hpp (internal::Counter)
 #include "Gene.hpp"     // uses GateBase.hpp
 #include "Tools.hpp"
 #include "Gates.hpp"    // uses Tools.hpp and GateBase.hpp
-#include "Fitness.hpp"
 #include "CandidateCounter.hpp"
 #include "CandidateBase.hpp"
 #include "CandidateFactory.hpp"

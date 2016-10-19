@@ -32,6 +32,7 @@ class Fixed : public GateBase {
   Backend::Controls ixs;
 
   using typename GateBase::Pointer;
+  using Ctx = typename GateBase::Context;
 
 public:
 
@@ -48,7 +49,7 @@ public:
         dOp(gen::rng), tgt, dCtrl(gen::rng));
   }
 
-  Backend::State applyTo(const Backend::State& psi) const override {
+  Backend::State applyTo(const Backend::State& psi, const Ctx*) const override {
     return psi.apply_ctrl((*gates)[op].op, ixs, tgt);
   }
 
@@ -56,8 +57,8 @@ public:
     return op == 0;
   }
 
-  unsigned complexity() const override {
-    return ixs.size() * ixs.size();
+  unsigned controls() const override {
+    return ixs.size();
   }
 
   Pointer invert(const Pointer& self) const override {
@@ -66,6 +67,10 @@ public:
       return std::make_shared<Fixed>(op + dIx, tgt, ixs);
     else
       return self;
+  }
+
+  void hit(typename GateBase::Counter& c) const {
+    c.hit(this);
   }
 
   Pointer invite(const Pointer& first) const override {

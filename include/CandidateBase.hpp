@@ -35,12 +35,15 @@ public:
     gt.erase(++last, gt.end());
   }
 
-  Fitness fitness() const {
-    unsigned cplx{0};
-    for(const auto& g : gt)
-      cplx += g->complexity();
+  Fitness<typename Gene::Counter> fitness() const {
+    typename Gene::Counter cc{};
+    unsigned controls{0};
+    for(const auto& g : gt) {
+      g->hit(cc);
+      controls += g->controls();
+    }
     counter.hit();
-    return {trimError(derived().error()), gt.size(), cplx};
+    return {trimError(derived().error()), cc, controls};
   }
 
   friend std::ostream& operator<< (std::ostream& os, const CandidateBase& c) {

@@ -8,29 +8,28 @@ namespace internal {
 
 
 /* The base class for all genes. Defines methods derived classes have to
- * implement, and provides default (no-op) definition for some of them.
- *
- * The reason for the template construction is that we may want to extend
- * GateBase before deriving from it, retaining the option of adding more
- * virtual functions (with default implementations). The Gates will then
- * derive from the RealBase.
- *
- * Ultimately, this will be internal::Gate, defined below, but we don't know
- * its template parameters. We can't simply directly ask for them here because
- * that would cause a recursive pattern. */
+ * implement, and provides default (no-op) definition for some of them. */
 
-template<class RealBase, class... Gates>
-class GateBase : public internal::Visitors<RealBase, Gates...> {
+template<class ContextParm, class... Gates>
+class GateBase :
+  public internal::Visitors<GateBase<ContextParm, Gates...>, Gates...>
+{
 
 public:
 
-  using Pointer = std::shared_ptr<const RealBase>;
+  using Pointer = std::shared_ptr<const GateBase>;
+  using Counter = internal::Counter<
+    typename Gates::template Template<GateBase>...>;
+  using Context = ContextParm;
 
   // apply this gene to a state vector
-  virtual Backend::State applyTo(const Backend::State&) const = 0;
+  virtual Backend::State applyTo(const Backend::State&, const Context*) const
+    = 0;
 
-  // return an arbitrary notion of complexity of this operation (accumulative)
-  virtual unsigned complexity() const = 0;
+  // return the number of control qubits of this gate
+  virtual unsigned controls() const {
+    return 0;
+  }
 
   // return whether this gate has degenerated to the identity (e.g., by means
   // of simplification or merge)
@@ -85,7 +84,19 @@ public:
       return second->invite(first);
   }
 
-  using internal::Visitors<RealBase, Gates...>::merge;
+  using internal::Visitors<GateBase, Gates...>::merge;
+
+  /* This function allows us to count the number of each gate type using
+   * QGA::internal::Counter. However each gate must call it itself so that the
+   * Counter can recognize the type the hit request came from. Therefore each
+   * gate must implement this verbatim:
+   *
+   *   void hit(typename GateBase::Counter& c) const {
+   *     c.hit(this);
+   *   }
+   */
+
+  virtual void hit(Counter& c) const = 0;
 
   friend std::ostream& operator<< (std::ostream& os, const GateBase& g) {
     return g.write(os);
@@ -121,22 +132,10 @@ protected:
    * This can not be enforced or default-implemented by an abstract base
    * class. A no-op can return Pointer{}. */
 
-}; // virtual class GateBase<RealBase, Gates...>
+}; // virtual class GateBase<Context, Gates...>
 
 
 namespace internal {
-
-/* This class alias takes a name of a template possibly extending GateBase and
- * constructs the final RealBase to pass to it. Note that the first template
- * parameter equals the class being defined, resulting in an interesting
- * cyclic graph. Luckily the C++ standard deals with this all right as part of
- * the curiously recurring template pattern (CRTP).
- *
- * See: https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern */
-
-template<template<class, class...> class GateBase, class... Gates>
-class Gate : public GateBase<Gate<GateBase, Gates...>, Gates...> { };
-
 
 /* The purpose of this helper class is to inject a virtual method for calling
  * a particular gene class, for the purposes of the merge() call pattern. Note
