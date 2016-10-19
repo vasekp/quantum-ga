@@ -26,7 +26,7 @@ public:
     unsigned tgt = dTgt(gen::rng);
     controls_distribution<cc> dCtrl{Config::nBit, tgt, Config::pControl};
     // distribution of angle
-    std::uniform_real_distribution<> dAng{-0.5*Const::pi, 0.5*Const::pi};
+    angle_distribution<> dAng{};
     return std::make_shared<SU2>(tgt,
         dAng(gen::rng), dAng(gen::rng), dAng(gen::rng), dCtrl(gen::rng));
   }
@@ -48,7 +48,7 @@ public:
   }
 
   Pointer mutate(const Pointer&) const override {
-    std::normal_distribution<> dAng{0.0, 0.1};
+    angle_distribution<true> dAng{};
     return std::make_shared<SU2>(tgt,
         angle1 + dAng(gen::rng),
         angle2 + dAng(gen::rng),

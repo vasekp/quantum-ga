@@ -25,7 +25,7 @@ public:
     controls_distribution<Controls::ANY>
       dCtrl{Config::nBit, tgt, Config::pControl};
     // distribution of angle
-    std::uniform_real_distribution<> dAng{-0.5*Const::pi, 0.5*Const::pi};
+    angle_distribution<> dAng{};
     // Convert P2[13] to P1[23]: mathematically identical and more easily
     // mergeable
     std::vector<bool> ctrl = dCtrl(gen::rng);
@@ -59,7 +59,7 @@ public:
   }
 
   Pointer mutate(const Pointer&) const override {
-    std::normal_distribution<> dAng{0.0, 0.1};
+    angle_distribution<true> dAng{};
     return std::make_shared<Inner>(tgt, angle + dAng(gen::rng), ixs);
   }
 
