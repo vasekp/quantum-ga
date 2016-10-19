@@ -36,18 +36,18 @@ class Fixed : public GateBase {
 
 public:
 
-  static Pointer getNew() {
-    /* Distributions: cheap and safer in MT environment this way */
-    // distribution of possible gates (except of identity)
-    std::uniform_int_distribution<size_t> dOp{1, gates->size() - 1};
-    // distribution of targets
-    std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
-    // distribution of controls
-    unsigned tgt = dTgt(gen::rng);
-    controls_distribution<cc> dCtrl{Config::nBit, tgt, Config::pControl};
-    return std::make_shared<Fixed>(
-        dOp(gen::rng), tgt, dCtrl(gen::rng));
-  }
+  // construct a random gate
+  Fixed():
+    op(std::uniform_int_distribution<size_t>{1, gates->size() - 1}(gen::rng)),
+    tgt(std::uniform_int_distribution<unsigned>{0, Config::nBit - 1}
+        (gen::rng)),
+    ixs(controls_distribution<cc>{Config::nBit, tgt, Config::pControl}
+        (gen::rng))
+  { }
+
+  // construct using parameters
+  Fixed(size_t op_, unsigned tgt_, const Backend::Controls& ixs_):
+    op(op_), tgt(tgt_), ixs(ixs_) { }
 
   Backend::State applyTo(const Backend::State& psi, const Ctx*) const override {
     return psi.apply_ctrl((*gates)[op].op, ixs, tgt);
@@ -121,9 +121,6 @@ public:
       }
     return std::make_shared<Fixed>(op, tgt, Backend::Controls{ctrl});
   }
-
-  Fixed(size_t op_, unsigned tgt_, const Backend::Controls& ixs_):
-    op(op_), tgt(tgt_), ixs(ixs_) { }
 
 }; // class Fixed
 

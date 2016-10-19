@@ -27,9 +27,7 @@ class Inner : public GateBase {
 
 public:
 
-  static Pointer getNew() {
-    return std::make_shared<Inner>();
-  }
+  Inner(bool odd_ = true): odd(odd_) { }
 
   State applyTo(const State& psi, const Context* pMark) const override {
     unsigned mark = pMark->mark;
@@ -68,8 +66,6 @@ public:
       return {};
     return std::make_shared<Inner>(m[1].matched);
   }
-
-  Inner(bool odd_ = true): odd(odd_) { }
 
 }; // class Oracle::Inner
 

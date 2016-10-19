@@ -40,7 +40,7 @@ public:
     std::vector<Gene> gtOrig{};
     gtOrig.reserve(Config::expLengthIni);
     do
-      gtOrig.push_back(Gene::getNew());
+      gtOrig.push_back(Gene::getRandom());
     while(dUni(gen::rng) > probTerm);
     return Candidate{std::move(gtOrig)};
   }
@@ -67,7 +67,7 @@ private:
     std::uniform_int_distribution<size_t> dPos{0, sz - 1};
     const double probTerm = 1/Config::expMutationCount;
     do
-      gtNew[dPos(gen::rng)] = Gene::getNew();
+      gtNew[dPos(gen::rng)] = Gene::getRandom();
     while(dUni(gen::rng) > probTerm);
     return Candidate{std::move(gtNew)};
   }
@@ -98,7 +98,7 @@ private:
     ins.reserve(2*Config::expMutationCount);
     double probTerm = 1/Config::expMutationCount;
     do
-      ins.push_back(Gene::getNew());
+      ins.push_back(Gene::getRandom());
     while(dUni(gen::rng) > probTerm);
     std::vector<Gene> gtNew{};
     gtNew.reserve(sz + ins.size());
@@ -121,7 +121,7 @@ private:
     ins.reserve(2*Config::expMutationCount);
     double probTerm = 1/Config::expMutationCount;
     do
-      ins.push_back(Gene::getNew());
+      ins.push_back(Gene::getRandom());
     while(dUni(gen::rng) > probTerm);
     std::vector<Gene> gtNew{};
     gtNew.reserve(sz + 2*ins.size());
