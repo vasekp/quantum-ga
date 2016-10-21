@@ -2,7 +2,7 @@ namespace QGA {
 
 namespace internal {
   // Defined below
-  template<class, class...>
+  template<class, class, class...>
   class Chooser;
 
   template<class, class...>
@@ -15,7 +15,7 @@ namespace internal {
  * This holds a shared pointer to GateBase (as typedef'd in GateBase.hpp) and
  * as such can refer to different gates polymorphically.
  *
- * Implements a static getNew() function which randomly picks from the given
+ * Implements a static getRandom() function which randomly picks from the given
  * Gates, along with several shortcuts to functions of the GateBase.  Other
  * functions like applyTo() or hit() are redirected using a ->. */
 
@@ -35,10 +35,10 @@ public:
 
   CustomGene(Pointer&& ptr): Pointer(std::move(ptr)) { }
 
-  static Pointer getNew() {
-    return internal::Chooser<
-      typename Gates::template Template<GBase>...
-    >::getNew();
+  static CustomGene getRandom() {
+    return {internal::Chooser<
+      Pointer, typename Gates::template Template<GBase>...
+    >::getNew()};
   }
 
   const GBase* operator->() const {
@@ -118,54 +118,55 @@ using Gene = CustomGene<void, Gates...>;
 
 namespace internal {
 
-/* Called as Chooser<A, B, C, ...>::getNew(i), returns:
- * i = 0: A::getNew()
- * i = 1: B::getNew()
- * i = 2: C::getNew()
- * etc. */
+/* Called as Chooser<P, A, B, C, ...>::getNew(i), returns:
+ * i = 0: std::make_shared<A>()
+ * i = 0: std::make_shared<B>()
+ * i = 0: std::make_shared<C>()
+ * etc. The classes A, B, C, ... need to be default-constructible and
+ * convertible to the class referred to by the pointer P. */
 
-template<class Head, class... Tail>
+template<class Pointer, class Head, class... Tail>
 class Chooser {
 
-  template<class, class...>
+  template<class, class, class...>
   friend class Chooser;
 
-  static auto getNew(unsigned index) -> decltype(Head::getNew()) {
+  static Pointer getNew(unsigned index) {
     if(index == 0)
-      return Head::getNew();
+      return std::make_shared<Head>();
     else
-      return Chooser<Tail...>::getNew(index - 1);
+      return Chooser<Pointer, Tail...>::getNew(index - 1);
   }
 
 public:
 
-  static auto getNew() -> decltype(Head::getNew()) {
+  static Pointer getNew() {
     // upper bound inclusive: no need to add 1 for Head
     std::uniform_int_distribution<> dist(0, sizeof...(Tail));
     return getNew(dist(gen::rng));
   }
 
-}; // class Chooser<Head, Tail...>
+}; // class Chooser<Pointer, Head, Tail...>
 
-template<class Last>
-class Chooser<Last> {
+template<class Pointer, class Last>
+class Chooser<Pointer, Last> {
 
 public:
 
 #ifdef DEBUG
-  static auto getNew(unsigned index = 0) -> decltype(Last::getNew()) {
+  static Pointer getNew(unsigned index = 0) {
     if(index == 0)
-      return Last::getNew();
+      return std::make_shared<Last>();
     else
       throw std::logic_error("Index too large in Chooser!");
   }
 #else
-  static auto getNew(unsigned = 0) -> decltype(Last::getNew()) {
-    return Last::getNew();
+  static Pointer getNew(unsigned = 0) {
+    return std::make_shared<Last>();
   }
 #endif
 
-}; // class Chooser<Last>
+}; // class Chooser<Pointer, Last>
 
 
 /* Called as Reader<A, B, C, ...>::read(input), this helper tries calling

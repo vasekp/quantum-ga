@@ -40,7 +40,7 @@ public:
     std::vector<Gene> gtOrig{};
     gtOrig.reserve(Config::expLengthIni);
     do
-      gtOrig.push_back(Gene::getNew());
+      gtOrig.push_back(Gene::getRandom());
     while(dUni(gen::rng) > probTerm);
     return Candidate{std::move(gtOrig)};
   }
@@ -67,7 +67,7 @@ private:
     std::uniform_int_distribution<size_t> dPos{0, sz - 1};
     const double probTerm = 1/Config::expMutationCount;
     do
-      gtNew[dPos(gen::rng)] = Gene::getNew();
+      gtNew[dPos(gen::rng)] = Gene::getRandom();
     while(dUni(gen::rng) > probTerm);
     return Candidate{std::move(gtNew)};
   }
@@ -93,12 +93,13 @@ private:
     auto &gtOrig = parent.genotype();
     auto sz = gtOrig.size();
     std::uniform_real_distribution<> dUni{0, 1};
-    size_t pos = gen::rng() % (sz + 1);
+    std::uniform_int_distribution<size_t> dPos{0, sz};
+    size_t pos = dPos(gen::rng);
     std::vector<Gene> ins{};
     ins.reserve(2*Config::expMutationCount);
     double probTerm = 1/Config::expMutationCount;
     do
-      ins.push_back(Gene::getNew());
+      ins.push_back(Gene::getRandom());
     while(dUni(gen::rng) > probTerm);
     std::vector<Gene> gtNew{};
     gtNew.reserve(sz + ins.size());
@@ -113,15 +114,16 @@ private:
     auto &gtOrig = parent.genotype();
     auto sz = gtOrig.size();
     std::uniform_real_distribution<> dUni{0, 1};
-    size_t pos1 = gen::rng() % (sz + 1),
-           pos2 = gen::rng() % (sz + 1);
+    std::uniform_int_distribution<size_t> dPos{0, sz};
+    size_t pos1 = dPos(gen::rng),
+           pos2 = dPos(gen::rng);
     if(pos2 < pos1)
       std::swap(pos1, pos2);
     std::vector<Gene> ins{};
     ins.reserve(2*Config::expMutationCount);
     double probTerm = 1/Config::expMutationCount;
     do
-      ins.push_back(Gene::getNew());
+      ins.push_back(Gene::getRandom());
     while(dUni(gen::rng) > probTerm);
     std::vector<Gene> gtNew{};
     gtNew.reserve(sz + 2*ins.size());
@@ -141,14 +143,13 @@ private:
     auto &parent = get();
     auto &gtOrig = parent.genotype();
     auto sz = gtOrig.size();
-    std::uniform_real_distribution<> dUni{0, 1};
+    std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
     if(sz == 0)
       return parent;
-    size_t pos1 = gen::rng() % (sz + 1);
-    /* Integer with the same distribution in mAddSlice */
-    size_t len = 1 + floor(log(dUni(gen::rng))
-        / log(1 - 1/Config::expMutationCount));
-    size_t pos2 = pos1 + len > sz ? sz : pos1 + len;
+    std::uniform_int_distribution<size_t> dPos{0, sz};
+    size_t pos1 = dPos(gen::rng),
+           len = 1 + dGeom(gen::rng),
+           pos2 = pos1 + len > sz ? sz : pos1 + len;
     std::vector<Gene> gtNew{};
     gtNew.reserve(sz - (pos2 - pos1));
     gtNew.insert(gtNew.end(), gtOrig.begin(), gtOrig.begin() + pos1);
@@ -177,9 +178,10 @@ private:
     auto sz = gtOrig.size();
     if(sz < 2)
       return parent;
+    std::uniform_int_distribution<size_t> dPos{0, sz - 2};
     std::array<size_t, 4> pos;
     for(auto& p : pos)
-      p = gen::rng() % (sz - 1);
+      p = dPos(gen::rng);
     std::sort(pos.begin(), pos.end());
     // ensure that pos[1]-pos[0] and pos[3]-pos[2] are nonzero
     pos[1]++, pos[2]++, pos[3] += 2;
@@ -203,8 +205,9 @@ private:
     auto sz = gtOrig.size();
     if(sz < 2)
       return parent;
-    size_t pos1 = gen::rng() % (sz - 1),
-           pos2 = gen::rng() % (sz - 1);
+    std::uniform_int_distribution<size_t> dPos{0, sz - 2};
+    size_t pos1 = dPos(gen::rng),
+           pos2 = dPos(gen::rng);
     if(pos2 < pos1)
       std::swap(pos1, pos2);
     // ensure that pos2-pos1 is at least 2
@@ -230,8 +233,9 @@ private:
     auto sz = gtOrig.size();
     if(sz < 2)
       return parent;
-    size_t pos1 = gen::rng() % (sz - 1),
-           pos2 = gen::rng() % (sz - 1);
+    std::uniform_int_distribution<size_t> dPos{0, sz - 2};
+    size_t pos1 = dPos(gen::rng),
+           pos2 = dPos(gen::rng);
     if(pos2 < pos1)
       std::swap(pos1, pos2);
     // ensure that pos2-pos1 is at least 2
@@ -247,8 +251,9 @@ private:
     auto sz = gtOrig.size();
     if(sz < 2)
       return parent;
-    size_t pos1 = gen::rng() % sz,
-           pos2 = gen::rng() % sz;
+    std::uniform_int_distribution<size_t> dPos{0, sz - 1};
+    size_t pos1 = dPos(gen::rng),
+           pos2 = dPos(gen::rng);
     if(pos2 < pos1)
       std::swap(pos1, pos2);
     // ensure that pos2-pos1 is at least 1
@@ -265,37 +270,51 @@ private:
   Candidate crossoverUniform() {
     auto &parent1 = get(),
          &parent2 = get();
-    auto &gt1 = parent1.genotype(),
-         &gt2 = parent2.genotype();
-    size_t sz1 = gt1.size(),
-           sz2 = gt2.size(),
-           szShorter = std::min(sz1, sz2);
-    double pTest1 = (double)szShorter / sz1,
-           pTest2 = (double)szShorter / sz2;
+    auto *gt1 = &parent1.genotype(),
+         *gt2 = &parent2.genotype();
+    // Most of these are here just for clarity and will hopefully be
+    // optimized away
+    size_t sz1 = gt1->size(),
+           sz2 = gt2->size(),
+           szShorter = std::min(sz1, sz2),
+           szLonger = std::max(sz1, sz2),
+           pos1 = 0, pos2 = 0;
+    // expLen will be = 1 for the shorter candidate and > 1 for the longer one
+    // (1 for both if equal length). This is the expected length of a slice we
+    // take or skip before making a new decision whether to cross over.
+    double expLen1 = (double)sz1 / szShorter,
+           expLen2 = (double)sz2 / szShorter;
     std::uniform_real_distribution<> dUni{0, 1};
+    std::geometric_distribution<size_t> dGeom1{1.0 / expLen1};
+    std::geometric_distribution<size_t> dGeom2{1.0 / expLen2};
     std::vector<Gene> gtNew{};
-    gtNew.reserve(sz1 + sz2 - szShorter);
-    auto it1 = gt1.begin(),
-         it2 = gt2.begin(),
-         ie1 = gt1.end(),
-         ie2 = gt2.end();
-    while(it1 != ie1) {
-      gtNew.push_back(*it1++);
-      if(dUni(gen::rng) < pTest1) {
-        // Whether to make this a possible crossover point.
-        // The above check passes every time on the shorter genotype,
-        // 1/ratio of the time on the longer one.
-        // We might still decide to stay on the same branch, though.
-        if(dUni(gen::rng) < Config::pCrossUniform) {
-          std::swap(it1, it2);
-          std::swap(ie1, ie2);
-          std::swap(pTest1, pTest2);
-        }
+
+    gtNew.reserve(szLonger);
+    for(;;) {
+      // Take roughly expLen1 genes from gt1
+      size_t upto = pos1 + dGeom1(gen::rng) + 1;
+      if(upto >= sz1)
+        break; // just use the rest of gt1
+      // Skip roughly expLen2 genes from gt2
+      pos2 += dGeom2(gen::rng) + 1;
+      if(pos2 >= sz2)
+        break; // ditto
+      gtNew.insert(gtNew.end(), gt1->begin() + pos1, gt1->begin() + upto);
+      pos1 = upto;
+      // With probability pCrossUniform we swap the two sources (along with
+      // all associated data), otherwise we repeat.
+      if(dUni(gen::rng) < Config::pCrossUniform) {
+        std::swap(gt1, gt2);
+        std::swap(sz1, sz2);
+        std::swap(pos1, pos2);
+        std::swap(dGeom1, dGeom2);
       }
     }
-    // now it1 is at its boundary, if there's anything left past it2 we
-    // flush it with no more crossovers
-    gtNew.insert(gtNew.end(), it2, ie2);
+    // If we get here then either more was requested of gt1 than available or
+    // gt2 went empty. In either case, we just take whatever's left and we
+    // finish the crossover operation.
+    gtNew.insert(gtNew.end(), gt1->begin() + pos1, gt1->end());
+
     return Candidate{std::move(gtNew)};
   }
 

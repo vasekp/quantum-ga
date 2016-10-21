@@ -58,6 +58,9 @@ namespace Config {
   // Size of random subset of candidates to list on demand at interrupt
   const size_t nIntList = 20;
 
+  // Standard deviation of mutation in gate angles
+  const double dAlpha = 0.1;
+
 } // namespace Config
 
 

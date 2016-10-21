@@ -16,14 +16,20 @@ class CNOT : public GateBase {
 
 public:
 
-  static Pointer getNew() {
-    // distribution of targets
-    std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
-    // distribution of controls
-    unsigned tgt = dTgt(gen::rng);
-    controls_distribution<cc> dCtrl{Config::nBit, tgt, Config::pControl};
-    return std::make_shared<CNOT>(tgt, dCtrl(gen::rng));
-  }
+  // construct a random gate
+  CNOT():
+    tgt(std::uniform_int_distribution<unsigned>{0, Config::nBit - 1}
+        (gen::rng)),
+    ixs(controls_distribution<cc>{Config::nBit, tgt, Config::pControl}
+        (gen::rng)),
+    odd(true)
+  { }
+
+  // construct using parameters
+  CNOT(unsigned tgt_, const Backend::Controls& ixs_, bool odd_ = true):
+      tgt(tgt_), ixs(ixs_), odd(odd_) { }
+
+  CNOT(bool): tgt(), ixs(), odd(false) { }
 
   Backend::State applyTo(const Backend::State& psi, const Ctx*) const override {
     return odd ? psi.apply_ctrl(Backend::X, ixs, tgt) : psi;
@@ -85,11 +91,6 @@ public:
       }
     return std::make_shared<CNOT>(tgt, Backend::Controls{ctrl});
   }
-
-  CNOT(unsigned tgt_, const Backend::Controls& ixs_, bool odd_ = true):
-      tgt(tgt_), ixs(ixs_), odd(odd_) { }
-
-  CNOT(bool): tgt(), ixs(), odd(false) { }
 
 }; // class CNOT
 

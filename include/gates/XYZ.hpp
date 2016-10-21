@@ -47,19 +47,22 @@ class Param : public GateBase {
 
 public:
 
-  static Pointer getNew() {
-    // distribution of possible gates
-    std::uniform_int_distribution<size_t> dOp{0, gates->size() - 1};
-    // distribution of targets
-    std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
-    // distribution of controls
-    unsigned tgt = dTgt(gen::rng);
-    controls_distribution<cc> dCtrl{Config::nBit, tgt, Config::pControl};
-    // distribution of angle
-    std::uniform_real_distribution<> dAng{-0.5*Const::pi, 0.5*Const::pi};
-    return std::make_shared<Param>(gates->size() == 1 ? 0 : dOp(gen::rng),
-        tgt, dAng(gen::rng), dCtrl(gen::rng));
-  }
+  // construct a random gate
+  Param():
+    op(std::uniform_int_distribution<size_t>{0, gates->size() - 1}(gen::rng)),
+    tgt(std::uniform_int_distribution<unsigned>{0, Config::nBit - 1}
+        (gen::rng)),
+    angle(angle_distribution<>{}(gen::rng)),
+    ixs(controls_distribution<cc>{Config::nBit, tgt, Config::pControl}
+        (gen::rng)),
+    mat((*gates)[op].fn(angle))
+  { }
+
+  // construct using parameters
+  Param(size_t op_, unsigned tgt_, double angle_,
+      const Backend::Controls& ixs_):
+    op(op_), tgt(tgt_), angle(angle_), ixs(ixs_), mat((*gates)[op].fn(angle))
+  { }
 
   Backend::State applyTo(const Backend::State& psi, const Ctx*) const override {
     return psi.apply_ctrl(mat, ixs, tgt);
@@ -78,7 +81,7 @@ public:
   }
 
   Pointer mutate(const Pointer&) const override {
-    std::normal_distribution<> dAng{0.0, 0.1};
+    angle_distribution<true> dAng{};
     return std::make_shared<Param>(op, tgt, angle + dAng(gen::rng), ixs);
   }
 
@@ -140,11 +143,6 @@ public:
     double angle = std::stod(m[num + 4].str()) * Const::pi;
     return std::make_shared<Param>(op, tgt, angle, Backend::Controls{ctrl});
   }
-
-  Param(size_t op_, unsigned tgt_, double angle_,
-      const Backend::Controls& ixs_):
-    op(op_), tgt(tgt_), angle(angle_), ixs(ixs_), mat((*gates)[op].fn(angle))
-  { }
 
 }; // class Param
 

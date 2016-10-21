@@ -19,16 +19,34 @@ class SU2 : public GateBase {
 
 public:
 
-  static Pointer getNew() {
-    // distribution of targets
-    std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
-    // distribution of controls
-    unsigned tgt = dTgt(gen::rng);
-    controls_distribution<cc> dCtrl{Config::nBit, tgt, Config::pControl};
-    // distribution of angle
-    std::uniform_real_distribution<> dAng{-0.5*Const::pi, 0.5*Const::pi};
-    return std::make_shared<SU2>(tgt,
-        dAng(gen::rng), dAng(gen::rng), dAng(gen::rng), dCtrl(gen::rng));
+  // construct a random gate
+  SU2():
+    tgt(std::uniform_int_distribution<unsigned>{0, Config::nBit - 1}
+        (gen::rng)),
+    angle1(angle_distribution<>{}(gen::rng)),
+    angle2(angle_distribution<>{}(gen::rng)),
+    angle3(angle_distribution<>{}(gen::rng)),
+    ixs(controls_distribution<cc>{Config::nBit, tgt, Config::pControl}
+        (gen::rng)),
+    mat(func::zrot(angle3) * func::yrot(angle2) * func::zrot(angle1))
+  { }
+
+  // construct using parameters
+  SU2(unsigned tgt_, double angle1_, double angle2_, double angle3_,
+      const Backend::Controls& ixs_):
+    tgt(tgt_), angle1(angle1_), angle2(angle2_), angle3(angle3_), ixs(ixs_),
+    mat(func::zrot(angle3) * func::yrot(angle2) * func::zrot(angle1))
+  { }
+
+  // construct from a product matrix
+  SU2(unsigned tgt_, const Backend::Controls& ixs_, Backend::Gate&& mat_):
+    tgt(tgt_), angle1(), angle2(), angle3(), ixs(ixs_), mat(mat_)
+  {
+    angle2 = std::atan2(std::abs(mat(1, 0)), std::abs(mat(0, 0)));
+    double sum = std::arg(mat(0, 0)),
+           diff = std::arg(mat(1, 0));
+    angle1 = (sum + diff) / 2.0;
+    angle3 = (sum - diff) / 2.0;
   }
 
   Backend::State applyTo(const Backend::State& psi, const Ctx*) const override {
@@ -48,7 +66,7 @@ public:
   }
 
   Pointer mutate(const Pointer&) const override {
-    std::normal_distribution<> dAng{0.0, 0.1};
+    angle_distribution<true> dAng{};
     return std::make_shared<SU2>(tgt,
         angle1 + dAng(gen::rng),
         angle2 + dAng(gen::rng),
@@ -118,22 +136,6 @@ public:
     return std::make_shared<SU2>(tgt,
         angle1, angle2, angle3,
         Backend::Controls{ctrl});
-  }
-
-  SU2(unsigned tgt_, double angle1_, double angle2_, double angle3_,
-      const Backend::Controls& ixs_):
-    tgt(tgt_), angle1(angle1_), angle2(angle2_), angle3(angle3_), ixs(ixs_),
-    mat(func::zrot(angle3) * func::yrot(angle2) * func::zrot(angle1))
-  { }
-
-  SU2(unsigned tgt_, const Backend::Controls& ixs_, Backend::Gate&& mat_):
-    tgt(tgt_), angle1(), angle2(), angle3(), ixs(ixs_), mat(mat_)
-  {
-    angle2 = std::atan2(std::abs(mat(1, 0)), std::abs(mat(0, 0)));
-    double sum = std::arg(mat(0, 0)),
-           diff = std::arg(mat(1, 0));
-    angle1 = (sum + diff) / 2.0;
-    angle3 = (sum - diff) / 2.0;
   }
 
 }; // class SU2

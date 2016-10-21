@@ -97,4 +97,25 @@ public:
 
 }; // class controls_distribution<Controls>
 
+
+/* Two related pre-initialized distributions: for generating initial values of
+ * angle for parametric gates and for generating angle deviations for
+ * continuous gate mutation. */
+
+template<bool diff = false>
+struct angle_distribution : std::uniform_real_distribution<> {
+
+  angle_distribution():
+    std::uniform_real_distribution<>(-Const::pi, Const::pi) { }
+
+}; // class angle_distribution<false>
+
+template<>
+struct angle_distribution<true> : std::normal_distribution<> {
+
+  angle_distribution():
+    std::normal_distribution<>(0.0, Config::dAlpha) { }
+
+}; // class angle_distribution<true>
+
 } // namespace QGA

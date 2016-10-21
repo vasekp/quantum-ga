@@ -17,15 +17,16 @@ class Inner : public GateBase {
 
 public:
 
-  static Pointer getNew() {
-    // distribution of targets
-    std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 1};
+  // construct a random gate
+  Inner():
+    tgt(std::uniform_int_distribution<unsigned>{0, Config::nBit - 1}
+        (gen::rng)),
+    angle(angle_distribution<>{}(gen::rng)),
+    ixs(), mat(func::phase(angle))
+  {
     // distribution of controls
-    unsigned tgt = dTgt(gen::rng);
     controls_distribution<Controls::ANY>
       dCtrl{Config::nBit, tgt, Config::pControl};
-    // distribution of angle
-    std::uniform_real_distribution<> dAng{-0.5*Const::pi, 0.5*Const::pi};
     // Convert P2[13] to P1[23]: mathematically identical and more easily
     // mergeable
     std::vector<bool> ctrl = dCtrl(gen::rng);
@@ -39,8 +40,12 @@ public:
       tgt = i;
     }
     ctrl[tgt] = false;
-    return std::make_shared<Inner>(tgt, dAng(gen::rng), ctrl);
+    ixs = Backend::Controls{ctrl};
   }
+
+  // construct using parameters
+  Inner(unsigned tgt_, double angle_, const Backend::Controls& ixs_):
+      tgt(tgt_), angle(angle_), ixs(ixs_), mat(func::phase(angle)) { }
 
   Backend::State applyTo(const Backend::State& psi, const Ctx*) const override {
     return psi.apply_ctrl(mat, ixs, tgt);
@@ -59,7 +64,7 @@ public:
   }
 
   Pointer mutate(const Pointer&) const override {
-    std::normal_distribution<> dAng{0.0, 0.1};
+    angle_distribution<true> dAng{};
     return std::make_shared<Inner>(tgt, angle + dAng(gen::rng), ixs);
   }
 
@@ -110,9 +115,6 @@ public:
     double angle = std::stod(m[2].str()) * Const::pi;
     return std::make_shared<Inner>(tgt, angle, Backend::Controls{ctrl});
   }
-
-  Inner(unsigned tgt_, double angle_, const Backend::Controls& ixs_):
-      tgt(tgt_), angle(angle_), ixs(ixs_), mat(func::phase(angle)) { }
 
 }; // class CPhase::Inner
 

@@ -16,16 +16,27 @@ class Inner : public GateBase {
 
 public:
 
-  static Pointer getNew() {
-    // distribution of targets
-    std::uniform_int_distribution<unsigned> dTgt{0, Config::nBit - 2};
-    // distribution of controls
-    unsigned s1 = dTgt(gen::rng),
-             s2 = dTgt(gen::rng);
+  // construct a random gate
+  Inner():
+    s1(std::uniform_int_distribution<unsigned>{0, Config::nBit - 2}
+        (gen::rng)), // NB the -2 is important!
+    s2(std::uniform_int_distribution<unsigned>{0, Config::nBit - 2}
+        (gen::rng)),
+    ixs(), odd(true)
+  {
     // ensure that the two subsystem indices are different
     s2 += s2 >= s1;
-    return std::make_shared<Inner>(s1, s2);
+    ixs = Backend::Controls::swap(s1, s2);
   }
+
+  // construct using parameters
+  Inner(unsigned s1_, unsigned s2_, const Backend::Controls& ixs_, bool odd_):
+      s1(s1_), s2(s2_), ixs(ixs_), odd(odd_) { }
+
+  Inner(unsigned s1_, unsigned s2_): s1(s1_), s2(s2_),
+    ixs(std::move(Backend::Controls::swap(s1, s2))), odd(true) { }
+
+  Inner(bool): s1(), s2(), ixs(), odd(false) { }
 
   Backend::State applyTo(const Backend::State& psi, const Ctx*) const override {
     return odd ? psi.swap(ixs) : psi;
@@ -71,14 +82,6 @@ public:
       return {};
     return std::make_shared<Inner>(s1, s2);
   }
-
-  Inner(unsigned s1_, unsigned s2_, const Backend::Controls& ixs_, bool odd_):
-      s1(s1_), s2(s2_), ixs(ixs_), odd(odd_) { }
-
-  Inner(unsigned s1_, unsigned s2_): s1(s1_), s2(s2_),
-    ixs(std::move(Backend::Controls::swap(s1, s2))), odd(true) { }
-
-  Inner(bool): s1(), s2(), ixs(), odd(false) { }
 
 }; // class Inner
 

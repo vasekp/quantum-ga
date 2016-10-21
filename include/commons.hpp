@@ -36,6 +36,7 @@ namespace Config {
   extern const double pChoiceUniform;
   extern const double pCrossUniform;
   extern const double pControl;
+  extern const double dAlpha;
 }
 
 /* Useful constants and typedefs */
