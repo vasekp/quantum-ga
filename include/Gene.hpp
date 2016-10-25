@@ -1,13 +1,13 @@
 namespace QGA {
 
 namespace internal {
-  // Defined below
-  template<class, class, class...>
-  class Chooser;
 
-  template<class, class...>
-  class Reader;
-}
+// Defined below
+template<class, class, class...>
+class Chooser;
+
+template<class, class...>
+class Reader;
 
 
 /* The Gene type ready for use with a CandidateBase.
@@ -20,7 +20,7 @@ namespace internal {
  * functions like applyTo() or hit() are redirected using a ->. */
 
 template<class Context, class... Gates>
-class CustomGene : GateBase<Context, Gates...>::Pointer {
+class Gene : GateBase<Context, Gates...>::Pointer {
 
   using GBase = GateBase<Context, Gates...>;
   using Pointer = typename GBase::Pointer;
@@ -29,13 +29,16 @@ public:
 
   using Counter = typename GBase::Counter;
 
-  CustomGene() = default; // Needed in CandidateBase::read()
+  template<class Context_>
+  using WithContext = Gene<Context_, Gates...>;
 
-  CustomGene(const Pointer& ptr): Pointer(ptr) { }
+  Gene() = default; // Needed in CandidateBase::read()
 
-  CustomGene(Pointer&& ptr): Pointer(std::move(ptr)) { }
+  Gene(const Pointer& ptr): Pointer(ptr) { }
 
-  static CustomGene getRandom() {
+  Gene(Pointer&& ptr): Pointer(std::move(ptr)) { }
+
+  static Gene getRandom() {
     return {internal::Chooser<
       Pointer, typename Gates::template Template<GBase>...
     >::getNew()};
@@ -45,11 +48,11 @@ public:
     return Pointer::operator->();
   }
 
-  friend std::ostream& operator<<(std::ostream& os, const CustomGene& g) {
+  friend std::ostream& operator<<(std::ostream& os, const Gene& g) {
     return os << *g;
   }
 
-  friend std::istream& operator>>(std::istream& is, CustomGene& g) {
+  friend std::istream& operator>>(std::istream& is, Gene& g) {
     std::string gene{};
     if(!(is >> gene))
       return is;
@@ -78,7 +81,7 @@ public:
     pointer() = pointer()->simplify(pointer());
   }
 
-  bool merge(CustomGene& other) {
+  bool merge(Gene& other) {
     Pointer result = pointer()->merge(pointer(), other);
     if(result) {
       pointer() = result;
@@ -90,7 +93,7 @@ public:
   /* Two genes are equal iff they point to the same object. This is used in
    * CandidateFactory to check if a genotype has changed at all during a
    * mutation (if not, the parent is returned). */
-  bool operator==(const CustomGene& other) const {
+  bool operator==(const Gene& other) const {
     return pointer() == other.pointer();
   }
 
@@ -104,16 +107,17 @@ private:
     return static_cast<const Pointer&>(*this);
   }
 
-}; // class CustomGene<Context, Gates...>
+}; // class Gene<Context, Gates...>
+
+} // namespace internal
 
 
 /* The default value for Context (additional data passed to GateBase::applyTo)
- * is void. Unfortunately there's no way of providing default values for
- * template parameters before the parameter pack without invalidating the use
- * of the pack so we use a template class alias instead. */
+ * is void. Other classes can be supplied later using the alias declaration
+ * internal::Gene::WithContext. */
 
 template<class... Gates>
-using Gene = CustomGene<void, Gates...>;
+using Gene = internal::Gene<void, Gates...>;
 
 
 namespace internal {

@@ -7,7 +7,7 @@ namespace {
 using QGA::Backend::State;
 
 
-/* The Context to be used in CustomGene, holding a mark for the Oracle */
+/* The Context to be used in Gene below, holding a mark for the Oracle */
 struct Context {
   unsigned mark;
 };
@@ -75,9 +75,8 @@ using Template = Inner<GateBase>;
 }; // struct Oracle
 
 
-using Gene = QGA::CustomGene<Context,
-        Oracle, QGA::Gates::X<>, QGA::Gates::CPhase>;
-
+using Gene = typename QGA::Gene<Oracle, QGA::Gates::X<>, QGA::Gates::CPhase>
+                ::WithContext<Context>;
 
 class Candidate : public QGA::CandidateBase<Candidate, Gene> {
 
