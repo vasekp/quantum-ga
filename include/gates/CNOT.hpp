@@ -95,7 +95,7 @@ public:
     return std::make_shared<CNOTTemp>(tgt, Backend::Controls{ctrl});
   }
 
-}; // class CNOTTemp
+}; // class CNOT<Controls>::CNOTTemp<GateBase>
 
 template<class GateBase>
 using Template = CNOTTemp<GateBase>;
@@ -103,7 +103,7 @@ using Template = CNOTTemp<GateBase>;
 template<Controls cc_>
 using WithControls = CNOT<cc_>;
 
-}; // struct CNOT
+}; // struct CNOT<Controls>
 
 } // namespace internal
 

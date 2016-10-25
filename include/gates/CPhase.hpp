@@ -118,7 +118,7 @@ public:
     return std::make_shared<CPhaseTemp>(tgt, angle, Backend::Controls{ctrl});
   }
 
-}; // class CPhase::CPhaseTemp
+}; // class CPhase<Controls>::CPhaseTemp<GateBase>
 
 template<class GateBase>
 using Template = CPhaseTemp<GateBase>;
@@ -126,7 +126,7 @@ using Template = CPhaseTemp<GateBase>;
 template<Controls cc_>
 using WithControls = CPhase<cc_>;
 
-}; // struct CPhase
+}; // struct CPhase<Controls>
 
 } // namespace internal
 

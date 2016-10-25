@@ -113,7 +113,9 @@ private:
 
 
 /* The default value for Context (additional data passed to GateBase::applyTo)
- * is void. Other classes can be supplied later using the alias declaration
+ * is void. This cannot be specified in the corresponding template because it
+ * precedes a parameter pack, so we make a class alias for such purpose. Other
+ * classes can be supplied later using the member alias declaration
  * internal::Gene::WithContext. */
 
 template<class... Gates>

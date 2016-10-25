@@ -141,7 +141,7 @@ public:
         Backend::Controls{ctrl});
   }
 
-}; // class SU2Temp
+}; // class SU2<Controls>::SU2Temp<GateBase>
 
 template<class GateBase>
 using Template = SU2Temp<GateBase>;
@@ -149,7 +149,7 @@ using Template = SU2Temp<GateBase>;
 template<Controls cc_>
 using WithControls = SU2<cc_>;
 
-}; // struct SU2
+}; // struct SU2<Controls>
 
 } // namespace internal
 

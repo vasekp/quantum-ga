@@ -147,7 +147,7 @@ public:
     return std::make_shared<ParamTemp>(op, tgt, angle, Backend::Controls{ctrl});
   }
 
-}; // class ParamTemp
+}; // class Param<Controls, Gates>::ParamTemp<GateBase>
 
 template<class GateBase>
 using Template = ParamTemp<GateBase>;
@@ -158,7 +158,7 @@ using WithControls = Param<cc_, gates>;
 template<const std::vector<gate_struct_p>* gates_>
 using WithGates = Param<cc, gates_>;
 
-}; // struct Param
+}; // struct Param<Controls, Gates>
 
 } // namespace internal
 

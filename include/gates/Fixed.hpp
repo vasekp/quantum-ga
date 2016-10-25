@@ -125,7 +125,7 @@ public:
     return std::make_shared<FixedTemp>(op, tgt, Backend::Controls{ctrl});
   }
 
-}; // class FixedTemp
+}; // class Fixed<Controls, Gates>::FixedTemp<GateBase>
 
 template<class GateBase>
 using Template = FixedTemp<GateBase>;
@@ -136,7 +136,7 @@ using WithControls = Fixed<cc_, gates>;
 template<const std::vector<gate_struct_f>* gates_>
 using WithGates = Fixed<cc, gates_>;
 
-}; // struct Fixed
+}; // struct Fixed<Controls, Gates>
 
 } // namespace internal
 

@@ -67,7 +67,7 @@ public:
     return std::make_shared<OracleTemp>(m[1].matched);
   }
 
-}; // class Oracle::OracleTemp
+}; // class Oracle::OracleTemp<GateBase>
 
 template<class GateBase>
 using Template = OracleTemp<GateBase>;

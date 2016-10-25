@@ -7,7 +7,7 @@ namespace internal {
 }
 
 
-/* The base class for all genes. Defines methods derived classes have to
+/* The base class for all gates. Defines methods derived classes have to
  * implement, and provides default (no-op) definition for some of them. */
 
 template<class ContextParm, class... Gates>
@@ -22,7 +22,7 @@ public:
     typename Gates::template Template<GateBase>...>;
   using Context = ContextParm;
 
-  // apply this gene to a state vector
+  // apply this gate to a state vector
   virtual Backend::State applyTo(const Backend::State&, const Context*) const
     = 0;
 
@@ -38,7 +38,7 @@ public:
   }
 
   /* The following functions pass a std::shared_ptr (SP) pointing to this
-   * along with this. If a gene allows a given operation, it should return a
+   * along with this. If a gate allows a given operation, it should return a
    * new SP created using std::make_shared<OwnClass>. If it does not, it
    * should return the parameter self so it can be reused just with its
    * reference count upped instead of creating a new copy. The default
@@ -57,7 +57,7 @@ public:
   }
 
   /* Merge needs to be implemented using double dispatch, because only
-   * genes of the same class can typically be merged (albeit this is not a
+   * gates of the same class can typically be merged (albeit this is not a
    * restriction) but all we know at compile time is a pointer to the base
    * class.
    *
@@ -118,8 +118,8 @@ protected:
    * specific class so it can be recognized as a (const) GateBase&. See the
    * description of merge() above.
    *
-   * The derived class (gene template) needs to define this function even if
-   * it does not allow merging with any other genes. */
+   * The derived class needs to define this function even if it does not allow
+   * merging with any other gates. */
 
   virtual Pointer invite(const Pointer& other) const = 0;
 
@@ -138,18 +138,18 @@ protected:
 namespace internal {
 
 /* The purpose of this helper class is to inject a virtual method for calling
- * a particular gene class, for the purposes of the merge() call pattern. Note
- * that for the visitor design pattern, we need one method like this for each
- * possible visitee, but we don't know what the derived classes are yet. (This
- * is supplied in Gene.hpp.)
+ * merge(const Derived&) for one particular derived class for the purposes of
+ * the GateBase::merge() call pattern above. Note that for the visitor design
+ * pattern, we need one method like this for each possible visitee.
  *
- * Subclasses can override merge(const X&) for some particular values of X
- * (presumably themselves) to allow merging with instances of class X.
+ * Subclasses of GateBase can override merge(const X&) for some particular
+ * values of X (presumably themselves) to allow merging with instances of
+ * class X.
  *
  * The default implementation returns an unassigned std::shared_pointer,
- * indicating that no merge happened. Any other return value means that the
- * pair of genes has been consumed and should be replaced by the return value
- * (which can also be one of them). */
+ * indicating that no merge has taken place. Any other return value means that
+ * the pair of genes has been consumed and should be replaced by the return
+ * value (which can also be one of them). */
 
 template<class GateBase, class Gate>
 class Visitor {
@@ -169,7 +169,9 @@ protected:
 
 
 /* Chain template dependency is used to generate the merge() methods one for
- * each of a list of derived classes. */
+ * each of a parameter pack of derived classes (gate templates).  The list of
+ * possible gate types to be considered is specific to each problem and is
+ * provided through a specialization of QGA::Gene. */
 
 template<class GateBase, class Head, class... Tail>
 class Visitors :

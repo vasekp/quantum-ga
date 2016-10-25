@@ -83,7 +83,7 @@ public:
     return std::make_shared<SWAPTemp>(s1, s2);
   }
 
-}; // class SWAPTemp
+}; // class SWAP::SWAPTemp<GateBase>
 
 template<class GateBase>
 using Template = SWAPTemp<GateBase>;
