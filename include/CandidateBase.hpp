@@ -88,9 +88,6 @@ public:
     return gen;
   }
 
-  template<class, class>
-  friend class CandidateFactory;
-
 protected:
 
   static double trimError(double error) {

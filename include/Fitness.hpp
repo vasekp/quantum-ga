@@ -43,7 +43,7 @@ namespace internal {
  * needed for a seamless inclusion in Fitness. */
 
 template<class Head, class... Tail>
-class Counter: public Counter<Tail...> {
+class Counter : Counter<Tail...> {
 
   unsigned cnt = 0;
 

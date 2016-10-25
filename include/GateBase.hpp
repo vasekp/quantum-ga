@@ -11,16 +11,19 @@ namespace internal {
  * implement, and provides default (no-op) definition for some of them. */
 
 template<class ContextParm, class... Gates>
-class GateBase :
-  public internal::Visitors<GateBase<ContextParm, Gates...>, Gates...>
-{
+class GateBase : internal::Visitors<GateBase<ContextParm, Gates...>, Gates...> {
+
+protected:
+
+  using Context = ContextParm;
 
 public:
 
+  // Both required in QGA::Gene
   using Pointer = std::shared_ptr<const GateBase>;
   using Counter = internal::Counter<
-    typename Gates::template Template<GateBase>...>;
-  using Context = ContextParm;
+    typename Gates::template Template<GateBase>...
+  >;
 
   // apply this gate to a state vector
   virtual Backend::State applyTo(const Backend::State&, const Context*) const
@@ -29,12 +32,6 @@ public:
   // return the number of control qubits of this gate
   virtual unsigned controls() const {
     return 0;
-  }
-
-  // return whether this gate has degenerated to the identity (e.g., by means
-  // of simplification or merge)
-  virtual bool isTrivial() const {
-    return false;
   }
 
   /* The following functions pass a std::shared_ptr (SP) pointing to this
@@ -84,6 +81,7 @@ public:
       return second->invite(first);
   }
 
+  // This needs to be public because it's going to be called through a SP
   using internal::Visitors<GateBase, Gates...>::merge;
 
   /* This function allows us to count the number of each gate type using
@@ -96,6 +94,7 @@ public:
    *   }
    */
 
+  // Called from CandidateBase
   virtual void hit(Counter& c) const = 0;
 
   friend std::ostream& operator<< (std::ostream& os, const GateBase& g) {
@@ -104,7 +103,13 @@ public:
 
   virtual ~GateBase() { }
 
-protected:
+private:
+
+  // return whether this gate has degenerated to the identity (e.g., by means
+  // of simplification or merge)
+  virtual bool isTrivial() const {
+    return false;
+  }
 
   /* Every derived class must implement this function with exactly the
    * following definition:
@@ -174,12 +179,9 @@ protected:
  * provided through a specialization of QGA::Gene. */
 
 template<class GateBase, class Head, class... Tail>
-class Visitors :
-  public Visitor<GateBase, Head>,
-  public Visitors<GateBase, Tail...>
-{
+class Visitors : Visitor<GateBase, Head>, Visitors<GateBase, Tail...> {
 
-public:
+protected:
 
   using Visitor<GateBase, Head>::merge;
   using Visitors<GateBase, Tail...>::merge;
@@ -187,11 +189,9 @@ public:
 }; // class Visitors
 
 template<class GateBase, class Last>
-class Visitors<GateBase, Last> :
-  public Visitor<GateBase, Last>
-{
+class Visitors<GateBase, Last> : Visitor<GateBase, Last> {
 
-public:
+protected:
 
   using Visitor<GateBase, Last>::merge;
 

@@ -132,10 +132,9 @@ namespace internal {
  * convertible to the class referred to by the pointer P. */
 
 template<class Pointer, class Head, class... Tail>
-class Chooser<Pointer, Head, Tail...> {
+class Chooser<Pointer, Head, Tail...> : Chooser<Pointer, Tail...> {
 
-  template<class, class...>
-  friend class Chooser;
+protected:
 
   static Pointer getNew(unsigned index) {
     if(index == 0)

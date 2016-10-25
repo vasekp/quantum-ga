@@ -340,12 +340,7 @@ private:
   }
 
   Candidate simplify() {
-    return simplify(get());
-  }
-
-public:
-
-  static Candidate simplify(const Candidate& parent) {
+    auto &parent = get();
     auto &gtOrig = parent.genotype();
     size_t sz = gtOrig.size();
     if(sz == 0)
