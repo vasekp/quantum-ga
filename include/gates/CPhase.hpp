@@ -2,10 +2,13 @@ namespace QGA {
 
 namespace Gates {
 
+namespace internal {
+
+template<Controls cc>
 struct CPhase {
 
 template<class GateBase>
-class Inner : public GateBase {
+class CPhaseTemp : public GateBase {
 
   unsigned tgt;
   double angle;
@@ -18,15 +21,14 @@ class Inner : public GateBase {
 public:
 
   // construct a random gate
-  Inner():
+  CPhaseTemp():
     tgt(std::uniform_int_distribution<unsigned>{0, Config::nBit - 1}
         (gen::rng)),
     angle(angle_distribution<>{}(gen::rng)),
     ixs(), mat(func::phase(angle))
   {
     // distribution of controls
-    controls_distribution<Controls::ANY>
-      dCtrl{Config::nBit, tgt, Config::pControl};
+    controls_distribution<cc> dCtrl{Config::nBit, tgt, Config::pControl};
     // Convert P2[13] to P1[23]: mathematically identical and more easily
     // mergeable
     std::vector<bool> ctrl = dCtrl(gen::rng);
@@ -44,7 +46,7 @@ public:
   }
 
   // construct using parameters
-  Inner(unsigned tgt_, double angle_, const Backend::Controls& ixs_):
+  CPhaseTemp(unsigned tgt_, double angle_, const Backend::Controls& ixs_):
       tgt(tgt_), angle(angle_), ixs(ixs_), mat(func::phase(angle)) { }
 
   Backend::State applyTo(const Backend::State& psi, const Ctx*) const override {
@@ -60,16 +62,16 @@ public:
   }
 
   Pointer invert(const Pointer&) const override {
-    return std::make_shared<Inner>(tgt, -angle, ixs);
+    return std::make_shared<CPhaseTemp>(tgt, -angle, ixs);
   }
 
   Pointer mutate(const Pointer&) const override {
     angle_distribution<true> dAng{};
-    return std::make_shared<Inner>(tgt, angle + dAng(gen::rng), ixs);
+    return std::make_shared<CPhaseTemp>(tgt, angle + dAng(gen::rng), ixs);
   }
 
   Pointer simplify(const Pointer&) const override {
-    return std::make_shared<Inner>(tgt, rationalize_angle(angle), ixs);
+    return std::make_shared<CPhaseTemp>(tgt, rationalize_angle(angle), ixs);
   }
 
   void hit(typename GateBase::Counter& c) const {
@@ -80,9 +82,9 @@ public:
     return first->merge(*this);
   }
 
-  Pointer merge(const Inner& g) const override {
+  Pointer merge(const CPhaseTemp& g) const override {
     if(g.tgt == tgt && g.ixs == ixs)
-      return std::make_shared<Inner>(tgt, angle + g.angle, ixs);
+      return std::make_shared<CPhaseTemp>(tgt, angle + g.angle, ixs);
     else
       return {};
   }
@@ -113,15 +115,22 @@ public:
       }
     }
     double angle = std::stod(m[2].str()) * Const::pi;
-    return std::make_shared<Inner>(tgt, angle, Backend::Controls{ctrl});
+    return std::make_shared<CPhaseTemp>(tgt, angle, Backend::Controls{ctrl});
   }
 
-}; // class CPhase::Inner
+}; // class CPhase<Controls>::CPhaseTemp<GateBase>
 
 template<class GateBase>
-using Template = Inner<GateBase>;
+using Template = CPhaseTemp<GateBase>;
 
-}; // struct CPhase
+template<Controls cc_>
+using WithControls = CPhase<cc_>;
+
+}; // struct CPhase<Controls>
+
+} // namespace internal
+
+using CPhase = internal::CPhase<Controls::ANY>;
 
 } // namespace Gates
 

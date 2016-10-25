@@ -5,7 +5,7 @@ namespace Gates {
 struct SWAP {
 
 template<class GateBase>
-class Inner : public GateBase {
+class SWAPTemp : public GateBase {
 
   unsigned s1, s2;
   Backend::Controls ixs;
@@ -17,7 +17,7 @@ class Inner : public GateBase {
 public:
 
   // construct a random gate
-  Inner():
+  SWAPTemp():
     s1(std::uniform_int_distribution<unsigned>{0, Config::nBit - 2}
         (gen::rng)), // NB the -2 is important!
     s2(std::uniform_int_distribution<unsigned>{0, Config::nBit - 2}
@@ -30,13 +30,13 @@ public:
   }
 
   // construct using parameters
-  Inner(unsigned s1_, unsigned s2_, const Backend::Controls& ixs_, bool odd_):
+  SWAPTemp(unsigned s1_, unsigned s2_, const Backend::Controls& ixs_, bool odd_):
       s1(s1_), s2(s2_), ixs(ixs_), odd(odd_) { }
 
-  Inner(unsigned s1_, unsigned s2_): s1(s1_), s2(s2_),
+  SWAPTemp(unsigned s1_, unsigned s2_): s1(s1_), s2(s2_),
     ixs(std::move(Backend::Controls::swap(s1, s2))), odd(true) { }
 
-  Inner(bool): s1(), s2(), ixs(), odd(false) { }
+  SWAPTemp(bool): s1(), s2(), ixs(), odd(false) { }
 
   Backend::State applyTo(const Backend::State& psi, const Ctx*) const override {
     return odd ? psi.swap(ixs) : psi;
@@ -55,9 +55,9 @@ public:
     return first->merge(*this);
   }
 
-  Pointer merge(const Inner& g) const override {
+  Pointer merge(const SWAPTemp& g) const override {
     if(g.s1 == s1 && g.s2 == s2)
-      return std::make_shared<Inner>(s1, s2, ixs, odd ^ g.odd);
+      return std::make_shared<SWAPTemp>(s1, s2, ixs, odd ^ g.odd);
     else
       return {};
   }
@@ -75,18 +75,18 @@ public:
     if(!std::regex_match(s, m, re))
       return {};
     if(m[1].matched)
-      return std::make_shared<Inner>(false);
+      return std::make_shared<SWAPTemp>(false);
     unsigned s1 = m[2].str()[0] - '1',
              s2 = m[3].str()[0] - '1';
     if(s1 >= Config::nBit || s2 >= Config::nBit || s2 == s1)
       return {};
-    return std::make_shared<Inner>(s1, s2);
+    return std::make_shared<SWAPTemp>(s1, s2);
   }
 
-}; // class Inner
+}; // class SWAP::SWAPTemp<GateBase>
 
 template<class GateBase>
-using Template = Inner<GateBase>;
+using Template = SWAPTemp<GateBase>;
 
 }; // struct SWAP
 

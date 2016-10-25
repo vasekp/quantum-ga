@@ -10,31 +10,34 @@ struct gate_struct_p {
 
 namespace internal {
 
-static const std::vector<gate_struct_p> gates_param {
+static const std::vector<gate_struct_p> gates_param_xyz {
   {func::xrot, 'X'},
   {func::yrot, 'Y'},
   {func::zrot, 'Z'}
 };
 
-static const std::vector<gate_struct_p> gates_x {
+static const std::vector<gate_struct_p> gates_param_x {
   {func::xrot, 'X'},
 };
 
-static const std::vector<gate_struct_p> gates_y {
+static const std::vector<gate_struct_p> gates_param_y {
   {func::yrot, 'Y'},
 };
 
-static const std::vector<gate_struct_p> gates_z {
+static const std::vector<gate_struct_p> gates_param_z {
   {func::zrot, 'Z'},
 };
 
-static const std::vector<gate_struct_p> gates_r {
+static const std::vector<gate_struct_p> gates_param_r {
   {func::rrot, 'R'},
 };
 
 
-template<class GateBase, const std::vector<gate_struct_p>* gates, Controls cc>
-class Param : public GateBase {
+template<Controls cc, const std::vector<gate_struct_p>* gates>
+struct Param {
+
+template<class GateBase>
+class ParamTemp : public GateBase {
 
   size_t op;
   unsigned tgt;
@@ -48,7 +51,7 @@ class Param : public GateBase {
 public:
 
   // construct a random gate
-  Param():
+  ParamTemp():
     op(std::uniform_int_distribution<size_t>{0, gates->size() - 1}(gen::rng)),
     tgt(std::uniform_int_distribution<unsigned>{0, Config::nBit - 1}
         (gen::rng)),
@@ -59,7 +62,7 @@ public:
   { }
 
   // construct using parameters
-  Param(size_t op_, unsigned tgt_, double angle_,
+  ParamTemp(size_t op_, unsigned tgt_, double angle_,
       const Backend::Controls& ixs_):
     op(op_), tgt(tgt_), angle(angle_), ixs(ixs_), mat((*gates)[op].fn(angle))
   { }
@@ -77,16 +80,16 @@ public:
   }
 
   Pointer invert(const Pointer&) const override {
-    return std::make_shared<Param>(op, tgt, -angle, ixs);
+    return std::make_shared<ParamTemp>(op, tgt, -angle, ixs);
   }
 
   Pointer mutate(const Pointer&) const override {
     angle_distribution<true> dAng{};
-    return std::make_shared<Param>(op, tgt, angle + dAng(gen::rng), ixs);
+    return std::make_shared<ParamTemp>(op, tgt, angle + dAng(gen::rng), ixs);
   }
 
   Pointer simplify(const Pointer&) const override {
-    return std::make_shared<Param>(op, tgt, rationalize_angle(angle), ixs);
+    return std::make_shared<ParamTemp>(op, tgt, rationalize_angle(angle), ixs);
   }
 
   void hit(typename GateBase::Counter& c) const {
@@ -97,9 +100,9 @@ public:
     return first->merge(*this);
   }
 
-  Pointer merge(const Param& g) const override {
+  Pointer merge(const ParamTemp& g) const override {
     if(g.op == op && g.tgt == tgt && g.ixs == ixs)
-      return std::make_shared<Param>(op, tgt, angle + g.angle, ixs);
+      return std::make_shared<ParamTemp>(op, tgt, angle + g.angle, ixs);
     else
       return {};
   }
@@ -141,44 +144,29 @@ public:
           ctrl[pos] = true;
       }
     double angle = std::stod(m[num + 4].str()) * Const::pi;
-    return std::make_shared<Param>(op, tgt, angle, Backend::Controls{ctrl});
+    return std::make_shared<ParamTemp>(op, tgt, angle, Backend::Controls{ctrl});
   }
 
-}; // class Param
+}; // class Param<Controls, Gates>::ParamTemp<GateBase>
+
+template<class GateBase>
+using Template = ParamTemp<GateBase>;
+
+template<Controls cc_>
+using WithControls = Param<cc_, gates>;
+
+template<const std::vector<gate_struct_p>* gates_>
+using WithGates = Param<cc, gates_>;
+
+}; // struct Param<Controls, Gates>
 
 } // namespace internal
 
-
-template<Controls cc = Controls::NONE,
-  const std::vector<gate_struct_p>* gates = &internal::gates_param>
-struct XYZ {
-  template<class GateBase>
-  using Template = internal::Param<GateBase, gates, cc>;
-};
-
-template<Controls cc = Controls::NONE>
-struct X {
-  template<class GateBase>
-  using Template = internal::Param<GateBase, &internal::gates_x, cc>;
-};
-
-template<Controls cc = Controls::NONE>
-struct Y {
-  template<class GateBase>
-  using Template = internal::Param<GateBase, &internal::gates_y, cc>;
-};
-
-template<Controls cc = Controls::NONE>
-struct Z {
-  template<class GateBase>
-  using Template = internal::Param<GateBase, &internal::gates_z, cc>;
-};
-
-template<Controls cc = Controls::NONE>
-struct R {
-  template<class GateBase>
-  using Template = internal::Param<GateBase, &internal::gates_r, cc>;
-};
+using XYZ = internal::Param<Controls::NONE, &internal::gates_param_xyz>;
+using X = internal::Param<Controls::NONE, &internal::gates_param_x>;
+using Y = internal::Param<Controls::NONE, &internal::gates_param_y>;
+using Z = internal::Param<Controls::NONE, &internal::gates_param_z>;
+using R = internal::Param<Controls::NONE, &internal::gates_param_r>;
 
 } // namespace Gates
 
