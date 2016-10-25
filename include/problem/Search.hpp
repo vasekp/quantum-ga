@@ -18,7 +18,7 @@ struct Context {
 struct Oracle {
 
 template<class GateBase>
-class Inner : public GateBase {
+class OracleTemp : public GateBase {
 
   using typename GateBase::Pointer;
   using typename GateBase::Context;
@@ -27,7 +27,7 @@ class Inner : public GateBase {
 
 public:
 
-  Inner(bool odd_ = true): odd(odd_) { }
+  OracleTemp(bool odd_ = true): odd(odd_) { }
 
   State applyTo(const State& psi, const Context* pMark) const override {
     unsigned mark = pMark->mark;
@@ -50,9 +50,9 @@ public:
     return first->merge(*this);
   }
 
-  Pointer merge(const Inner& g) const override {
+  Pointer merge(const OracleTemp& g) const override {
     // oracle * oracle = oracle^2 → true ^ true = false
-    return std::make_shared<Inner>(odd ^ g.odd);
+    return std::make_shared<OracleTemp>(odd ^ g.odd);
   }
 
   std::ostream& write(std::ostream& os) const override {
@@ -64,19 +64,23 @@ public:
     std::smatch m{};
     if(!std::regex_match(s, m, re))
       return {};
-    return std::make_shared<Inner>(m[1].matched);
+    return std::make_shared<OracleTemp>(m[1].matched);
   }
 
-}; // class Oracle::Inner
+}; // class Oracle::OracleTemp
 
 template<class GateBase>
-using Template = Inner<GateBase>;
+using Template = OracleTemp<GateBase>;
 
 }; // struct Oracle
 
 
-using Gene = typename QGA::Gene<Oracle, QGA::Gates::X<>, QGA::Gates::CPhase>
-                ::WithContext<Context>;
+using Gene = typename QGA::Gene<
+                Oracle,
+                QGA::Gates::X,
+                QGA::Gates::CPhase
+              >::WithContext<Context>;
+
 
 class Candidate : public QGA::CandidateBase<Candidate, Gene> {
 

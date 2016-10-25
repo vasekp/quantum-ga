@@ -4,8 +4,11 @@ namespace Gates {
 
 namespace internal {
 
-template<class GateBase, Controls cc>
-class SU2 : public GateBase {
+template<Controls cc>
+struct SU2 {
+
+template<class GateBase>
+class SU2Temp : public GateBase {
 
   unsigned tgt;
   double angle1;
@@ -20,7 +23,7 @@ class SU2 : public GateBase {
 public:
 
   // construct a random gate
-  SU2():
+  SU2Temp():
     tgt(std::uniform_int_distribution<unsigned>{0, Config::nBit - 1}
         (gen::rng)),
     angle1(angle_distribution<>{}(gen::rng)),
@@ -32,14 +35,14 @@ public:
   { }
 
   // construct using parameters
-  SU2(unsigned tgt_, double angle1_, double angle2_, double angle3_,
+  SU2Temp(unsigned tgt_, double angle1_, double angle2_, double angle3_,
       const Backend::Controls& ixs_):
     tgt(tgt_), angle1(angle1_), angle2(angle2_), angle3(angle3_), ixs(ixs_),
     mat(func::zrot(angle3) * func::yrot(angle2) * func::zrot(angle1))
   { }
 
   // construct from a product matrix
-  SU2(unsigned tgt_, const Backend::Controls& ixs_, Backend::Gate&& mat_):
+  SU2Temp(unsigned tgt_, const Backend::Controls& ixs_, Backend::Gate&& mat_):
     tgt(tgt_), angle1(), angle2(), angle3(), ixs(ixs_), mat(mat_)
   {
     angle2 = std::atan2(std::abs(mat(1, 0)), std::abs(mat(0, 0)));
@@ -62,12 +65,12 @@ public:
   }
 
   Pointer invert(const Pointer&) const override {
-    return std::make_shared<SU2>(tgt, -angle3, -angle2, -angle1, ixs);
+    return std::make_shared<SU2Temp>(tgt, -angle3, -angle2, -angle1, ixs);
   }
 
   Pointer mutate(const Pointer&) const override {
     angle_distribution<true> dAng{};
-    return std::make_shared<SU2>(tgt,
+    return std::make_shared<SU2Temp>(tgt,
         angle1 + dAng(gen::rng),
         angle2 + dAng(gen::rng),
         angle3 + dAng(gen::rng),
@@ -75,7 +78,7 @@ public:
   }
 
   Pointer simplify(const Pointer&) const override {
-    return std::make_shared<SU2>(tgt,
+    return std::make_shared<SU2Temp>(tgt,
         rationalize_angle(angle1),
         rationalize_angle(angle2),
         rationalize_angle(angle3),
@@ -90,9 +93,9 @@ public:
     return first->merge(*this);
   }
 
-  Pointer merge(const SU2& g) const override {
+  Pointer merge(const SU2Temp& g) const override {
     if(g.tgt == tgt && g.ixs == ixs)
-      return std::make_shared<SU2>(tgt, ixs,
+      return std::make_shared<SU2Temp>(tgt, ixs,
           static_cast<Backend::Gate>(g.mat * mat));
     else
       return {};
@@ -133,23 +136,24 @@ public:
     double angle1 = std::stod(m[4].str()) * Const::pi,
            angle2 = std::stod(m[5].str()) * Const::pi,
            angle3 = std::stod(m[6].str()) * Const::pi;
-    return std::make_shared<SU2>(tgt,
+    return std::make_shared<SU2Temp>(tgt,
         angle1, angle2, angle3,
         Backend::Controls{ctrl});
   }
 
-}; // class SU2
+}; // class SU2Temp
+
+template<class GateBase>
+using Template = SU2Temp<GateBase>;
+
+template<Controls cc_>
+using WithControls = SU2<cc_>;
+
+}; // struct SU2
 
 } // namespace internal
 
-
-template<Controls cc = Controls::NONE>
-struct SU2 {
-
-  template<class GateBase>
-  using Template = internal::SU2<GateBase, cc>;
-
-}; // struct SU2
+using SU2 = internal::SU2<Controls::NONE>;
 
 } // namespace Gates
 

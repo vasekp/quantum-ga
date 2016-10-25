@@ -13,7 +13,11 @@ static const std::vector<QGA::Gates::gate_struct_f> reduced_set {
   { QGA::Backend::Ti, "Ti", -1, 0 },
 };
 
-using Gene = QGA::Gene<QGA::Gates::Fixed<QGA::Controls::ANY, &reduced_set>>;
+using Gene = QGA::Gene<
+               QGA::Gates::Fixed
+                 ::WithControls<QGA::Controls::ANY>
+                 ::WithGates<&reduced_set>
+             >;
 
 const State out{3};
 

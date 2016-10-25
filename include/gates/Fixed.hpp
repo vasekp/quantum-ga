@@ -24,8 +24,11 @@ static const std::vector<gate_struct_f> gates_fixed {
   { Backend::Si, "Si", -1, -4 }
 };
 
-template<class GateBase, const std::vector<gate_struct_f>* gates, Controls cc>
-class Fixed : public GateBase {
+template<Controls cc, const std::vector<gate_struct_f>* gates>
+struct Fixed {
+
+template<class GateBase>
+class FixedTemp : public GateBase {
 
   size_t op;
   unsigned tgt;
@@ -37,7 +40,7 @@ class Fixed : public GateBase {
 public:
 
   // construct a random gate
-  Fixed():
+  FixedTemp():
     op(std::uniform_int_distribution<size_t>{1, gates->size() - 1}(gen::rng)),
     tgt(std::uniform_int_distribution<unsigned>{0, Config::nBit - 1}
         (gen::rng)),
@@ -46,7 +49,7 @@ public:
   { }
 
   // construct using parameters
-  Fixed(size_t op_, unsigned tgt_, const Backend::Controls& ixs_):
+  FixedTemp(size_t op_, unsigned tgt_, const Backend::Controls& ixs_):
     op(op_), tgt(tgt_), ixs(ixs_) { }
 
   Backend::State applyTo(const Backend::State& psi, const Ctx*) const override {
@@ -64,7 +67,7 @@ public:
   Pointer invert(const Pointer& self) const override {
     int dIx = (*gates)[op].inv;
     if(dIx != 0)
-      return std::make_shared<Fixed>(op + dIx, tgt, ixs);
+      return std::make_shared<FixedTemp>(op + dIx, tgt, ixs);
     else
       return self;
   }
@@ -77,10 +80,10 @@ public:
     return first->merge(*this);
   }
 
-  Pointer merge(const Fixed& g) const override {
+  Pointer merge(const FixedTemp& g) const override {
     // G * G = square(G) if also among our operations
     if(g.op == op && g.tgt == tgt && g.ixs == ixs && (*gates)[op].sq != 0)
-      return std::make_shared<Fixed>(op + (*gates)[op].sq, tgt, ixs);
+      return std::make_shared<FixedTemp>(op + (*gates)[op].sq, tgt, ixs);
     else
       return {};
   }
@@ -119,22 +122,25 @@ public:
         if(pos >= 0 && pos < Config::nBit && pos != tgt)
           ctrl[pos] = true;
       }
-    return std::make_shared<Fixed>(op, tgt, Backend::Controls{ctrl});
+    return std::make_shared<FixedTemp>(op, tgt, Backend::Controls{ctrl});
   }
 
-}; // class Fixed
+}; // class FixedTemp
+
+template<class GateBase>
+using Template = FixedTemp<GateBase>;
+
+template<Controls cc_>
+using WithControls = Fixed<cc_, gates>;
+
+template<const std::vector<gate_struct_f>* gates_>
+using WithGates = Fixed<cc, gates_>;
+
+}; // struct Fixed
 
 } // namespace internal
 
-
-template<Controls cc = Controls::NONE,
-  const std::vector<gate_struct_f>* gates = internal::gates_fixed>
-struct Fixed {
-
-  template<class GateBase>
-  using Template = internal::Fixed<GateBase, gates, cc>;
-
-}; // struct Fixed
+using Fixed = internal::Fixed<Controls::NONE, &internal::gates_fixed>;
 
 } // namespace Gates
 

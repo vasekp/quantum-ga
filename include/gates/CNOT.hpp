@@ -4,8 +4,11 @@ namespace Gates {
 
 namespace internal {
 
-template<class GateBase, Controls cc>
-class CNOT : public GateBase {
+template<Controls cc>
+class CNOT {
+
+template<class GateBase>
+class CNOTTemp : public GateBase {
 
   unsigned tgt;
   Backend::Controls ixs;
@@ -17,7 +20,7 @@ class CNOT : public GateBase {
 public:
 
   // construct a random gate
-  CNOT():
+  CNOTTemp():
     tgt(std::uniform_int_distribution<unsigned>{0, Config::nBit - 1}
         (gen::rng)),
     ixs(controls_distribution<cc>{Config::nBit, tgt, Config::pControl}
@@ -26,10 +29,10 @@ public:
   { }
 
   // construct using parameters
-  CNOT(unsigned tgt_, const Backend::Controls& ixs_, bool odd_ = true):
+  CNOTTemp(unsigned tgt_, const Backend::Controls& ixs_, bool odd_ = true):
       tgt(tgt_), ixs(ixs_), odd(odd_) { }
 
-  CNOT(bool): tgt(), ixs(), odd(false) { }
+  CNOTTemp(bool): tgt(), ixs(), odd(false) { }
 
   Backend::State applyTo(const Backend::State& psi, const Ctx*) const override {
     return odd ? psi.apply_ctrl(Backend::X, ixs, tgt) : psi;
@@ -52,9 +55,9 @@ public:
     return first->merge(*this);
   }
 
-  Pointer merge(const CNOT& g) const override {
+  Pointer merge(const CNOTTemp& g) const override {
     if(g.tgt == tgt && g.ixs == ixs)
-      return std::make_shared<CNOT>(tgt, ixs, odd ^ g.odd);
+      return std::make_shared<CNOTTemp>(tgt, ixs, odd ^ g.odd);
     else
       return {};
   }
@@ -78,7 +81,7 @@ public:
     if(!std::regex_match(s, m, re))
       return {};
     if(m[1].matched)
-      return std::make_shared<CNOT>(false);
+      return std::make_shared<CNOTTemp>(false);
     unsigned tgt = m[2].str()[0] - '1';
     if(tgt >= Config::nBit)
       return {};
@@ -89,21 +92,22 @@ public:
         if(pos >= 0 && pos < Config::nBit && pos != tgt)
           ctrl[c - '1'] = true;
       }
-    return std::make_shared<CNOT>(tgt, Backend::Controls{ctrl});
+    return std::make_shared<CNOTTemp>(tgt, Backend::Controls{ctrl});
   }
 
-}; // class CNOT
+}; // class CNOTTemp
+
+template<class GateBase>
+using Template = CNOTTemp<GateBase>;
+
+template<Controls cc_>
+using WithControls = CNOT<cc_>;
+
+}; // struct CNOT
 
 } // namespace internal
 
-
-template<Controls cc = Controls::ONE>
-struct CNOT {
-
-  template<class GateBase>
-  using Template = internal::CNOT<GateBase, cc>;
-
-}; // struct CNOT
+using CNOT = internal::CNOT<Controls::ONE>;
 
 } // namespace Gates
 
