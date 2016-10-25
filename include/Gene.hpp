@@ -3,7 +3,7 @@ namespace QGA {
 namespace internal {
 
 // Defined below
-template<class, class, class...>
+template<class, class...>
 class Chooser;
 
 template<class, class...>
@@ -132,9 +132,9 @@ namespace internal {
  * convertible to the class referred to by the pointer P. */
 
 template<class Pointer, class Head, class... Tail>
-class Chooser {
+class Chooser<Pointer, Head, Tail...> {
 
-  template<class, class, class...>
+  template<class, class...>
   friend class Chooser;
 
   static Pointer getNew(unsigned index) {
@@ -154,25 +154,16 @@ public:
 
 }; // class Chooser<Pointer, Head, Tail...>
 
-template<class Pointer, class Last>
-class Chooser<Pointer, Last> {
+template<class Pointer>
+class Chooser<Pointer> {
 
 public:
 
-#ifdef DEBUG
-  static Pointer getNew(unsigned index = 0) {
-    if(index == 0)
-      return std::make_shared<Last>();
-    else
-      throw std::logic_error("Index too large in Chooser!");
-  }
-#else
   static Pointer getNew(unsigned = 0) {
-    return std::make_shared<Last>();
+    throw std::logic_error("Chooser: reached end of list!");
   }
-#endif
 
-}; // class Chooser<Pointer, Last>
+}; // class Chooser<Pointer>
 
 
 /* Called as Reader<A, B, C, ...>::read(input), this helper tries calling
