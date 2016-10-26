@@ -11,7 +11,7 @@ namespace QGA {
 
 namespace Backend {
 
-class Gate : public arma::cx_mat22 {
+class Gate : arma::cx_mat22 {
 
   using Base = arma::cx_mat22;
   using cxd = std::complex<double>;
@@ -22,6 +22,10 @@ public:
 
   Gate(cxd u11, cxd u12, cxd u21, cxd u22) :
     Base{u11, u12, u21, u22} { }
+
+  const arma::cx_mat22& rep() const {
+    return static_cast<const arma::cx_mat22&>(*this);
+  }
 
 }; // class Gate
 
@@ -43,7 +47,7 @@ const Gate S { 1, 0, 0, i };
 const Gate Si { 1, 0, 0, -i };
 
 
-class Controls : public arma::uvec {
+class Controls : arma::uvec {
 
 public:
 
@@ -51,7 +55,7 @@ public:
 
   Controls(const std::vector<bool>& bits): arma::uvec(ix_vector(bits)) { }
 
-  friend bool operator== (const Controls& lhs, const Controls& rhs) {
+  friend bool operator==(const Controls& lhs, const Controls& rhs) {
     return lhs.size() == rhs.size() && arma::all(lhs.rep() == rhs.rep());
   }
 
@@ -72,13 +76,15 @@ public:
     return {std::move(ret)};
   }
 
-private:
-
-  Controls(arma::uvec&& vec): arma::uvec(std::move(vec)) { }
-
   const arma::uvec& rep() const {
     return static_cast<const arma::uvec&>(*this);
   }
+
+  using arma::uvec::size;
+
+private:
+
+  Controls(arma::uvec&& vec): arma::uvec(std::move(vec)) { }
 
   static std::vector<arma::uword> ix_vector(const std::vector<bool>& bits) {
     std::vector<arma::uword> ret{};
@@ -91,7 +97,7 @@ private:
 }; // class Controls
 
 
-class State : public arma::cx_vec {
+class State : arma::cx_vec {
 
   using Base = arma::cx_vec;
 
@@ -126,17 +132,19 @@ public:
   }
 
   State apply_ctrl(const Gate& gate, const Controls& ixs, unsigned tgt) const {
-    return {qic::apply_ctrl(rep(), gate, ixs, {tgt + 1})};
+    return {qic::apply_ctrl(rep(), gate.rep(), ixs.rep(), {tgt + 1})};
   }
 
   State swap(const Controls& ixs) const {
-    return {qic::sysperm(rep(), ixs)};
+    return {qic::sysperm(rep(), ixs.rep())};
   }
 
   friend std::ostream& operator<< (std::ostream& os, const State& state) {
     state.st().raw_print(os);
     return os;
   }
+
+  using Base::operator[];
 
 private:
 

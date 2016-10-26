@@ -9,7 +9,7 @@ namespace QGA {
 
 namespace Backend {
 
-class Gate : public Eigen::Matrix2cd {
+class Gate : Eigen::Matrix2cd {
 
   using Base = Eigen::Matrix2cd;
   using cxd = std::complex<double>;
@@ -20,6 +20,10 @@ public:
 
   Gate(cxd u11, cxd u12, cxd u21, cxd u22) : Base(2, 2) {
     *this << u11, u12, u21, u22;
+  }
+
+  const Base& rep() const {
+    return static_cast<const Base&>(*this);
   }
 
 }; // class Gate
@@ -38,7 +42,7 @@ const Gate S { qpp::gt.S };
 const Gate Si { qpp::gt.S.conjugate() };
 
 
-class Controls : public std::vector<qpp::idx> {
+class Controls : std::vector<qpp::idx> {
 
   using Base = std::vector<qpp::idx>;
 
@@ -50,6 +54,10 @@ public:
     for(unsigned i = 0; i < Config::nBit; i++)
       if(bits[i])
         Base::push_back(i);
+  }
+
+  friend bool operator==(const Controls& lhs, const Controls& rhs) {
+    return lhs.rep() == rhs.rep();
   }
 
   const Base& as_vector() const {
@@ -65,6 +73,12 @@ public:
     return {std::move(ret)};
   }
 
+  const Base& rep() const {
+    return static_cast<const Base&>(*this);
+  }
+
+  using Base::size;
+
 private:
 
   Controls(Base&& vec): Base(std::move(vec)) { }
@@ -72,7 +86,7 @@ private:
 }; // class Controls
 
 
-class State : public qpp::ket {
+class State : qpp::ket {
 
   using Base = qpp::ket;
 
@@ -111,11 +125,11 @@ public:
   }
 
   State apply_ctrl(const Gate& mat, const Controls& ixs, unsigned tgt) const {
-    return {qpp::applyCTRL(*this, mat, ixs, {tgt})};
+    return {qpp::applyCTRL(rep(), mat.rep(), ixs.rep(), {tgt})};
   }
 
   State swap(const Controls& ixs) const {
-    return {qpp::syspermute(*this, ixs)};
+    return {qpp::syspermute(rep(), ixs.rep())};
   }
 
   friend std::ostream& operator<< (std::ostream& os, const State& state) {
@@ -124,7 +138,13 @@ public:
     return os << state.format(fmt) << '\n';
   }
 
+  using Base::operator[];
+
 private:
+
+  const Base& rep() const {
+    return static_cast<const Base&>(*this);
+  }
 
   std::vector<qpp::idx> dims() {
     return std::vector<qpp::idx>(Config::nBit, 2);

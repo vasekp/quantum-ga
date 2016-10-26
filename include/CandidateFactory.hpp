@@ -1,36 +1,19 @@
 namespace QGA {
 
-
-// Defined below CandidateFactory
-template<class Candidate, class Population>
-class CFSelector;
-
-
 template<
   class Candidate,
   class Population = gen::NSGAPopulation<Candidate>>
 class CandidateFactory {
 
   using Gene = typename Candidate::GeneType;
+  // private members declared at bottom
 
 public:
 
-  friend class CFSelector<Candidate, Population>;
-  using Selector = CFSelector<Candidate, Population>;
-
-private:
-
-  Population& pop;
-  Selector& sel;
-
-public:
+  class Selector;
 
   CandidateFactory(Population& pop_, Selector& sel_): pop(pop_), sel(sel_) {
     sel.update();
-  }
-
-  static Selector getInitSelector() {
-    return Selector{};
   }
 
   static Candidate genInit() {
@@ -340,12 +323,7 @@ private:
   }
 
   Candidate simplify() {
-    return simplify(get());
-  }
-
-public:
-
-  static Candidate simplify(const Candidate& parent) {
+    auto &parent = get();
     auto &gtOrig = parent.genotype();
     size_t sz = gtOrig.size();
     if(sz == 0)
@@ -356,84 +334,101 @@ public:
     return gtNew != gtOrig ? Candidate{std::move(gtNew)} : parent;
   }
 
-}; // class CandidateFactory
-
-
-template<class Candidate, class Population>
-class CFSelector {
-
-  using CF = CandidateFactory<Candidate, Population>;
-  using FunPtr = Candidate (CF::*)();
-
-  struct GenOp {
-
-    FunPtr fun;
-    std::string name;
-    double prob;
-    unsigned long hits;
-    unsigned long thits;
-
-    GenOp(FunPtr fun_, std::string name_):
-      fun(fun_), name(name_), prob(1), hits(0), thits(0) { }
-
-  };
-
-  std::vector<GenOp> ops;
-  size_t count;
-
-  std::discrete_distribution<size_t> dFun{};
-
 public:
 
-  void hit(size_t ix) {
-    if(ix >= 0 && ix < count)
-      ops[ix].hits++;
-  }
+  class Selector {
 
-  void update() {
-    /* Calculate the probability distribution of GenOps based on prior success
-     * rate */
-    double denom = 0;
-    for(auto& op : ops)
-      denom += op.hits / op.prob;
-    /* If we're not counting hits the probabilities will stay constant */
-    if(denom != 0)
-      for(auto& op : ops) {
-        op.prob = (1 - Config::heurFactor) * op.prob
-          + Config::heurFactor * op.hits / op.prob / denom;
-        op.thits += op.hits;
-        op.hits = 0;
-      }
-    std::vector<double> weights(count);
-    for(size_t i = 0; i < count; i++)
-      weights[i] = ops[i].prob;
-    dFun = std::discrete_distribution<size_t>(weights.begin(), weights.end());
-  }
+    using CF = CandidateFactory;
+    using FunPtr = Candidate (CF::*)();
+    // private members declared at bottom
 
-  void dump(std::ostream& os) {
-    /* Find the longest GenOp name */
-    auto max = std::max_element(ops.begin(), ops.end(),
-        [](const GenOp& a, const GenOp& b) {
-          return a.name.length() < b.name.length();
-        });
-    auto maxw = max->name.length();
-    /* Preserve settings of os */
-    auto flags_ = os.flags(std::ios_base::left | std::ios_base::fixed);
-    auto precision_ = os.precision(4);
-    /* List all op names and probabilities */
-    for(auto& op : ops)
-      os << std::setw(maxw+3) << op.name + ':'
-         << op.prob << "  " << op.thits << '\n';
-    os.flags(flags_);
-    os.precision(precision_);
-  }
+  public:
 
-  std::pair<FunPtr, size_t> select() {
-    size_t index = dFun(gen::rng);
-    return {ops[index].fun, index};
-  }
+    struct GenOp {
 
-  CFSelector(): ops{}, count(0) {
+      FunPtr fun;
+      std::string name;
+      double prob;
+      unsigned long hits;
+      unsigned long thits;
+
+      GenOp(FunPtr fun_, std::string name_):
+        fun(fun_), name(name_), prob(1), hits(0), thits(0) { }
+
+    };
+
+    void hit(size_t ix) {
+      if(ix >= 0 && ix < count)
+        ops[ix].hits++;
+    }
+
+    void update() {
+      /* Calculate the probability distribution of GenOps based on prior
+       * success rate */
+      double denom = 0;
+      for(auto& op : ops)
+        denom += op.hits / op.prob;
+
+      if(denom != 0)
+        /* Only if we're counting hits; if we're not, the probabilities will
+         * stay constant */
+        for(auto& op : ops) {
+          op.prob = (1 - Config::heurFactor) * op.prob
+            + Config::heurFactor * op.hits / op.prob / denom;
+          op.thits += op.hits;
+          op.hits = 0;
+        }
+
+      std::vector<double> weights(count);
+      for(size_t i = 0; i < count; i++)
+        weights[i] = ops[i].prob;
+      dFun = std::discrete_distribution<size_t>(weights.begin(), weights.end());
+    }
+
+    void dump(std::ostream& os) {
+      /* Find the longest GenOp name */
+      auto max = std::max_element(ops.begin(), ops.end(),
+          [](const GenOp& a, const GenOp& b) {
+            return a.name.length() < b.name.length();
+          });
+      auto maxw = max->name.length();
+
+      /* Preserve settings of os */
+      auto flags_ = os.flags(std::ios_base::left | std::ios_base::fixed);
+      auto precision_ = os.precision(4);
+
+      /* List all op names and probabilities */
+      for(auto& op : ops)
+        os << std::setw(maxw+3) << op.name + ':'
+           << op.prob << "  " << op.thits << '\n';
+      os.flags(flags_);
+      os.precision(precision_);
+    }
+
+    std::pair<FunPtr, size_t> select() {
+      size_t index = dFun(gen::rng);
+      return {ops[index].fun, index};
+    }
+
+    Selector(std::vector<GenOp>&& ops_):
+    ops(std::move(ops_)), count(ops.size()) {
+      double pUniform = 1.0 / count;
+      for(auto& op : ops)
+        op.prob = pUniform;
+      update();
+    }
+
+  private:
+
+    std::vector<GenOp> ops;
+    size_t count;
+    std::discrete_distribution<size_t> dFun{};
+
+  }; // class Selector
+
+  static Selector getInitSelector() {
+    using CF = CandidateFactory;
+    std::vector<typename Selector::GenOp> ops{};
     ops.push_back({ &CF::mAlterDiscrete,   "MDiscrete" });
     ops.push_back({ &CF::mAlterContinuous, "MContns" });
     ops.push_back({ &CF::mAddSlice,        "AddSlice" });
@@ -447,13 +442,14 @@ public:
     ops.push_back({ &CF::crossoverUniform, "C/Over"   });
   //ops.push_back({ &CF::concat3,          "Concat3"  });
     ops.push_back({ &CF::simplify,         "Simplify" });
-    count = ops.size();
-    double pUniform = 1.0 / count;
-    for(auto& op : ops)
-      op.prob = pUniform;
-    update();
+    return {std::move(ops)};
   }
 
-}; // class CFSelector<CandidateFactory>
+private:
+
+  Population& pop;
+  Selector& sel;
+
+}; // class CandidateFactory
 
 } // namespace QGA
