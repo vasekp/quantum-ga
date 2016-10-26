@@ -41,7 +41,7 @@ public:
   static Gene getRandom() {
     return {internal::Chooser<
       Pointer, typename Gates::template Template<GBase>...
-    >::getNew()};
+    >::getRandom()};
   }
 
   const GBase* operator->() const {
@@ -124,7 +124,7 @@ using Gene = internal::Gene<void, Gates...>;
 
 namespace internal {
 
-/* Called as Chooser<P, A, B, C, ...>::getNew(i), returns:
+/* Called as Chooser<P, A, B, C, ...>::getRandom(i), returns:
  * i = 0: std::make_shared<A>()
  * i = 0: std::make_shared<B>()
  * i = 0: std::make_shared<C>()
@@ -136,19 +136,19 @@ class Chooser<Pointer, Head, Tail...> : Chooser<Pointer, Tail...> {
 
 protected:
 
-  static Pointer getNew(unsigned index) {
+  static Pointer getRandom(unsigned index) {
     if(index == 0)
       return std::make_shared<Head>();
     else
-      return Chooser<Pointer, Tail...>::getNew(index - 1);
+      return Chooser<Pointer, Tail...>::getRandom(index - 1);
   }
 
 public:
 
-  static Pointer getNew() {
+  static Pointer getRandom() {
     // upper bound inclusive: no need to add 1 for Head
     std::uniform_int_distribution<> dist(0, sizeof...(Tail));
-    return getNew(dist(gen::rng));
+    return getRandom(dist(gen::rng));
   }
 
 }; // class Chooser<Pointer, Head, Tail...>
@@ -158,7 +158,7 @@ class Chooser<Pointer> {
 
 public:
 
-  static Pointer getNew(unsigned = 0) {
+  static Pointer getRandom(unsigned = 0) {
     throw std::logic_error("Chooser: reached end of list!");
   }
 
