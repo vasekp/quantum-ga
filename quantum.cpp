@@ -77,6 +77,7 @@ namespace SigComm {
     DUMP,
     RESTART,
     LIST,
+    EVALUATE,
     INJECT,
     STOP
   };
@@ -105,6 +106,7 @@ void dumpResults(Population&, CandidateFactory::Selector&,
     std::chrono::time_point<std::chrono::steady_clock>, unsigned long);
 void listRandom(Population&);
 void inject(Population&, unsigned long);
+void evaluate();
 
 
 int main() {
@@ -179,6 +181,9 @@ int main() {
       switch(res) {
         case SigComm::DUMP:
           dumpResults(pop, sel, start, gen);
+          break;
+        case SigComm::EVALUATE:
+          evaluate();
           break;
         case SigComm::INJECT:
           inject(pop, gen);
@@ -259,10 +264,21 @@ void inject(Population& pop, unsigned long gen) {
   Candidate c{Candidate::read(s)};
   c.setGen(gen);
   pop.add(c);
-  std::cout << "Parsed: "
+  std::cout << "\nParsed: "
     << Colours::green() << c.fitness() << Colours::reset()
     << " [" << Colours::blue() << 'g' << c.getGen() << Colours::reset()
     << "] " << c << '\n';
+}
+
+
+void evaluate() {
+  std::cout << "Enter a candidate:\n";
+  std::string s{};
+  std::getline(std::cin, s);
+  Candidate c{Candidate::read(s)};
+  std::cout << "\nParsed: "
+    << Colours::green() << c.fitness() << Colours::reset()
+    << ' ' << c << '\n' << c.dump(std::cout) << '\n';
 }
 
 
@@ -285,8 +301,10 @@ int int_response() {
       << "continue,\n"
     << Colours::blue() << "d: " << Colours::reset()
       << "diagnose / list current results,\n"
+    << Colours::blue() << "e: " << Colours::reset()
+      << "fully evaluate a candidate,\n"
     << Colours::blue() << "i: " << Colours::reset()
-      << "evaluate / inject a candidate,\n"
+      << "inject a candidate,\n"
     << Colours::blue() << "l: " << Colours::reset()
       << "list " << Config::nIntList << " random candidates,\n"
     << Colours::blue() << "r: " << Colours::reset()
@@ -310,6 +328,9 @@ int int_response() {
         break;
       case 'd':
         ret = SigComm::DUMP;
+        break;
+      case 'e':
+        ret = SigComm::EVALUATE;
         break;
       case 'i':
         ret = SigComm::INJECT;
