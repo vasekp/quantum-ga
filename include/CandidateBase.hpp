@@ -1,11 +1,14 @@
 namespace QGA {
 
-template<class Derived, class Gene>
+template<class Derived, class Gene, typename... Elements>
 class CandidateBase {
 
 protected:
 
   std::vector<Gene> gt{};
+
+  using FitnessMain = Fitness<Elements...>;
+  using FitnessFull = Fitness<typename Gene::Counter, Elements...>;
 
 private:
 
@@ -35,15 +38,16 @@ public:
     gt.erase(++last, gt.end());
   }
 
-  Fitness<typename Gene::Counter> fitness() const {
+  FitnessFull fitness() const {
     typename Gene::Counter cc{};
-    unsigned controls{0};
+    //unsigned controls{0};
     for(const auto& g : gt) {
       g->hit(cc);
-      controls += g->controls();
+      //controls += g->controls();
     }
     counter.hit();
-    return {trimError(derived().error()), cc, controls};
+    //return {trimError(derived().error()), cc, controls};
+    return {derived().fitness_main(), cc};
   }
 
   friend std::ostream& operator<< (std::ostream& os, const CandidateBase& c) {

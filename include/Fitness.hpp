@@ -1,37 +1,50 @@
 namespace QGA {
 
-template<class Counter>
-struct Fitness {
+namespace internal {
+  // Defined below
+  template<typename...>
+  class DomTuple;
 
-  double error;
-  Counter cc;
-  unsigned controls;
+  template<class...>
+  class Counter;
+}
+
+
+template<class... Elements>
+struct Fitness : internal::DomTuple<Elements...> {
+
+  using internal::DomTuple<Elements...>::DomTuple;
+
+}; // struct Fitness<Elements...>
+
+template<typename... Gates, typename Main, typename... Others>
+struct Fitness<internal::Counter<Gates...>, Main, Others...> {
+
+  internal::DomTuple<Main, Others...> tuple;
+  internal::Counter<Gates...> counter;
 
   friend std::ostream& operator<< (std::ostream& os, const Fitness& f) {
-    return os << '{'
-       << f.error << ','
-       << f.cc << ','
-       << f.controls << '}';
+    return os << '{' << f.tuple << ',' << f.counter << '}';
   }
 
+  // Comparison of the first element of tuple
   friend bool operator< (const Fitness& a, const Fitness& b) {
-    return a.error < b.error;
+    return static_cast<Main>(a.tuple) < static_cast<Main>(b.tuple);
   }
 
   friend bool operator<< (const Fitness& a, const Fitness& b) {
-    return a.error <= b.error
-        && (a.cc <<= b.cc)
-        && a.controls <= b.controls
-        && !(a == b);
+    return (a.tuple <<= b.tuple) && (a.counter <<= b.counter) && !(a == b);
   }
 
   friend bool operator== (const Fitness& a, const Fitness& b) {
-    return a.error == b.error
-        && (a.cc == b.cc)
-        && a.controls == b.controls;
+    return a.tuple == b.tuple && a.counter == b.counter;
   }
 
-}; // struct Fitness
+  operator Main() const {
+    return static_cast<Main>(tuple);
+  }
+
+}; // struct Fitness<Counter, Elements...>
 
 
 namespace internal {
@@ -41,9 +54,6 @@ namespace internal {
  * be numeric and can repeat. It defines equality and dominance comparison
  * operators and a stream operator<< needed for a seamless inclusion in
  * Fitness. */
-
-template<typename... Types>
-class DomTuple;
 
 template<typename Head, typename... Tail>
 class DomTuple<Head, Tail...> : virtual DomTuple<Tail...> {
@@ -66,6 +76,10 @@ public:
 
   friend bool operator== (const DomTuple& c1, const DomTuple& c2) {
     return c1.element == c2.element && c1.next() == c2.next();
+  }
+
+  operator Head() const {
+    return element;
   }
 
   template<typename New>
@@ -117,9 +131,6 @@ public:
  * non-void. It defines member functions hit(const A*), hit(const B*), ...
  * which each bump their respective counter.  Otherwise it behaves like a
  * DomTuple<unsigned, unsigned, ...>. */
-
-template<class...>
-class Counter;
 
 template<class Head, class... Tail>
 class Counter<Head, Tail...> :

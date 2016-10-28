@@ -223,7 +223,7 @@ void dumpResults(Population& pop, CandidateFactory::Selector& sel,
     std::cout << Colours::green() << c.fitness() << Colours::reset()
       << " [" << Colours::blue() << 'g' << c.getGen() << Colours::reset()
       << "] " << c;
-    if(c.fitness().error < 0.01)
+    if(c.fitness() < 0.01)
       std::cout << ": " << c.dump(std::cout);
     else
       std::cout << '\n';
