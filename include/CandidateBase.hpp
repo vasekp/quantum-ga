@@ -40,13 +40,9 @@ public:
 
   FitnessFull fitness() const {
     typename Gene::Counter cc{};
-    //unsigned controls{0};
-    for(const auto& g : gt) {
+    for(const auto& g : gt)
       g->hit(cc);
-      //controls += g->controls();
-    }
     counter.hit();
-    //return {trimError(derived().error()), cc, controls};
     return {derived().fitness_main(), cc};
   }
 
@@ -93,6 +89,13 @@ public:
   }
 
 protected:
+
+  unsigned controls() const {
+    unsigned controls = 0;
+    for(const auto& g : gt)
+      controls += g->controls();
+    return controls;
+  }
 
   static double trimError(double error) {
     // Ignore deviations of roughly 10^-7
