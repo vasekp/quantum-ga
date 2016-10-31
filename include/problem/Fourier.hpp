@@ -9,28 +9,36 @@ using QGA::Backend::State;
 using Gene = QGA::Gene<QGA::Gates::R, QGA::Gates::CPhase, QGA::Gates::SWAP>;
 
 
-class Candidate : public QGA::CandidateBase<Candidate, Gene> {
+class Candidate : public QGA::CandidateBase<Candidate, Gene, double, double> {
 
-  using Base = QGA::CandidateBase<Candidate, Gene>;
+  using Base = QGA::CandidateBase<Candidate, Gene, double, double>;
 
 public:
 
   using Base::Base;
 
-  double error() const {
+  Base::FitnessMain fitness_main() const {
     if(gt.size() > 1000)
-      return INFINITY;
-    std::complex<double> avg_overlap{0};
+      return {INFINITY, INFINITY};
+    using cxd = std::complex<double>;
+    cxd overlapTotal{0};
+    double errorMax = 0;
     unsigned dim = 1 << Config::nBit;
     State psi{};
     for(unsigned i = 0; i < dim; i++) {
       psi.reset(i);
       State out = State::fourier(psi);
-      avg_overlap += State::overlap(out, sim(psi));
+      cxd overlap = State::overlap(out, sim(psi));
+      overlapTotal += overlap;
+      double error = 1.0 - std::abs(overlap);
+      if(error > errorMax)
+        errorMax = error;
     }
-    avg_overlap /= dim;
-    double error = std::max(1.0 - std::abs(avg_overlap), 0.0);
-    return error < 1E-8 ? 0 : error;
+    double errorAvg = std::max(1.0 - std::abs(overlapTotal / cxd(dim)), 0.0);
+    return {
+      this->trimError(errorAvg),
+      this->trimError(errorMax)
+    };
   }
 
   std::string dump(const std::ostream& ex) const {
