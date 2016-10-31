@@ -82,26 +82,32 @@ using Gene = typename QGA::Gene<
               >::WithContext<Context>;
 
 
-class Candidate : public QGA::CandidateBase<Candidate, Gene> {
+class Candidate : public QGA::CandidateBase<Candidate, Gene, double, double> {
 
-  using Base = QGA::CandidateBase<Candidate, Gene>;
+  using Base = QGA::CandidateBase<Candidate, Gene, double, double>;
 
 public:
 
   using Base::Base;
 
-  double error() const {
+  Base::FitnessMain fitness_main() const {
     if(gt.size() > 1000)
-      return INFINITY;
-    double error{0};
+      return {INFINITY, INFINITY};
+    double errTotal = 0, errMax = 0;
     unsigned dim = 1 << Config::nBit;
     State psi{0};
     for(unsigned mark = 0; mark < dim; mark++) {
       State out{mark};
-      error += std::max(1 -
+      double error = std::max(1 -
           std::pow(std::abs(State::overlap(out, sim(psi, mark))), 2), 0.0);
+      errTotal += error;
+      if(error > errMax)
+        errMax = error;
     }
-    return error / dim;
+    return {
+      this->trimError(errTotal / dim),
+      this->trimError(errMax)
+    };
   }
 
   std::string dump(const std::ostream& ex) const {
