@@ -49,118 +49,155 @@ struct Fitness<internal::Counter<Gates...>, Main, Others...> {
 
 namespace internal {
 
+/* Helper template class for DomTuple and Counter. Holds one element of a
+ * specified type and defines operators for dominance comparison and for
+ * output. Invoked in a zig-zag pattern: e.g.,
+ * Counter<A, B, C>
+ *   DomComparator<unsigned, Counter<B, C>>
+ * Counter<B, C>
+ *   DomCompataror<unsigned, Counter<C>>
+ * Counter<C> (specialization)
+ *   DomComparator<unsigned, void) (specialization)
+ */
+
+template<typename Element, class Next>
+class DomComparator : protected Next {
+
+public:
+  template<typename... Args>
+  DomComparator(Element elm_, Args... args): Next(args...), element(elm_) { }
+
+  friend std::ostream& operator<< (std::ostream& os, const DomComparator& c) {
+    return os << c.element << ',' << c.next();
+  }
+
+  friend bool operator<<= (const DomComparator& c1, const DomComparator& c2) {
+    return c1.element <= c2.element && (c1.next() <<= c2.next());
+  }
+
+  friend bool operator== (const DomComparator& c1, const DomComparator& c2) {
+    return c1.element == c2.element && c1.next() == c2.next();
+  }
+
+  operator const Element&() const {
+    return element;
+  }
+
+  operator Element&() {
+    return element;
+  }
+
+protected:
+
+  DomComparator() = default;
+
+private:
+
+  const Next next() const {
+    return static_cast<const Next&>(*this);
+  }
+
+  Element element{};
+
+}; // class DomComparator<Element, Next>
+
+template<typename Element>
+class DomComparator<Element, void> {
+
+public:
+
+  DomComparator(Element elm_): element(elm_) { }
+
+  friend std::ostream& operator<< (std::ostream& os, const DomComparator& c) {
+    return os << c.element;
+  }
+
+  friend bool operator<<= (const DomComparator& c1, const DomComparator& c2) {
+    return c1.element <= c2.element;
+  }
+
+  friend bool operator== (const DomComparator& c1, const DomComparator& c2) {
+    return c1.element == c2.element;
+  }
+
+  operator const Element&() const {
+    return element;
+  }
+
+  operator Element&() {
+    return element;
+  }
+
+protected:
+
+  DomComparator() = default;
+
+private:
+
+  Element element{};
+
+}; // class DomComparator<Element, void> (sequence terminator)
+
+
 /* Specialized as DomTuple<A, B, C, ...>, this template holds one content
  * element of each type given in the parameter pack. The types are expected to
  * be numeric and can repeat. It defines equality and dominance comparison
  * operators and a stream operator<< needed for a seamless inclusion in
- * Fitness. */
+ * Fitness. It is also implicitly convertible to A&, yielding a reference to
+ * the first element. */
 
 template<typename Head, typename... Tail>
-class DomTuple<Head, Tail...> : virtual DomTuple<Tail...> {
+class DomTuple<Head, Tail...> : public DomComparator<Head, DomTuple<Tail...>> {
 
 public:
 
   DomTuple(Head head, Tail... tail) :
-    DomTuple<Tail...>(tail...), element(head) { }
-
-  friend std::ostream& operator<< (std::ostream& os, const DomTuple& c) {
-    os << c.element;
-    if(sizeof...(Tail))
-      os << ',' << c.next();
-    return os;
-  }
-
-  friend bool operator<<= (const DomTuple& c1, const DomTuple& c2) {
-    return c1.element <= c2.element && (c1.next() <<= c2.next());
-  }
-
-  friend bool operator== (const DomTuple& c1, const DomTuple& c2) {
-    return c1.element == c2.element && c1.next() == c2.next();
-  }
-
-  operator Head() const {
-    return element;
-  }
-
-  template<typename New>
-  using Prepend = DomTuple<New, Head, Tail...>;
-
-protected:
-
-  // Default initialization is only intended for derived classes (Counter)
-  DomTuple(): element() { }
-
-  Head element;
-
-private:
-
-  const DomTuple<Tail...>& next() const {
-    return static_cast<const DomTuple<Tail...>&>(*this);
-  }
+    DomComparator<Head, DomTuple<Tail...>>(head, tail...) { }
 
 }; // class DomTuple<Head, Tail...>
 
-template<>
-class DomTuple<> {
+template<typename Last>
+class DomTuple<Last> : public DomComparator<Last, void> {
 
 public:
 
-  // no-op
-  friend std::ostream& operator<< (std::ostream& os, const DomTuple&) {
-    return os;
-  }
+  DomTuple(Last last) :
+    DomComparator<Last, void>(last) { }
 
-  // trivial
-  friend bool operator<<= (const DomTuple&, const DomTuple&) {
-    return true;
-  }
-
-  // trivial
-  friend bool operator== (const DomTuple&, const DomTuple&) {
-    return true;
-  }
-
-  template<typename New>
-  using Prepend = DomTuple<New>;
-
-}; // class DomTuple<> (trivial)
+}; // class DomTuple<Last> (sequence terminator)
 
 
 /* Specialized as Counter<A, B, C, ...>, this template holds one counter per
- * each type given in the parameter pack. The types must be unique and
- * non-void. It defines member functions hit(const A*), hit(const B*), ...
- * which each bump their respective counter.  Otherwise it behaves like a
- * DomTuple<unsigned, unsigned, ...>. */
+ * each type given in the parameter pack. The types must be unique. It defines
+ * member functions hit(const A*), hit(const B*), ...  which each bump their
+ * respective counter.  Otherwise it behaves like a DomTuple<unsigned,
+ * unsigned, ...>. */
 
 template<class Head, class... Tail>
 class Counter<Head, Tail...> :
-  Counter<Tail...>,
-  virtual public Counter<Tail...>::Tuple::template Prepend<unsigned>
+  public DomComparator<unsigned, Counter<Tail...>>
 {
 
 public:
 
-  using Tuple = typename Counter<Tail...>::Tuple::template Prepend<unsigned>;
-
   void hit(const Head*) {
-    Tuple::element++;
+    ++(unsigned&)(*this);
   }
 
   using Counter<Tail...>::hit;
 
 }; // class Counter<Head, Tail...>
 
-template<>
-class Counter<> : virtual DomTuple<> {
+template<class Last>
+class Counter<Last> : public DomComparator<unsigned, void> {
 
 public:
 
-  using Tuple = DomTuple<>;
+  void hit(const Last*) {
+    ++(unsigned&)(*this);
+  }
 
-  // unimplemented: not callable
-  void hit(void*) = delete;
-
-}; // class Counter<> (trivial)
+}; // class Counter<Last> (sequence terminator)
 
 } // namespace internal
 
