@@ -126,9 +126,9 @@ private:
     auto &parent = get();
     auto &gtOrig = parent.genotype();
     auto sz = gtOrig.size();
-    std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
     if(sz == 0)
       return parent;
+    std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
     std::uniform_int_distribution<size_t> dPos{0, sz};
     size_t pos1 = dPos(gen::rng),
            len = 1 + dGeom(gen::rng),
@@ -142,13 +142,15 @@ private:
 
   Candidate mDeleteUniform() {
     auto &parent = get();
-    auto gtOrig = parent.genotype();
+    auto &gtOrig = parent.genotype();
+    auto sz = gtOrig.size();
     std::uniform_real_distribution<> dUni{0, 1};
     std::vector<Gene> gtNew{};
     gtNew.reserve(gtOrig.size());
     size_t cnt = 0;
+    double prob = double(Config::expMutationCount) / sz;
     for(auto& g : gtOrig)
-      if(dUni(gen::rng) >= Config::pChoiceUniform)
+      if(dUni(gen::rng) >= prob)
         gtNew.push_back(g);
       else
         cnt++;
