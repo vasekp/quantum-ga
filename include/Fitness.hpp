@@ -11,7 +11,7 @@ namespace internal {
 
 
 template<class... Elements>
-struct Fitness : internal::DomTuple<Elements...> {
+struct Fitness : public internal::DomTuple<Elements...> {
 
   using internal::DomTuple<Elements...>::DomTuple;
 
@@ -38,6 +38,10 @@ struct Fitness<internal::Counter<Gates...>, Main, Others...> {
 
   friend bool operator== (const Fitness& a, const Fitness& b) {
     return a.tuple == b.tuple && a.counter == b.counter;
+  }
+
+  friend double dist(const Fitness& a, const Fitness& b) {
+    return dist(a.tuple, b.tuple) + dist(a.counter, b.counter);
   }
 
   operator Main() const {
@@ -79,15 +83,19 @@ public:
     return c1.element == c2.element && c1.next() == c2.next();
   }
 
+  friend double dist(const DomComparator& c1, const DomComparator& c2) {
+    return std::abs(c1.element - c2.element) + dist(c1.next(), c2.next());
+  }
+
   operator const Element&() const {
     return element;
   }
 
+protected:
+
   operator Element&() {
     return element;
   }
-
-protected:
 
   DomComparator() = default;
 
@@ -120,15 +128,19 @@ public:
     return c1.element == c2.element;
   }
 
+  friend double dist(const DomComparator& c1, const DomComparator& c2) {
+    return std::abs(c1.element - c2.element);
+  }
+
   operator const Element&() const {
     return element;
   }
 
+protected:
+
   operator Element&() {
     return element;
   }
-
-protected:
 
   DomComparator() = default;
 

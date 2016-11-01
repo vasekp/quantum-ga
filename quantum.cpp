@@ -29,7 +29,7 @@ namespace Config {
   const size_t arSize = 100;
 
   // Internal population size
-  const size_t popSize = 2000;
+  const size_t popSize = 1000;
 
   // Number of candidates to keep from parent generation
   const size_t popKeep = 0;
@@ -132,8 +132,13 @@ int main() {
   unsigned long gen;
   for(gen = 0; gen < Config::nGen; gen++) {
 
-    /* Find the nondominated subset and trim down do arSize */
+    /* Find the nondominated subset */
     Population pop2 = pop.front();
+    /* Randomize and drop very similar fitnesses (disregarding gate counts) */
+    pop2.prune([](const GenCandidate& a, const GenCandidate& b) -> bool {
+        return dist(a.fitness(), b.fitness()) < 0.01;
+      }, 0, true);
+    /* Rank-trim the rest doen to arSize */
     pop2.rankTrim(Config::arSize);
 
     /* Randomly select popKeep candidates for survival without modification */
