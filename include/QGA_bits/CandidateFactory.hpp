@@ -140,6 +140,32 @@ private:
     return Candidate{std::move(gtNew)};
   }
 
+  Candidate mReplaceSlice() {
+    auto &parent = get();
+    auto &gtOrig = parent.genotype();
+    auto sz = gtOrig.size();
+    std::uniform_real_distribution<> dUni{0, 1};
+    std::uniform_int_distribution<size_t> dPos{0, sz};
+    std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
+    size_t pos1 = dPos(gen::rng),
+           len = 1 + dGeom(gen::rng),
+           pos2 = pos1 + len > sz ? sz : pos1 + len;
+    std::vector<Gene> ins{};
+    ins.reserve(2*Config::expMutationCount);
+    double probTerm = 1/Config::expMutationCount;
+    do
+      ins.push_back(Gene::getRandom());
+    while(dUni(gen::rng) > probTerm);
+    /*while(dUni(gen::rng) > probTerm)
+      ins.push_back(Gene::getRandom());*/
+    std::vector<Gene> gtNew{};
+    gtNew.reserve(sz - (pos2 - pos1) + ins.size());
+    gtNew.insert(gtNew.end(), gtOrig.begin(), gtOrig.begin() + pos1);
+    gtNew.insert(gtNew.end(), ins.begin(), ins.end());
+    gtNew.insert(gtNew.end(), gtOrig.begin() + pos2, gtOrig.end());
+    return Candidate{std::move(gtNew)};
+  }
+
   Candidate mDeleteUniform() {
     auto &parent = get();
     auto &gtOrig = parent.genotype();
@@ -434,13 +460,14 @@ public:
     ops.push_back({ &CF::mAlterDiscrete,   "MDiscrete" });
     ops.push_back({ &CF::mAlterContinuous, "MContns" });
     ops.push_back({ &CF::mAddSlice,        "AddSlice" });
-    ops.push_back({ &CF::mAddPairs,        "AddPairs" });
+  //ops.push_back({ &CF::mAddPairs,        "AddPairs" });
     ops.push_back({ &CF::mDeleteSlice,     "DelShort" });
     ops.push_back({ &CF::mDeleteUniform,   "DelUnif"  });
+    ops.push_back({ &CF::mReplaceSlice,    "ReplSlice" });
     ops.push_back({ &CF::mSplitSwap,       "SpltSwp"  });
     ops.push_back({ &CF::mReverseSlice,    "InvSlice" });
     ops.push_back({ &CF::mPermuteSlice,    "PermSlice" });
-    ops.push_back({ &CF::mRepeatSlice,     "RepSlice" });
+    ops.push_back({ &CF::mRepeatSlice,     "ReptSlice" });
     ops.push_back({ &CF::crossoverUniform, "C/Over"   });
   //ops.push_back({ &CF::concat3,          "Concat3"  });
     ops.push_back({ &CF::simplify,         "Simplify" });
