@@ -8,6 +8,7 @@
 #include "QGA.hpp"
 #include "Colours.hpp"
 #include "BriefPrinter.hpp"
+#include "signal.hpp"
 
 #ifdef FOURIER
   #include "QGA_Problem/Fourier.hpp"
@@ -67,26 +68,11 @@ namespace Config {
 } // namespace Config
 
 
-namespace SigComm {
-
-  enum StopState {
-    RUNNING,
-    INTERRUPTED,
-    STOPPING
-  };
-
-  enum Response {
-    CONTINUE,
-    DUMP,
-    RESTART,
-    STOP
-  };
-
+// Initialization of global variables
+namespace Signal {
   volatile sig_atomic_t state = RUNNING;
-
   std::chrono::duration<double> timeOut{};
-
-} // namespace SigComm
+}
 
 
 /* Candidate defined in PROBLEM_HPP */
@@ -166,21 +152,21 @@ int main() {
         });
     std::cout << brief(newest) << std::endl;
 
-    while(SigComm::state == SigComm::INTERRUPTED)
+    while(Signal::state == Signal::INTERRUPTED)
       switch(int_response(pop, gen)) {
-        case SigComm::DUMP:
+        case Signal::DUMP:
           dumpResults(pop, sel, start, gen);
           break;
-        case SigComm::RESTART:
+        case Signal::RESTART:
           pop = Population{Config::popSize,
             [&] { return CandidateFactory::genInit().setGen(0); }};
           sel = CandidateFactory::getInitSelector();
           start = std::chrono::steady_clock::now();
-          SigComm::timeOut = std::chrono::duration<double>(0);
+          Signal::timeOut = std::chrono::duration<double>(0);
           gen = 0;
           break;
       }
-    if(SigComm::state == SigComm::STOPPING)
+    if(Signal::state == Signal::STOPPING)
       break;
   }
 
@@ -212,7 +198,7 @@ void dumpResults(Population& pop, CandidateFactory::Selector& sel,
   /* Timing information */
   std::chrono::time_point<std::chrono::steady_clock>
     now{std::chrono::steady_clock::now()};
-  std::chrono::duration<double> dur = now - start - SigComm::timeOut;
+  std::chrono::duration<double> dur = now - start - Signal::timeOut;
   std::cout
     << "\nRun took " << dur.count() << " s, "
     << Colours::blue(QGA::counter.total()) << " candidates tested in "
@@ -267,11 +253,11 @@ void prettyprint() {
 
 
 void int_handler(int) {
-  if(SigComm::state != SigComm::RUNNING)
+  if(Signal::state != Signal::RUNNING)
     // getting here means we got stuck while processing another signal
     // (e.g., popSize too large or a deadlock)
     std::_Exit(1);
-  SigComm::state = SigComm::INTERRUPTED;
+  Signal::state = Signal::INTERRUPTED;
 }
 
 
@@ -301,11 +287,11 @@ int int_response(Population& pop, unsigned long gen) {
       case 'a':
         std::_Exit(1);
       case 'c':
-        SigComm::state = SigComm::RUNNING;
-        ret = SigComm::CONTINUE;
+        Signal::state = Signal::RUNNING;
+        ret = Signal::CONTINUE;
         break;
       case 'd':
-        ret = SigComm::DUMP;
+        ret = Signal::DUMP;
         break;
       case 'e':
         evaluate();
@@ -320,16 +306,16 @@ int int_response(Population& pop, unsigned long gen) {
         prettyprint();
         return int_response(pop, gen);
       case 'r':
-        SigComm::state = SigComm::RUNNING;
-        ret = SigComm::RESTART;
+        Signal::state = Signal::RUNNING;
+        ret = Signal::RESTART;
         break;
       case 'q':
-        SigComm::state = SigComm::STOPPING;
-        ret = SigComm::STOP;
+        Signal::state = Signal::STOPPING;
+        ret = Signal::STOP;
         break;
     }
   } while(ret < 0);
   post = std::chrono::steady_clock::now();
-  SigComm::timeOut += post - pre;
+  Signal::timeOut += post - pre;
   return ret;
 }
