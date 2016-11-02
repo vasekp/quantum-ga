@@ -2,6 +2,7 @@
 #include <csignal>
 #include <cstdlib>
 #include <chrono>
+#include <unistd.h> // isatty()
 
 #include "genetic.hpp"
 #include "include/commons.hpp"
@@ -107,11 +108,9 @@ public:
   BriefPrinter(const Candidate& ref_): ref(ref_) { }
 
   friend std::ostream& operator<< (std::ostream& os, const BriefPrinter& fp) {
-    os << Colours::green() << fp.ref.fitness() << Colours::reset();
+    os << Colours::green(fp.ref.fitness());
     if(fp.ref.getGen() != (size_t)(~0))
-      os << Colours::blue()
-           << " [g" << fp.ref.getGen() << "]"
-         << Colours::reset();
+      os << Colours::blue(" [g", fp.ref.getGen(), "]");
     return os;
   }
 
@@ -184,11 +183,12 @@ int main() {
         sel.hit(c.getOrigin());
 
     /* Summarize */
-    std::cout << Colours::bold() << "Gen " << gen << ": " << Colours::reset()
-      << Colours::yellow() << pop.size() << Colours::reset()
-      << " unique fitnesses, lowest error " << brief(pop.best()) << ", "
-      << Colours::yellow() << nondom.size() << Colours::reset()
-      << " nondominated, newest: ";
+    std::cout
+      << Colours::bold("Gen ", gen, ": ")
+      << Colours::yellow(pop.size()) << " unique fitnesses, "
+      << "lowest error " << brief(pop.best()) << ", "
+      << Colours::yellow(nondom.size()) << " nondominated, "
+      << "newest: ";
     auto& newest = *std::min_element(nondom.begin(), nondom.end(),
         [](const GenCandidate& c1, const GenCandidate& c2) {
           return c1.getGen() > c2.getGen();
@@ -233,8 +233,7 @@ void dumpResults(Population& pop, CandidateFactory::Selector& sel,
   auto nondom = pop.front();
   nondom.sort();
   std::cout << '\n'
-    << Colours::yellow() << nondom.size() << Colours::reset()
-    << " nondominated candidates:\n";
+    << Colours::yellow(nondom.size()) << " nondominated candidates:\n";
   for(auto& c : nondom.reverse()) {
     std::cout << brief(c) << ' ' << c;
     if(c.fitness().error < 0.01)
@@ -251,13 +250,11 @@ void dumpResults(Population& pop, CandidateFactory::Selector& sel,
   std::chrono::time_point<std::chrono::steady_clock>
     now{std::chrono::steady_clock::now()};
   std::chrono::duration<double> dur = now - start - SigComm::timeOut;
-  std::cout << "\nRun took " << dur.count() << " s, "
-    << Colours::blue() << QGA::counter.total() << Colours::reset()
-    << " candidates tested in "
-    << Colours::blue() << gen << Colours::reset()
-    << " generations ("
-    << Colours::blue() << dur.count()/gen << " s/gen" << Colours::reset()
-    << " avg)\n";
+  std::cout
+    << "\nRun took " << dur.count() << " s, "
+    << Colours::blue(QGA::counter.total()) << " candidates tested in "
+    << Colours::blue(gen) << " generations "
+    << '(' << Colours::blue(dur.count()/gen, " s/gen") << " avg)\n";
 }
 
 
@@ -321,24 +318,16 @@ int int_response() {
   std::chrono::time_point<std::chrono::steady_clock> pre, post;
   pre = std::chrono::steady_clock::now();
   std::cerr << "\nComputation stopped. Choose action:\n"
-    << Colours::blue() << "a: " << Colours::reset()
-      << "abort,\n"
-    << Colours::blue() << "c: " << Colours::reset()
-      << "continue,\n"
-    << Colours::blue() << "d: " << Colours::reset()
-      << "diagnose / list current results,\n"
-    << Colours::blue() << "e: " << Colours::reset()
-      << "fully evaluate a candidate,\n"
-    << Colours::blue() << "i: " << Colours::reset()
-      << "inject a candidate,\n"
-    << Colours::blue() << "l: " << Colours::reset()
-      << "list " << Config::nIntList << " random candidates,\n"
-    << Colours::blue() << "p: " << Colours::reset()
-      << "pretty-print a candidate as a circuit,\n"
-    << Colours::blue() << "r: " << Colours::reset()
-      << "restart,\n"
-    << Colours::blue() << "q: " << Colours::reset()
-      << "quit after this generation.\n";
+    << Colours::blue("a: ") << "abort,\n"
+    << Colours::blue("c: ") << "continue,\n"
+    << Colours::blue("d: ") << "diagnose / list current results,\n"
+    << Colours::blue("e: ") << "fully evaluate a candidate,\n"
+    << Colours::blue("i: ") << "inject a candidate,\n"
+    << Colours::blue("l: ") << "list " << Config::nIntList
+        << " random candidates,\n"
+    << Colours::blue("p: ") << "pretty-print a candidate as a circuit,\n"
+    << Colours::blue("r: ") << "restart,\n"
+    << Colours::blue("q: ") << "quit after this generation.\n";
   int ret = -1;
   do {
     char c;
