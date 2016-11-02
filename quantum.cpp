@@ -95,11 +95,6 @@ using GenCandidate = gen::Candidate<Candidate>;
 using CandidateFactory = QGA::CandidateFactory<Candidate>;
 
 
-// Initialize the candidate counter
-// Needs to appear in the .cpp
-QGA::CandidateCounter QGA::counter{};
-
-
 void int_handler(int);
 int int_response(Population&, unsigned long);
 void dumpResults(Population&, CandidateFactory::Selector&,
