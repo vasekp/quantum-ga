@@ -5,17 +5,18 @@
 #include <unistd.h> // isatty()
 
 #include "genetic.hpp"
-#include "include/commons.hpp"
+#include "QGA.hpp"
+#include "Colours.hpp"
 
 #ifdef FOURIER
-  #include "include/problem/Fourier.hpp"
+  #include "QGA_Problem/Fourier.hpp"
   #ifdef USE_QPP
     #error FFT implementation is currently broken in Eigen3, used by Quantum++.
   #endif
 #elif defined(SEARCH)
-  #include "include/problem/Search.hpp"
+  #include "QGA_Problem/Search.hpp"
 #else
-  #include "include/problem/Simple.hpp"
+  #include "QGA_Problem/Simple.hpp"
 #endif
 
 namespace Config {
