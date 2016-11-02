@@ -75,6 +75,13 @@ public:
     return os;
   }
 
+  void print(Printer& p) const override {
+    p.addGates({
+        {{tgt}, "[X]"},
+        {ixs.as_vector(), "o"}
+    });
+  }
+
   static Pointer read(const std::string& s) {
     std::regex re{"(\\[Id\\])|NOT(\\d)(\\[(\\d+)\\])?"};
     std::smatch m{};
