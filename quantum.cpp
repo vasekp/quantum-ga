@@ -77,7 +77,6 @@ namespace SigComm {
     DUMP,
     RESTART,
     LIST,
-    EVALUATE,
     INJECT,
     STOP
   };
@@ -106,7 +105,6 @@ void dumpResults(Population&, CandidateFactory::Selector&,
     std::chrono::time_point<std::chrono::steady_clock>, unsigned long);
 void listRandom(Population&);
 void inject(Population&, unsigned long);
-void evaluate();
 
 
 int main() {
@@ -181,9 +179,6 @@ int main() {
       switch(res) {
         case SigComm::DUMP:
           dumpResults(pop, sel, start, gen);
-          break;
-        case SigComm::EVALUATE:
-          evaluate();
           break;
         case SigComm::INJECT:
           inject(pop, gen);
@@ -282,6 +277,22 @@ void evaluate() {
 }
 
 
+void prettyprint() {
+  std::cout << "Enter a candidate:\n";
+  std::string s{};
+  std::getline(std::cin, s);
+  Candidate c{Candidate::read(s)};
+  std::cout << "\nParsed: "
+    << Colours::green() << c.fitness() << Colours::reset()
+    << ' ' << c << "\n\n";
+
+  Printer p{Config::nBit};
+  for(auto& g : c.genotype())
+    g->print(p);
+  std::cout << p << '\n';
+}
+
+
 void int_handler(int) {
   if(SigComm::state != SigComm::RUNNING)
     // we got stuck while processing another signal (e.g., popSize too large
@@ -307,6 +318,8 @@ int int_response() {
       << "inject a candidate,\n"
     << Colours::blue() << "l: " << Colours::reset()
       << "list " << Config::nIntList << " random candidates,\n"
+    << Colours::blue() << "p: " << Colours::reset()
+      << "pretty-print a candidate as a circuit,\n"
     << Colours::blue() << "r: " << Colours::reset()
       << "restart,\n"
     << Colours::blue() << "q: " << Colours::reset()
@@ -330,14 +343,17 @@ int int_response() {
         ret = SigComm::DUMP;
         break;
       case 'e':
-        ret = SigComm::EVALUATE;
-        break;
+        evaluate();
+        return int_response(); // tail recursion
       case 'i':
         ret = SigComm::INJECT;
         break;
       case 'l':
         ret = SigComm::LIST;
         break;
+      case 'p':
+        prettyprint();
+        return int_response(); // tail recursion
       case 'r':
         SigComm::state = SigComm::RUNNING;
         ret = SigComm::RESTART;
