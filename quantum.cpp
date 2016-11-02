@@ -7,6 +7,7 @@
 #include "genetic.hpp"
 #include "QGA.hpp"
 #include "Colours.hpp"
+#include "BriefPrinter.hpp"
 
 #ifdef FOURIER
   #include "QGA_Problem/Fourier.hpp"
@@ -99,32 +100,11 @@ using CandidateFactory = QGA::CandidateFactory<Candidate>;
 QGA::CandidateCounter QGA::counter{};
 
 
-// For colourful printing of fitness and generation
-class BriefPrinter {
-
-public:
-
-  BriefPrinter(const Candidate& ref_): ref(ref_) { }
-
-  friend std::ostream& operator<< (std::ostream& os, const BriefPrinter& fp) {
-    os << Colours::green(fp.ref.fitness());
-    if(fp.ref.getGen() != (size_t)(~0))
-      os << Colours::blue(" [g", fp.ref.getGen(), "]");
-    return os;
-  }
-
-private:
-
-  const Candidate& ref;
-
-}; // class BriefPrinter
-
-
 void int_handler(int);
 int int_response(Population&, unsigned long);
 void dumpResults(Population&, CandidateFactory::Selector&,
     std::chrono::time_point<std::chrono::steady_clock>, unsigned long);
-BriefPrinter brief(const Candidate&);
+BriefPrinter<Candidate> brief(const Candidate&);
 
 
 int main() {
@@ -246,7 +226,7 @@ void dumpResults(Population& pop, CandidateFactory::Selector& sel,
 }
 
 
-BriefPrinter brief(const Candidate& ref) {
+BriefPrinter<Candidate> brief(const Candidate& ref) {
   return {ref};
 }
 
