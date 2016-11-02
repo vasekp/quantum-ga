@@ -75,18 +75,27 @@ namespace Signal {
 }
 
 
-/* Candidate defined in PROBLEM_HPP */
+// Candidate defined in PROBLEM_HPP
 using Population = gen::NSGAPopulation<Candidate>;
 using GenCandidate = gen::Candidate<Candidate>;
 using CandidateFactory = QGA::CandidateFactory<Candidate>;
 
 
+/* Forward declarations */
 void int_handler(int);
 int int_response(Population&, unsigned long);
 void dumpResults(Population&, CandidateFactory::Selector&,
     std::chrono::time_point<std::chrono::steady_clock>, unsigned long);
-BriefPrinter<Candidate> brief(const Candidate&);
+/* End forward declarations */
 
+BriefPrinter<Candidate> brief(const Candidate& ref) {
+  return {ref};
+}
+
+
+/************
+ *** Main ***
+ ************/
 
 int main() {
 #ifdef BENCH
@@ -94,21 +103,22 @@ int main() {
   omp_set_num_threads(1);
 #endif
 
-  Colours::use = isatty(1);
-
-  std::signal(SIGINT, int_handler);
-
-  std::chrono::time_point<std::chrono::steady_clock>
-    start{std::chrono::steady_clock::now()};
-
-  Population pop{Config::popSize,
-    [&] { return CandidateFactory::genInit().setGen(0); }};
-
+  /* Initialize output */
+  if(isatty(1)) {
+    Colours::use = true;
+    std::signal(SIGINT, int_handler);
+  }
   std::cout << std::fixed << std::setprecision(4);
 
+  /* Initialize state variables */
+  std::chrono::time_point<std::chrono::steady_clock>
+    start{std::chrono::steady_clock::now()};
+  Population pop{Config::popSize,
+    [] { return CandidateFactory::genInit().setGen(0); }};
   CandidateFactory::Selector sel = CandidateFactory::getInitSelector();
-
   unsigned long gen;
+
+  /* Main cycle */
   for(gen = 0; gen < Config::nGen; gen++) {
 
     /* Find the nondominated subset and trim down do arSize */
@@ -152,6 +162,7 @@ int main() {
         });
     std::cout << brief(newest) << std::endl;
 
+    /* Interrupted? */
     while(Signal::state == Signal::INTERRUPTED)
       switch(int_response(pop, gen)) {
         case Signal::DUMP:
@@ -207,10 +218,7 @@ void dumpResults(Population& pop, CandidateFactory::Selector& sel,
 }
 
 
-BriefPrinter<Candidate> brief(const Candidate& ref) {
-  return {ref};
-}
-
+/* Helper functions for interrupt handler */
 
 Candidate input() {
   std::cout << "Enter a candidate:\n";
@@ -219,7 +227,6 @@ Candidate input() {
   return Candidate::read(s);
 }
 
-
 void listRandom(Population& pop) {
   auto sel = pop.randomSelect(Config::nIntList);
   sel.sort();
@@ -227,13 +234,11 @@ void listRandom(Population& pop) {
     std::cout << brief(c) << ' ' << c << '\n';
 }
 
-
 void evaluate() {
   Candidate c{input()};
   std::cout << "\nParsed: " << brief(c) << ' ' << c << '\n'
     << c.dump(std::cout) << '\n';
 }
-
 
 void inject(Population& pop, unsigned long gen) {
   Candidate c{input()};
@@ -241,7 +246,6 @@ void inject(Population& pop, unsigned long gen) {
   pop.add(c);
   std::cout << "\nParsed: " << brief(c) << ' ' << c << '\n';
 }
-
 
 void prettyprint() {
   Candidate c{input()};
@@ -251,6 +255,7 @@ void prettyprint() {
   std::cout << p << '\n';
 }
 
+/* Interrupt handler (Ctrl-C) */
 
 void int_handler(int) {
   if(Signal::state != Signal::RUNNING)
@@ -260,6 +265,7 @@ void int_handler(int) {
   Signal::state = Signal::INTERRUPTED;
 }
 
+/* Interrupt diagnosis */
 
 int int_response(Population& pop, unsigned long gen) {
   std::chrono::time_point<std::chrono::steady_clock> pre, post;
@@ -285,7 +291,7 @@ int int_response(Population& pop, unsigned long gen) {
       c = 'a';
     switch(c) {
       case 'a':
-        std::_Exit(1);
+        std::exit(1);
       case 'c':
         Signal::state = Signal::RUNNING;
         ret = Signal::CONTINUE;
