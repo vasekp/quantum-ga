@@ -77,8 +77,6 @@ namespace SigComm {
     CONTINUE,
     DUMP,
     RESTART,
-    LIST,
-    INJECT,
     STOP
   };
 
@@ -122,12 +120,9 @@ private:
 
 
 void int_handler(int);
-int int_response();
+int int_response(Population&, unsigned long);
 void dumpResults(Population&, CandidateFactory::Selector&,
     std::chrono::time_point<std::chrono::steady_clock>, unsigned long);
-void listRandom(Population&);
-void inject(Population&, unsigned long);
-Candidate input();
 BriefPrinter brief(const Candidate&);
 
 
@@ -195,17 +190,10 @@ int main() {
         });
     std::cout << brief(newest) << std::endl;
 
-    while(SigComm::state == SigComm::INTERRUPTED) {
-      int res = int_response();
-      switch(res) {
+    while(SigComm::state == SigComm::INTERRUPTED)
+      switch(int_response(pop, gen)) {
         case SigComm::DUMP:
           dumpResults(pop, sel, start, gen);
-          break;
-        case SigComm::INJECT:
-          inject(pop, gen);
-          break;
-        case SigComm::LIST:
-          listRandom(pop);
           break;
         case SigComm::RESTART:
           pop = Population{Config::popSize,
@@ -216,7 +204,6 @@ int main() {
           gen = 0;
           break;
       }
-    }
     if(SigComm::state == SigComm::STOPPING)
       break;
   }
@@ -258,11 +245,8 @@ void dumpResults(Population& pop, CandidateFactory::Selector& sel,
 }
 
 
-void listRandom(Population& pop) {
-  auto sel = pop.randomSelect(Config::nIntList);
-  sel.sort();
-  for(auto& c : sel.reverse())
-    std::cout << brief(c) << ' ' << c << '\n';
+BriefPrinter brief(const Candidate& ref) {
+  return {ref};
 }
 
 
@@ -274,8 +258,18 @@ Candidate input() {
 }
 
 
-BriefPrinter brief(const Candidate& ref) {
-  return {ref};
+void listRandom(Population& pop) {
+  auto sel = pop.randomSelect(Config::nIntList);
+  sel.sort();
+  for(auto& c : sel.reverse())
+    std::cout << brief(c) << ' ' << c << '\n';
+}
+
+
+void evaluate() {
+  Candidate c{input()};
+  std::cout << "\nParsed: " << brief(c) << ' ' << c << '\n'
+    << c.dump(std::cout) << '\n';
 }
 
 
@@ -287,17 +281,8 @@ void inject(Population& pop, unsigned long gen) {
 }
 
 
-void evaluate() {
-  Candidate c{input()};
-  std::cout << "\nParsed: " << brief(c) << ' ' << c << '\n'
-    << c.dump(std::cout) << '\n';
-}
-
-
 void prettyprint() {
   Candidate c{input()};
-  std::cout << "\nParsed: " << brief(c) << ' ' << c << "\n\n";
-
   Printer p{Config::nBit};
   for(auto& g : c.genotype())
     g->print(p);
@@ -307,14 +292,14 @@ void prettyprint() {
 
 void int_handler(int) {
   if(SigComm::state != SigComm::RUNNING)
-    // we got stuck while processing another signal (e.g., popSize too large
-    // or a deadlock)
+    // getting here means we got stuck while processing another signal
+    // (e.g., popSize too large or a deadlock)
     std::_Exit(1);
   SigComm::state = SigComm::INTERRUPTED;
 }
 
 
-int int_response() {
+int int_response(Population& pop, unsigned long gen) {
   std::chrono::time_point<std::chrono::steady_clock> pre, post;
   pre = std::chrono::steady_clock::now();
   std::cerr << "\nComputation stopped. Choose action:\n"
@@ -348,16 +333,16 @@ int int_response() {
         break;
       case 'e':
         evaluate();
-        return int_response(); // tail recursion
+        return int_response(pop, gen); // tail recursion
       case 'i':
-        ret = SigComm::INJECT;
-        break;
+        inject(pop, gen);
+        return int_response(pop, gen);
       case 'l':
-        ret = SigComm::LIST;
-        break;
+        listRandom(pop);
+        return int_response(pop, gen);
       case 'p':
         prettyprint();
-        return int_response(); // tail recursion
+        return int_response(pop, gen);
       case 'r':
         SigComm::state = SigComm::RUNNING;
         ret = SigComm::RESTART;
