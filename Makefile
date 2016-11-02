@@ -25,6 +25,10 @@ else
 	CXXFLAGS += -O3 -DNODEBUG -DEIGEN_NO_DEBUG -DQICLIB_NO_DEBUG
 endif
 
+ifdef BENCH
+	CXXFLAGS += -DBENCH
+endif
+
 ifeq ($(BACKEND), QPP)
 	CXXFLAGS += -isystem /usr/include/eigen3 -Iquantum++/include -DUSE_QPP
 else
