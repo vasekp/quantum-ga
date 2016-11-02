@@ -116,6 +116,13 @@ public:
     return os;
   }
 
+  void print(Printer& p) const override {
+    p.addGates({
+        {{tgt}, "[U]"},
+        {ixs.as_vector(), "o"}
+    });
+  }
+
   static Pointer read(const std::string& s) {
     std::string reS{};
     std::regex re{"U(\\d)(\\[(\\d+)\\])?"

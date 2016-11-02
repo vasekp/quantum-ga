@@ -20,6 +20,11 @@ public:
 }; // class CandidateCounter
 
 
-extern CandidateCounter counter;
+namespace {
+
+  // It's not the purest technique but one global variable here is acceptable
+  CandidateCounter counter{};
+
+} // anonymous namespace
 
 } // namespace QGA

@@ -4,32 +4,32 @@ namespace Gates {
 
 struct gate_struct_p {
   Backend::Gate(*fn)(double);
-  char name;
+  std::string name;
 };
 
 
 namespace internal {
 
 static const std::vector<gate_struct_p> gates_param_xyz {
-  {func::xrot, 'X'},
-  {func::yrot, 'Y'},
-  {func::zrot, 'Z'}
+  {func::xrot, "X"},
+  {func::yrot, "Y"},
+  {func::zrot, "Z"}
 };
 
 static const std::vector<gate_struct_p> gates_param_x {
-  {func::xrot, 'X'},
+  {func::xrot, "X"},
 };
 
 static const std::vector<gate_struct_p> gates_param_y {
-  {func::yrot, 'Y'},
+  {func::yrot, "Y"},
 };
 
 static const std::vector<gate_struct_p> gates_param_z {
-  {func::zrot, 'Z'},
+  {func::zrot, "Z"},
 };
 
 static const std::vector<gate_struct_p> gates_param_r {
-  {func::rrot, 'R'},
+  {func::rrot, "R"},
 };
 
 
@@ -117,6 +117,13 @@ public:
     }
     os << '(' << angle / Const::pi << "π)";
     return os;
+  }
+
+  void print(Printer& p) const override {
+    p.addGates({
+        {{tgt}, "[" + (*gates)[op].name + "]"},
+        {ixs.as_vector(), "o"}
+    });
   }
 
   static Pointer read(const std::string& s) {

@@ -2,19 +2,23 @@
 #include <csignal>
 #include <cstdlib>
 #include <chrono>
+#include <unistd.h> // isatty()
 
 #include "genetic.hpp"
-#include "include/commons.hpp"
+#include "QGA.hpp"
+#include "Colours.hpp"
+#include "BriefPrinter.hpp"
+#include "signal.hpp"
 
 #ifdef FOURIER
-  #include "include/problem/Fourier.hpp"
+  #include "QGA_Problem/Fourier.hpp"
   #ifdef USE_QPP
     #error FFT implementation is currently broken in Eigen3, used by Quantum++.
   #endif
 #elif defined(SEARCH)
-  #include "include/problem/Search.hpp"
+  #include "QGA_Problem/Search.hpp"
 #else
-  #include "include/problem/Simple.hpp"
+  #include "QGA_Problem/Simple.hpp"
 #endif
 
 namespace Config {
@@ -64,50 +68,34 @@ namespace Config {
 } // namespace Config
 
 
-namespace SigComm {
-
-  enum StopState {
-    RUNNING,
-    INTERRUPTED,
-    STOPPING
-  };
-
-  enum Response {
-    CONTINUE,
-    DUMP,
-    RESTART,
-    LIST,
-    EVALUATE,
-    INJECT,
-    STOP
-  };
-
+// Initialization of global variables
+namespace Signal {
   volatile sig_atomic_t state = RUNNING;
-
   std::chrono::duration<double> timeOut{};
+}
 
-} // namespace SigComm
 
-
-/* Candidate defined in PROBLEM_HPP */
+// Candidate defined in PROBLEM_HPP
 using Population = gen::NSGAPopulation<Candidate>;
 using GenCandidate = gen::Candidate<Candidate>;
 using CandidateFactory = QGA::CandidateFactory<Candidate>;
 
 
-// Initialize the candidate counter
-// Needs to appear in the .cpp
-QGA::CandidateCounter QGA::counter{};
-
-
+/* Forward declarations */
 void int_handler(int);
-int int_response();
+int int_response(Population&, unsigned long);
 void dumpResults(Population&, CandidateFactory::Selector&,
     std::chrono::time_point<std::chrono::steady_clock>, unsigned long);
-void listRandom(Population&);
-void inject(Population&, unsigned long);
-void evaluate();
+/* End forward declarations */
 
+BriefPrinter<Candidate> brief(const Candidate& ref) {
+  return {ref};
+}
+
+
+/************
+ *** Main ***
+ ************/
 
 int main() {
 #ifdef BENCH
@@ -115,21 +103,22 @@ int main() {
   omp_set_num_threads(1);
 #endif
 
-  Colours::use = isatty(1);
-
-  std::signal(SIGINT, int_handler);
-
-  std::chrono::time_point<std::chrono::steady_clock>
-    start{std::chrono::steady_clock::now()};
-
-  Population pop{Config::popSize,
-    [&] { return CandidateFactory::genInit().setGen(0); }};
-
+  /* Initialize output */
+  if(isatty(1)) {
+    Colours::use = true;
+    std::signal(SIGINT, int_handler);
+  }
   std::cout << std::fixed << std::setprecision(4);
 
+  /* Initialize state variables */
+  std::chrono::time_point<std::chrono::steady_clock>
+    start{std::chrono::steady_clock::now()};
+  Population pop{Config::popSize,
+    [] { return CandidateFactory::genInit().setGen(0); }};
   CandidateFactory::Selector sel = CandidateFactory::getInitSelector();
-
   unsigned long gen;
+
+  /* Main cycle */
   for(gen = 0; gen < Config::nGen; gen++) {
 
     /* Find the nondominated subset */
@@ -166,47 +155,34 @@ int main() {
         sel.hit(c.getOrigin());
 
     /* Summarize */
-    std::cout << Colours::bold() << "Gen " << gen << ": " << Colours::reset()
-      << Colours::yellow() << pop.size() << Colours::reset()
-      << " unique fitnesses, lowest error "
-      << Colours::green() << pop.best().fitness() << Colours::blue()
-      << " [" << pop.best().getGen() << ']' << Colours::reset() << ", "
-      << Colours::yellow() << nondom.size() << Colours::reset()
-      << " nondominated, newest: ";
+    std::cout
+      << Colours::bold("Gen ", gen, ": ")
+      << Colours::yellow(pop.size()) << " unique fitnesses, "
+      << "lowest error " << brief(pop.best()) << ", "
+      << Colours::yellow(nondom.size()) << " nondominated, "
+      << "newest: ";
     auto& newest = *std::min_element(nondom.begin(), nondom.end(),
         [](const GenCandidate& c1, const GenCandidate& c2) {
           return c1.getGen() > c2.getGen();
         });
-    std::cout
-      << Colours::green() << newest.fitness() << Colours::blue()
-      << " [" << newest.getGen() << ']' << Colours::reset() << std::endl;
+    std::cout << brief(newest) << std::endl;
 
-    while(SigComm::state == SigComm::INTERRUPTED) {
-      int res = int_response();
-      switch(res) {
-        case SigComm::DUMP:
+    /* Interrupted? */
+    while(Signal::state == Signal::INTERRUPTED)
+      switch(int_response(pop, gen)) {
+        case Signal::DUMP:
           dumpResults(pop, sel, start, gen);
           break;
-        case SigComm::EVALUATE:
-          evaluate();
-          break;
-        case SigComm::INJECT:
-          inject(pop, gen);
-          break;
-        case SigComm::LIST:
-          listRandom(pop);
-          break;
-        case SigComm::RESTART:
+        case Signal::RESTART:
           pop = Population{Config::popSize,
             [&] { return CandidateFactory::genInit().setGen(0); }};
           sel = CandidateFactory::getInitSelector();
           start = std::chrono::steady_clock::now();
-          SigComm::timeOut = std::chrono::duration<double>(0);
+          Signal::timeOut = std::chrono::duration<double>(0);
           gen = 0;
           break;
       }
-    }
-    if(SigComm::state == SigComm::STOPPING)
+    if(Signal::state == Signal::STOPPING)
       break;
   }
 
@@ -222,12 +198,9 @@ void dumpResults(Population& pop, CandidateFactory::Selector& sel,
   auto nondom = pop.front();
   nondom.sort();
   std::cout << '\n'
-    << Colours::yellow() << nondom.size() << Colours::reset()
-    << " nondominated candidates:\n";
+    << Colours::yellow(nondom.size()) << " nondominated candidates:\n";
   for(auto& c : nondom.reverse()) {
-    std::cout << Colours::green() << c.fitness() << Colours::reset()
-      << " [" << Colours::blue() << 'g' << c.getGen() << Colours::reset()
-      << "] " << c;
+    std::cout << brief(c) << ' ' << c;
     if(c.fitness() < 0.01)
       std::cout << ": " << c.dump(std::cout);
     else
@@ -241,81 +214,78 @@ void dumpResults(Population& pop, CandidateFactory::Selector& sel,
   /* Timing information */
   std::chrono::time_point<std::chrono::steady_clock>
     now{std::chrono::steady_clock::now()};
-  std::chrono::duration<double> dur = now - start - SigComm::timeOut;
-  std::cout << "\nRun took " << dur.count() << " s, "
-    << Colours::blue() << QGA::counter.total() << Colours::reset()
-    << " candidates tested in "
-    << Colours::blue() << gen << Colours::reset()
-    << " generations ("
-    << Colours::blue() << dur.count()/gen << " s/gen" << Colours::reset()
-    << " avg)\n";
+  std::chrono::duration<double> dur = now - start - Signal::timeOut;
+  std::cout
+    << "\nRun took " << dur.count() << " s, "
+    << Colours::blue(QGA::counter.total()) << " candidates tested in "
+    << Colours::blue(gen) << " generations "
+    << '(' << Colours::blue(dur.count()/gen, " s/gen") << " avg)\n";
 }
 
+
+/* Helper functions for interrupt handler */
+
+Candidate input() {
+  std::cout << "Enter a candidate:\n";
+  std::string s{};
+  std::getline(std::cin, s);
+  return Candidate::read(s);
+}
 
 void listRandom(Population& pop) {
   auto sel = pop.randomSelect(Config::nIntList);
   sel.sort();
   for(auto& c : sel.reverse())
-    std::cout << Colours::green() << c.fitness() << Colours::reset()
-      << " [" << Colours::blue() << 'g' << c.getGen() << Colours::reset()
-      << "] " << c << '\n';
+    std::cout << brief(c) << ' ' << c << '\n';
 }
-
-
-void inject(Population& pop, unsigned long gen) {
-  std::cout << "Enter a candidate:\n";
-  std::string s{};
-  std::getline(std::cin, s);
-  Candidate c{Candidate::read(s)};
-  c.setGen(gen);
-  pop.add(c);
-  std::cout << "\nParsed: "
-    << Colours::green() << c.fitness() << Colours::reset()
-    << " [" << Colours::blue() << 'g' << c.getGen() << Colours::reset()
-    << "] " << c << '\n';
-}
-
 
 void evaluate() {
-  std::cout << "Enter a candidate:\n";
-  std::string s{};
-  std::getline(std::cin, s);
-  Candidate c{Candidate::read(s)};
-  std::cout << "\nParsed: "
-    << Colours::green() << c.fitness() << Colours::reset()
-    << ' ' << c << '\n' << c.dump(std::cout) << '\n';
+  Candidate c{input()};
+  std::cout << "\nParsed: " << brief(c) << ' ' << c << '\n'
+    << c.dump(std::cout) << '\n';
 }
 
+void inject(Population& pop, unsigned long gen) {
+  Candidate c{input()};
+  c.setGen(gen);
+  pop.add(c);
+  std::cout << "\nParsed: " << brief(c) << ' ' << c << '\n';
+}
+
+void prettyprint() {
+  Candidate c{input()};
+  Printer p{Config::nBit};
+  for(auto& g : c.genotype())
+    g->print(p);
+  std::cout << p << '\n';
+}
+
+/* Interrupt handler (Ctrl-C) */
 
 void int_handler(int) {
-  if(SigComm::state != SigComm::RUNNING)
-    // we got stuck while processing another signal (e.g., popSize too large
-    // or a deadlock)
+  if(Signal::state != Signal::RUNNING)
+    // getting here means we got stuck while processing another signal
+    // (e.g., popSize too large or a deadlock)
     std::_Exit(1);
-  SigComm::state = SigComm::INTERRUPTED;
+  Signal::state = Signal::INTERRUPTED;
 }
 
+/* Interrupt diagnosis */
 
-int int_response() {
+int int_response(Population& pop, unsigned long gen) {
   std::chrono::time_point<std::chrono::steady_clock> pre, post;
   pre = std::chrono::steady_clock::now();
   std::cerr << "\nComputation stopped. Choose action:\n"
-    << Colours::blue() << "a: " << Colours::reset()
-      << "abort,\n"
-    << Colours::blue() << "c: " << Colours::reset()
-      << "continue,\n"
-    << Colours::blue() << "d: " << Colours::reset()
-      << "diagnose / list current results,\n"
-    << Colours::blue() << "e: " << Colours::reset()
-      << "fully evaluate a candidate,\n"
-    << Colours::blue() << "i: " << Colours::reset()
-      << "inject a candidate,\n"
-    << Colours::blue() << "l: " << Colours::reset()
-      << "list " << Config::nIntList << " random candidates,\n"
-    << Colours::blue() << "r: " << Colours::reset()
-      << "restart,\n"
-    << Colours::blue() << "q: " << Colours::reset()
-      << "quit after this generation.\n";
+    << Colours::blue("a: ") << "abort,\n"
+    << Colours::blue("c: ") << "continue,\n"
+    << Colours::blue("d: ") << "diagnose / list current results,\n"
+    << Colours::blue("e: ") << "fully evaluate a candidate,\n"
+    << Colours::blue("i: ") << "inject a candidate,\n"
+    << Colours::blue("l: ") << "list " << Config::nIntList
+        << " random candidates,\n"
+    << Colours::blue("p: ") << "pretty-print a candidate as a circuit,\n"
+    << Colours::blue("r: ") << "restart,\n"
+    << Colours::blue("q: ") << "quit after this generation.\n";
   int ret = -1;
   do {
     char c;
@@ -326,34 +296,37 @@ int int_response() {
       c = 'a';
     switch(c) {
       case 'a':
-        std::_Exit(1);
+        std::exit(1);
       case 'c':
-        SigComm::state = SigComm::RUNNING;
-        ret = SigComm::CONTINUE;
+        Signal::state = Signal::RUNNING;
+        ret = Signal::CONTINUE;
         break;
       case 'd':
-        ret = SigComm::DUMP;
+        ret = Signal::DUMP;
         break;
       case 'e':
-        ret = SigComm::EVALUATE;
-        break;
+        evaluate();
+        return int_response(pop, gen); // tail recursion
       case 'i':
-        ret = SigComm::INJECT;
-        break;
+        inject(pop, gen);
+        return int_response(pop, gen);
       case 'l':
-        ret = SigComm::LIST;
-        break;
+        listRandom(pop);
+        return int_response(pop, gen);
+      case 'p':
+        prettyprint();
+        return int_response(pop, gen);
       case 'r':
-        SigComm::state = SigComm::RUNNING;
-        ret = SigComm::RESTART;
+        Signal::state = Signal::RUNNING;
+        ret = Signal::RESTART;
         break;
       case 'q':
-        SigComm::state = SigComm::STOPPING;
-        ret = SigComm::STOP;
+        Signal::state = Signal::STOPPING;
+        ret = Signal::STOP;
         break;
     }
   } while(ret < 0);
   post = std::chrono::steady_clock::now();
-  SigComm::timeOut += post - pre;
+  Signal::timeOut += post - pre;
   return ret;
 }

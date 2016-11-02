@@ -59,6 +59,10 @@ public:
     return os << (odd ? "Oracle" : "[Id]");
   }
 
+  void print(Printer& p) const override {
+    p.addBarrierGate("U_f");
+  }
+
   static Pointer read(const std::string& s) {
     std::regex re{"\\[Id\\]|(Oracle)"};
     std::smatch m{};

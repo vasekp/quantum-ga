@@ -97,6 +97,13 @@ public:
     return os;
   }
 
+  void print(Printer& p) const override {
+    p.addGates({
+        {{tgt}, "[Φ]"},
+        {ixs.as_vector(), "[Φ]"}
+    });
+  }
+
   static Pointer read(const std::string& s) {
     std::string reS{};
     std::regex re{"P(\\d+)\\((-?[0-9.]+)(π)?\\)"};

@@ -49,22 +49,21 @@ namespace QGA {
 }
 
 #ifdef USE_QPP
-  #include "backend/QPP.hpp"
+  #include "QGA_Backend/QPP.hpp"
 #elif defined USE_QICLIB
-  #include "backend/QIClib.hpp"
+  #include "QGA_Backend/QIClib.hpp"
 #else
   #error Either USE_QPP or USE_QICLIB needed.
 #endif
 
-#include "Fitness.hpp"
-#include "GateBase.hpp" // uses Fitness.hpp (internal::Counter)
-#include "Gene.hpp"     // uses GateBase.hpp
-#include "Tools.hpp"
-#include "Gates.hpp"    // uses Tools.hpp and GateBase.hpp
-#include "CandidateCounter.hpp"
-#include "CandidateBase.hpp"
-#include "CandidateFactory.hpp"
-
-#include "Colours.hpp"
+#include "QGA_bits/Printer.hpp"
+#include "QGA_bits/Fitness.hpp"
+#include "QGA_bits/GateBase.hpp" // uses Fitness.hpp (internal::Counter)
+#include "QGA_bits/Gene.hpp"     // uses GateBase.hpp
+#include "QGA_bits/Tools.hpp"
+#include "QGA_bits/Gates.hpp"    // uses Tools.hpp and GateBase.hpp
+#include "QGA_bits/CandidateCounter.hpp"
+#include "QGA_bits/CandidateBase.hpp"
+#include "QGA_bits/CandidateFactory.hpp"
 
 #endif // !defined QGA_COMMONS_HPP
