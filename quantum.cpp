@@ -5,17 +5,20 @@
 #include <unistd.h> // isatty()
 
 #include "genetic.hpp"
-#include "include/commons.hpp"
+#include "QGA.hpp"
+#include "Colours.hpp"
+#include "BriefPrinter.hpp"
+#include "signal.hpp"
 
 #ifdef FOURIER
-  #include "include/problem/Fourier.hpp"
+  #include "QGA_Problem/Fourier.hpp"
   #ifdef USE_QPP
     #error FFT implementation is currently broken in Eigen3, used by Quantum++.
   #endif
 #elif defined(SEARCH)
-  #include "include/problem/Search.hpp"
+  #include "QGA_Problem/Search.hpp"
 #else
-  #include "include/problem/Simple.hpp"
+  #include "QGA_Problem/Simple.hpp"
 #endif
 
 namespace Config {
@@ -65,66 +68,34 @@ namespace Config {
 } // namespace Config
 
 
-namespace SigComm {
-
-  enum StopState {
-    RUNNING,
-    INTERRUPTED,
-    STOPPING
-  };
-
-  enum Response {
-    CONTINUE,
-    DUMP,
-    RESTART,
-    STOP
-  };
-
+// Initialization of global variables
+namespace Signal {
   volatile sig_atomic_t state = RUNNING;
-
   std::chrono::duration<double> timeOut{};
+}
 
-} // namespace SigComm
 
-
-/* Candidate defined in PROBLEM_HPP */
+// Candidate defined in PROBLEM_HPP
 using Population = gen::NSGAPopulation<Candidate>;
 using GenCandidate = gen::Candidate<Candidate>;
 using CandidateFactory = QGA::CandidateFactory<Candidate>;
 
 
-// Initialize the candidate counter
-// Needs to appear in the .cpp
-QGA::CandidateCounter QGA::counter{};
-
-
-// For colourful printing of fitness and generation
-class BriefPrinter {
-
-public:
-
-  BriefPrinter(const Candidate& ref_): ref(ref_) { }
-
-  friend std::ostream& operator<< (std::ostream& os, const BriefPrinter& fp) {
-    os << Colours::green(fp.ref.fitness());
-    if(fp.ref.getGen() != (size_t)(~0))
-      os << Colours::blue(" [g", fp.ref.getGen(), "]");
-    return os;
-  }
-
-private:
-
-  const Candidate& ref;
-
-}; // class BriefPrinter
-
-
+/* Forward declarations */
 void int_handler(int);
 int int_response(Population&, unsigned long);
 void dumpResults(Population&, CandidateFactory::Selector&,
     std::chrono::time_point<std::chrono::steady_clock>, unsigned long);
-BriefPrinter brief(const Candidate&);
+/* End forward declarations */
 
+BriefPrinter<Candidate> brief(const Candidate& ref) {
+  return {ref};
+}
+
+
+/************
+ *** Main ***
+ ************/
 
 int main() {
 #ifdef BENCH
@@ -132,21 +103,22 @@ int main() {
   omp_set_num_threads(1);
 #endif
 
-  Colours::use = isatty(1);
-
-  std::signal(SIGINT, int_handler);
-
-  std::chrono::time_point<std::chrono::steady_clock>
-    start{std::chrono::steady_clock::now()};
-
-  Population pop{Config::popSize,
-    [&] { return CandidateFactory::genInit().setGen(0); }};
-
+  /* Initialize output */
+  if(isatty(1)) {
+    Colours::use = true;
+    std::signal(SIGINT, int_handler);
+  }
   std::cout << std::fixed << std::setprecision(4);
 
+  /* Initialize state variables */
+  std::chrono::time_point<std::chrono::steady_clock>
+    start{std::chrono::steady_clock::now()};
+  Population pop{Config::popSize,
+    [] { return CandidateFactory::genInit().setGen(0); }};
   CandidateFactory::Selector sel = CandidateFactory::getInitSelector();
-
   unsigned long gen;
+
+  /* Main cycle */
   for(gen = 0; gen < Config::nGen; gen++) {
 
     /* Find the nondominated subset and trim down do arSize */
@@ -190,21 +162,22 @@ int main() {
         });
     std::cout << brief(newest) << std::endl;
 
-    while(SigComm::state == SigComm::INTERRUPTED)
+    /* Interrupted? */
+    while(Signal::state == Signal::INTERRUPTED)
       switch(int_response(pop, gen)) {
-        case SigComm::DUMP:
+        case Signal::DUMP:
           dumpResults(pop, sel, start, gen);
           break;
-        case SigComm::RESTART:
+        case Signal::RESTART:
           pop = Population{Config::popSize,
             [&] { return CandidateFactory::genInit().setGen(0); }};
           sel = CandidateFactory::getInitSelector();
           start = std::chrono::steady_clock::now();
-          SigComm::timeOut = std::chrono::duration<double>(0);
+          Signal::timeOut = std::chrono::duration<double>(0);
           gen = 0;
           break;
       }
-    if(SigComm::state == SigComm::STOPPING)
+    if(Signal::state == Signal::STOPPING)
       break;
   }
 
@@ -236,7 +209,7 @@ void dumpResults(Population& pop, CandidateFactory::Selector& sel,
   /* Timing information */
   std::chrono::time_point<std::chrono::steady_clock>
     now{std::chrono::steady_clock::now()};
-  std::chrono::duration<double> dur = now - start - SigComm::timeOut;
+  std::chrono::duration<double> dur = now - start - Signal::timeOut;
   std::cout
     << "\nRun took " << dur.count() << " s, "
     << Colours::blue(QGA::counter.total()) << " candidates tested in "
@@ -245,10 +218,7 @@ void dumpResults(Population& pop, CandidateFactory::Selector& sel,
 }
 
 
-BriefPrinter brief(const Candidate& ref) {
-  return {ref};
-}
-
+/* Helper functions for interrupt handler */
 
 Candidate input() {
   std::cout << "Enter a candidate:\n";
@@ -257,7 +227,6 @@ Candidate input() {
   return Candidate::read(s);
 }
 
-
 void listRandom(Population& pop) {
   auto sel = pop.randomSelect(Config::nIntList);
   sel.sort();
@@ -265,13 +234,11 @@ void listRandom(Population& pop) {
     std::cout << brief(c) << ' ' << c << '\n';
 }
 
-
 void evaluate() {
   Candidate c{input()};
   std::cout << "\nParsed: " << brief(c) << ' ' << c << '\n'
     << c.dump(std::cout) << '\n';
 }
-
 
 void inject(Population& pop, unsigned long gen) {
   Candidate c{input()};
@@ -279,7 +246,6 @@ void inject(Population& pop, unsigned long gen) {
   pop.add(c);
   std::cout << "\nParsed: " << brief(c) << ' ' << c << '\n';
 }
-
 
 void prettyprint() {
   Candidate c{input()};
@@ -289,15 +255,17 @@ void prettyprint() {
   std::cout << p << '\n';
 }
 
+/* Interrupt handler (Ctrl-C) */
 
 void int_handler(int) {
-  if(SigComm::state != SigComm::RUNNING)
+  if(Signal::state != Signal::RUNNING)
     // getting here means we got stuck while processing another signal
     // (e.g., popSize too large or a deadlock)
     std::_Exit(1);
-  SigComm::state = SigComm::INTERRUPTED;
+  Signal::state = Signal::INTERRUPTED;
 }
 
+/* Interrupt diagnosis */
 
 int int_response(Population& pop, unsigned long gen) {
   std::chrono::time_point<std::chrono::steady_clock> pre, post;
@@ -323,13 +291,13 @@ int int_response(Population& pop, unsigned long gen) {
       c = 'a';
     switch(c) {
       case 'a':
-        std::_Exit(1);
+        std::exit(1);
       case 'c':
-        SigComm::state = SigComm::RUNNING;
-        ret = SigComm::CONTINUE;
+        Signal::state = Signal::RUNNING;
+        ret = Signal::CONTINUE;
         break;
       case 'd':
-        ret = SigComm::DUMP;
+        ret = Signal::DUMP;
         break;
       case 'e':
         evaluate();
@@ -344,16 +312,16 @@ int int_response(Population& pop, unsigned long gen) {
         prettyprint();
         return int_response(pop, gen);
       case 'r':
-        SigComm::state = SigComm::RUNNING;
-        ret = SigComm::RESTART;
+        Signal::state = Signal::RUNNING;
+        ret = Signal::RESTART;
         break;
       case 'q':
-        SigComm::state = SigComm::STOPPING;
-        ret = SigComm::STOP;
+        Signal::state = Signal::STOPPING;
+        ret = Signal::STOP;
         break;
     }
   } while(ret < 0);
   post = std::chrono::steady_clock::now();
-  SigComm::timeOut += post - pre;
+  Signal::timeOut += post - pre;
   return ret;
 }
