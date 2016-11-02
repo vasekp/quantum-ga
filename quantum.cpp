@@ -99,12 +99,37 @@ using CandidateFactory = QGA::CandidateFactory<Candidate>;
 QGA::CandidateCounter QGA::counter{};
 
 
+// For colourful printing of fitness and generation
+class BriefPrinter {
+
+public:
+
+  BriefPrinter(const Candidate& ref_): ref(ref_) { }
+
+  friend std::ostream& operator<< (std::ostream& os, const BriefPrinter& fp) {
+    os << Colours::green() << fp.ref.fitness() << Colours::reset();
+    if(fp.ref.getGen() != (size_t)(~0))
+      os << Colours::blue()
+           << " [g" << fp.ref.getGen() << "]"
+         << Colours::reset();
+    return os;
+  }
+
+private:
+
+  const Candidate& ref;
+
+}; // class BriefPrinter
+
+
 void int_handler(int);
 int int_response();
 void dumpResults(Population&, CandidateFactory::Selector&,
     std::chrono::time_point<std::chrono::steady_clock>, unsigned long);
 void listRandom(Population&);
 void inject(Population&, unsigned long);
+Candidate input();
+BriefPrinter brief(const Candidate&);
 
 
 int main() {
@@ -161,18 +186,14 @@ int main() {
     /* Summarize */
     std::cout << Colours::bold() << "Gen " << gen << ": " << Colours::reset()
       << Colours::yellow() << pop.size() << Colours::reset()
-      << " unique fitnesses, lowest error "
-      << Colours::green() << pop.best().fitness() << Colours::blue()
-      << " [" << pop.best().getGen() << ']' << Colours::reset() << ", "
+      << " unique fitnesses, lowest error " << brief(pop.best()) << ", "
       << Colours::yellow() << nondom.size() << Colours::reset()
       << " nondominated, newest: ";
     auto& newest = *std::min_element(nondom.begin(), nondom.end(),
         [](const GenCandidate& c1, const GenCandidate& c2) {
           return c1.getGen() > c2.getGen();
         });
-    std::cout
-      << Colours::green() << newest.fitness() << Colours::blue()
-      << " [" << newest.getGen() << ']' << Colours::reset() << std::endl;
+    std::cout << brief(newest) << std::endl;
 
     while(SigComm::state == SigComm::INTERRUPTED) {
       int res = int_response();
@@ -215,9 +236,7 @@ void dumpResults(Population& pop, CandidateFactory::Selector& sel,
     << Colours::yellow() << nondom.size() << Colours::reset()
     << " nondominated candidates:\n";
   for(auto& c : nondom.reverse()) {
-    std::cout << Colours::green() << c.fitness() << Colours::reset()
-      << " [" << Colours::blue() << 'g' << c.getGen() << Colours::reset()
-      << "] " << c;
+    std::cout << brief(c) << ' ' << c;
     if(c.fitness().error < 0.01)
       std::cout << ": " << c.dump(std::cout);
     else
@@ -246,45 +265,41 @@ void listRandom(Population& pop) {
   auto sel = pop.randomSelect(Config::nIntList);
   sel.sort();
   for(auto& c : sel.reverse())
-    std::cout << Colours::green() << c.fitness() << Colours::reset()
-      << " [" << Colours::blue() << 'g' << c.getGen() << Colours::reset()
-      << "] " << c << '\n';
+    std::cout << brief(c) << ' ' << c << '\n';
+}
+
+
+Candidate input() {
+  std::cout << "Enter a candidate:\n";
+  std::string s{};
+  std::getline(std::cin, s);
+  return Candidate::read(s);
+}
+
+
+BriefPrinter brief(const Candidate& ref) {
+  return {ref};
 }
 
 
 void inject(Population& pop, unsigned long gen) {
-  std::cout << "Enter a candidate:\n";
-  std::string s{};
-  std::getline(std::cin, s);
-  Candidate c{Candidate::read(s)};
+  Candidate c{input()};
   c.setGen(gen);
   pop.add(c);
-  std::cout << "\nParsed: "
-    << Colours::green() << c.fitness() << Colours::reset()
-    << " [" << Colours::blue() << 'g' << c.getGen() << Colours::reset()
-    << "] " << c << '\n';
+  std::cout << "\nParsed: " << brief(c) << ' ' << c << '\n';
 }
 
 
 void evaluate() {
-  std::cout << "Enter a candidate:\n";
-  std::string s{};
-  std::getline(std::cin, s);
-  Candidate c{Candidate::read(s)};
-  std::cout << "\nParsed: "
-    << Colours::green() << c.fitness() << Colours::reset()
-    << ' ' << c << '\n' << c.dump(std::cout) << '\n';
+  Candidate c{input()};
+  std::cout << "\nParsed: " << brief(c) << ' ' << c << '\n'
+    << c.dump(std::cout) << '\n';
 }
 
 
 void prettyprint() {
-  std::cout << "Enter a candidate:\n";
-  std::string s{};
-  std::getline(std::cin, s);
-  Candidate c{Candidate::read(s)};
-  std::cout << "\nParsed: "
-    << Colours::green() << c.fitness() << Colours::reset()
-    << ' ' << c << "\n\n";
+  Candidate c{input()};
+  std::cout << "\nParsed: " << brief(c) << ' ' << c << "\n\n";
 
   Printer p{Config::nBit};
   for(auto& g : c.genotype())
