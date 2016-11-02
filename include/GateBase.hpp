@@ -101,6 +101,9 @@ public:
     return g.write(os);
   }
 
+  // print this gate in circuit representation
+  virtual void print(Printer& p) const = 0;
+
   virtual ~GateBase() { }
 
 private:

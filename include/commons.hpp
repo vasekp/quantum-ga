@@ -56,6 +56,7 @@ namespace QGA {
   #error Either USE_QPP or USE_QICLIB needed.
 #endif
 
+#include "Printer.hpp"
 #include "Fitness.hpp"
 #include "GateBase.hpp" // uses Fitness.hpp (internal::Counter)
 #include "Gene.hpp"     // uses GateBase.hpp
