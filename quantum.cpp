@@ -33,7 +33,7 @@ namespace Config {
   const size_t arSize = 100;
 
   // Internal population size
-  const size_t popSize = 2000;
+  const size_t popSize = 1000;
 
   // Number of candidates to keep from parent generation
   const size_t popKeep = 0;
@@ -46,9 +46,6 @@ namespace Config {
 
   // Expected number of gates inserted / modified / removed in mutation
   const double expMutationCount = 4.0;
-
-  // Probability of removing a single gate in uniform deletion
-  const double pChoiceUniform = 0.1;
 
   // Probability of a crossover at any given point
   const double pCrossUniform = 0.1;
@@ -121,9 +118,19 @@ int main() {
   /* Main cycle */
   for(gen = 0; gen < Config::nGen; gen++) {
 
-    /* Find the nondominated subset and trim down do arSize */
+    /* Find the nondominated subset */
     Population pop2 = pop.front();
+
+    /* Randomize and drop very similar fitnesses (disregarding gate counts) */
+    pop2.prune([](const GenCandidate& a, const GenCandidate& b) -> bool {
+        return dist(a.fitness(), b.fitness()) < 0.1;
+      }, 0, true);
+
+    /* Rank-trim the rest doen to arSize */
     pop2.rankTrim(Config::arSize);
+
+    /* Unconditionally add the best candidate so far (in case it got pruned) */
+    pop2.add(pop.best());
 
     /* Randomly select popKeep candidates for survival without modification */
     pop2.reserve(Config::popSize);
@@ -196,7 +203,7 @@ void dumpResults(Population& pop, CandidateFactory::Selector& sel,
     << Colours::yellow(nondom.size()) << " nondominated candidates:\n";
   for(auto& c : nondom.reverse()) {
     std::cout << brief(c) << ' ' << c;
-    if(c.fitness().error < 0.01)
+    if(c.fitness() < 0.01)
       std::cout << ": " << c.dump(std::cout);
     else
       std::cout << '\n';
