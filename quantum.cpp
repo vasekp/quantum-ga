@@ -120,12 +120,17 @@ int main() {
 
     /* Find the nondominated subset */
     Population pop2 = pop.front();
+
     /* Randomize and drop very similar fitnesses (disregarding gate counts) */
     pop2.prune([](const GenCandidate& a, const GenCandidate& b) -> bool {
-        return dist(a.fitness(), b.fitness()) < 0.01;
+        return dist(a.fitness(), b.fitness()) < 0.1;
       }, 0, true);
+
     /* Rank-trim the rest doen to arSize */
     pop2.rankTrim(Config::arSize);
+
+    /* Unconditionally add the best candidate so far (in case it got pruned) */
+    pop2.add(pop.best());
 
     /* Randomly select popKeep candidates for survival without modification */
     pop2.reserve(Config::popSize);
