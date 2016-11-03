@@ -210,9 +210,13 @@ void dumpResults(Population& pop, CandidateFactory::Selector& sel,
     << Colours::yellow(nondom.size()) << " nondominated candidates:\n";
   for(auto& c : nondom.reverse()) {
     std::cout << brief(c) << ' ' << c;
-    if(c.fitness() < 0.01)
+    if(c.fitness() < 0.01) {
       std::cout << ": " << c.dump(std::cout);
-    else
+      Printer printer{Config::nBit};
+      for(auto& g : c.genotype())
+        g->print(printer);
+      std::cout << printer;
+    } else
       std::cout << '\n';
   }
 
