@@ -28,9 +28,12 @@ static const std::vector<gate_struct_p> gates_param_z {
   {func::zrot, "Z"},
 };
 
-static const std::vector<gate_struct_p> gates_param_r {
+/* Do not use: does not represent a 1-parametric group!
+ * This interferes with the isTrivial and merge mechanisms of Param.
+ * An equivalent of R(φ) is P(π) Y(φ). */
+/*static const std::vector<gate_struct_p> gates_param_r {
   {func::rrot, "R"},
-};
+};*/
 
 
 template<Controls cc, const std::vector<gate_struct_p>* gates>
@@ -173,7 +176,6 @@ using XYZ = internal::Param<Controls::NONE, &internal::gates_param_xyz>;
 using X = internal::Param<Controls::NONE, &internal::gates_param_x>;
 using Y = internal::Param<Controls::NONE, &internal::gates_param_y>;
 using Z = internal::Param<Controls::NONE, &internal::gates_param_z>;
-using R = internal::Param<Controls::NONE, &internal::gates_param_r>;
 
 } // namespace Gates
 
