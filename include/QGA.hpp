@@ -33,7 +33,6 @@ namespace Config {
   extern const double heurFactor;
   extern const double expLengthIni;
   extern const double expMutationCount;
-  extern const double pChoiceUniform;
   extern const double pCrossUniform;
   extern const double pControl;
   extern const double dAlpha;
