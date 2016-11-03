@@ -157,17 +157,24 @@ int main() {
         sel.hit(c.getOrigin());
 
     /* Summarize */
-    std::cout
-      << Colours::bold("Gen ", gen, ": ")
-      << Colours::yellow(pop.size()) << " unique fitnesses, "
-      << "lowest error " << brief(pop.best()) << ", "
-      << Colours::yellow(nondom.size()) << " nondominated, "
-      << "newest: ";
-    auto& newest = *std::min_element(nondom.begin(), nondom.end(),
-        [](const GenCandidate& c1, const GenCandidate& c2) {
-          return c1.getGen() > c2.getGen();
-        });
-    std::cout << brief(newest) << std::endl;
+    {
+      auto& newest = *std::min_element(nondom.begin(), nondom.end(),
+          [](const GenCandidate& c1, const GenCandidate& c2) {
+            return c1.getGen() > c2.getGen();
+          });
+
+      Printer printer{Config::nBit};
+      for(auto& g : pop.best().genotype())
+        g->print(printer);
+
+      std::cout
+        << Colours::bold("Gen ", gen, ": ")
+        << Colours::yellow(pop.size()) << " unique fitnesses, "
+        << "lowest error " << brief(pop.best()) << ", "
+        << Colours::yellow(nondom.size()) << " nondominated, "
+        << "newest: " << brief(newest) << '\n'
+        << printer << std::endl;
+    }
 
     /* Interrupted? */
     while(Signal::state == Signal::INTERRUPTED)
