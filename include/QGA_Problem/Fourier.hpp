@@ -6,7 +6,7 @@ namespace {
 
 using QGA::Backend::State;
 
-using Gene = QGA::Gene<QGA::Gates::R, QGA::Gates::CPhase, QGA::Gates::SWAP>;
+using Gene = QGA::Gene<QGA::Gates::Y, QGA::Gates::CPhase, QGA::Gates::SWAP>;
 
 
 class Candidate : public QGA::CandidateBase<Candidate, Gene> {
