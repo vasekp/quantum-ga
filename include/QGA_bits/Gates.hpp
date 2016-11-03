@@ -29,6 +29,7 @@ Backend::Gate zrot(double a) {
 }
 
 // Det -1 version of yrot (covers Hadamard)
+// DO NOT USE in Gates::Param: does not represent a 1-parametric group!
 Backend::Gate rrot(double a) {
   return {
     std::cos(a/2.0), std::sin(a/2.0),

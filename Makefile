@@ -8,7 +8,7 @@
 # make -B target
 
 SOURCES = quantum.cpp
-HEADERS = include/*.hpp include/*/*.hpp
+HEADERS = include/*.hpp include/*/*.hpp include/*/*/*.hpp
 
 TARGETS := simple fourier search
 default: search
