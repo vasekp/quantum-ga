@@ -36,6 +36,10 @@ else
 	CXXFLAGS += -Iqiclib/include -lopenblas -DUSE_QICLIB
 endif
 
+ifdef NBIT
+	CXXFLAGS += -DNBIT=${NBIT}
+endif
+
 fourier: CXXFLAGS += -DFOURIER
 
 search:	CXXFLAGS += -DSEARCH
