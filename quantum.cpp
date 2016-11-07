@@ -157,17 +157,22 @@ int main() {
         sel.hit(c.getOrigin());
 
     /* Summarize */
-    std::cout
-      << Colours::bold("Gen ", gen, ": ")
-      << Colours::yellow(pop.size()) << " unique fitnesses, "
-      << "lowest error " << brief(pop.best()) << ", "
-      << Colours::yellow(nondom.size()) << " nondominated, "
-      << "newest: ";
-    auto& newest = *std::min_element(nondom.begin(), nondom.end(),
-        [](const GenCandidate& c1, const GenCandidate& c2) {
-          return c1.getGen() > c2.getGen();
-        });
-    std::cout << brief(newest) << std::endl;
+    {
+      auto& newest = *std::min_element(nondom.begin(), nondom.end(),
+          [](const GenCandidate& c1, const GenCandidate& c2) {
+            return c1.getGen() > c2.getGen();
+          });
+
+      // Prepare circuit in advance to not delay the printing operation later
+      auto circuit = pop.best().circuit();
+      std::cout
+        << Colours::bold("Gen ", gen, ": ")
+        << Colours::yellow(pop.size()) << " unique fitnesses, "
+        << "lowest error " << brief(pop.best()) << ", "
+        << Colours::yellow(nondom.size()) << " nondominated, "
+        << "newest: " << brief(newest) << '\n'
+        << circuit << std::endl;
+    }
 
     /* Interrupted? */
     while(Signal::state == Signal::INTERRUPTED)
@@ -204,14 +209,13 @@ void dumpResults(Population& pop, CandidateFactory::Selector& sel,
   for(auto& c : nondom.reverse()) {
     std::cout << brief(c) << ' ' << c;
     if(c.fitness() < 0.01)
-      std::cout << ": " << c.dump(std::cout);
+      std::cout << ": " << c.full() << c.circuit();
     else
       std::cout << '\n';
   }
 
   /* Dump the heuristic distribution */
-  std::cout << "\nGenetic operator distribution:\n";
-  sel.dump(std::cout);
+  std::cout << "\nGenetic operator distribution:\n" << sel;
 
   /* Timing information */
   std::chrono::time_point<std::chrono::steady_clock>
@@ -244,7 +248,7 @@ void listRandom(Population& pop) {
 void evaluate() {
   Candidate c{input()};
   std::cout << "\nParsed: " << brief(c) << ' ' << c << '\n'
-    << c.dump(std::cout) << '\n';
+    << c.full() << '\n';
 }
 
 void inject(Population& pop, unsigned long gen) {
@@ -256,10 +260,7 @@ void inject(Population& pop, unsigned long gen) {
 
 void prettyprint() {
   Candidate c{input()};
-  Printer p{Config::nBit};
-  for(auto& g : c.genotype())
-    g->print(p);
-  std::cout << p << '\n';
+  std::cout << c.circuit() << '\n';
 }
 
 /* Interrupt handler (Ctrl-C) */

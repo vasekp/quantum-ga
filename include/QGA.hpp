@@ -55,9 +55,9 @@ namespace QGA {
   #error Either USE_QPP or USE_QICLIB needed.
 #endif
 
-#include "QGA_bits/Printer.hpp"
+#include "QGA_bits/CircuitPrinter.hpp"
 #include "QGA_bits/Fitness.hpp"
-#include "QGA_bits/GateBase.hpp" // uses Fitness.hpp (internal::Counter)
+#include "QGA_bits/GateBase.hpp" // uses Fitness.hpp and CircuitPrinter.hpp
 #include "QGA_bits/Gene.hpp"     // uses GateBase.hpp
 #include "QGA_bits/Tools.hpp"
 #include "QGA_bits/Gates.hpp"    // uses Tools.hpp and GateBase.hpp

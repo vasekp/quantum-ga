@@ -413,24 +413,24 @@ public:
       dFun = std::discrete_distribution<size_t>(weights.begin(), weights.end());
     }
 
-    void dump(std::ostream& os) {
+    friend std::ostream& operator<< (std::ostream& os, const Selector& sel) {
       /* Find the longest GenOp name */
-      auto max = std::max_element(ops.begin(), ops.end(),
+      auto max = std::max_element(sel.ops.begin(), sel.ops.end(),
           [](const GenOp& a, const GenOp& b) {
             return a.name.length() < b.name.length();
           });
       auto maxw = max->name.length();
 
       /* Preserve settings of os */
-      auto flags_ = os.flags(std::ios_base::left | std::ios_base::fixed);
-      auto precision_ = os.precision(4);
+      auto flags_ = os.flags(std::ios_base::left);
 
       /* List all op names and probabilities */
-      for(auto& op : ops)
+      for(auto& op : sel.ops)
         os << std::setw(maxw+3) << op.name + ':'
            << op.prob << "  " << op.thits << '\n';
+
       os.flags(flags_);
-      os.precision(precision_);
+      return os;
     }
 
     std::pair<FunPtr, size_t> select() {
