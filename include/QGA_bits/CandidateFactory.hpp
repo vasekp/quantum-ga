@@ -457,7 +457,7 @@ public:
   static Selector getInitSelector() {
     using CF = CandidateFactory;
     std::vector<typename Selector::GenOp> ops{};
-    ops.push_back({ &CF::mAlterDiscrete,   "MDiscrete" });
+  //ops.push_back({ &CF::mAlterDiscrete,   "MDiscrete" });
     ops.push_back({ &CF::mAlterContinuous, "MContns" });
     ops.push_back({ &CF::mAddSlice,        "AddSlice" });
   //ops.push_back({ &CF::mAddPairs,        "AddPairs" });

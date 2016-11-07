@@ -61,8 +61,14 @@ public:
   }
 
   Pointer mutate(const Pointer&) const override {
-    angle_distribution<true> dAng{};
-    return std::make_shared<CPhaseTemp>(tgt, angle + dAng(gen::rng), ixs);
+    std::bernoulli_distribution dCont{};
+    if(dCont(gen::rng)) {
+      // Continuous
+      angle_distribution<true> dAng{};
+      return std::make_shared<CPhaseTemp>(tgt, angle + dAng(gen::rng), ixs);
+    } else
+      // Discrete
+      return std::make_shared<CPhaseTemp>();
   }
 
   Pointer simplify(const Pointer&) const override {
