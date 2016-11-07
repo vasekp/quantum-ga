@@ -10,11 +10,6 @@ struct CPhase {
 template<class GateBase>
 class CPhaseTemp : public GateBase {
 
-  unsigned tgt;
-  double angle;
-  Backend::Controls ixs;
-  Backend::Gate mat;
-
   using typename GateBase::Pointer;
   using Ctx = typename GateBase::Context;
 
@@ -124,6 +119,13 @@ public:
     double angle = std::stod(m[2].str()) * Const::pi;
     return std::make_shared<CPhaseTemp>(tgt, angle, Backend::Controls{ctrl});
   }
+
+private:
+
+  unsigned tgt;
+  double angle;
+  Backend::Controls ixs;
+  Backend::Gate mat;
 
 }; // class CPhase<Controls>::CPhaseTemp<GateBase>
 

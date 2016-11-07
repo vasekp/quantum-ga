@@ -134,6 +134,14 @@ namespace internal {
 template<class Pointer, class Head, class... Tail>
 class Chooser<Pointer, Head, Tail...> : Chooser<Pointer, Tail...> {
 
+public:
+
+  static Pointer getRandom() {
+    // upper bound inclusive: no need to add 1 for Head
+    std::uniform_int_distribution<> dist(0, sizeof...(Tail));
+    return getRandom(dist(gen::rng));
+  }
+
 protected:
 
   static Pointer getRandom(unsigned index) {
@@ -141,14 +149,6 @@ protected:
       return std::make_shared<Head>();
     else
       return Chooser<Pointer, Tail...>::getRandom(index - 1);
-  }
-
-public:
-
-  static Pointer getRandom() {
-    // upper bound inclusive: no need to add 1 for Head
-    std::uniform_int_distribution<> dist(0, sizeof...(Tail));
-    return getRandom(dist(gen::rng));
   }
 
 }; // class Chooser<Pointer, Head, Tail...>

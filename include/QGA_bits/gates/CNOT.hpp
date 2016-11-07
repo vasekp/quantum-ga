@@ -10,10 +10,6 @@ class CNOT {
 template<class GateBase>
 class CNOTTemp : public GateBase {
 
-  unsigned tgt;
-  Backend::Controls ixs;
-  bool odd;  // parity of the power
-
   using typename GateBase::Pointer;
   using Ctx = typename GateBase::Context;
 
@@ -101,6 +97,12 @@ public:
       }
     return std::make_shared<CNOTTemp>(tgt, Backend::Controls{ctrl});
   }
+
+private:
+
+  unsigned tgt;
+  Backend::Controls ixs;
+  bool odd;  // parity of the power
 
 }; // class CNOT<Controls>::CNOTTemp<GateBase>
 

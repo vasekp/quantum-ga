@@ -14,16 +14,6 @@ protected:
   using FitnessMain = Fitness<Elements...>;
   using FitnessFull = Fitness<typename Gene::Counter, Elements...>;
 
-private:
-
-  std::vector<Gene> gt{};
-  size_t origin = (size_t)(~0);
-  unsigned long gen = (unsigned long)(~0);
-
-  const Derived& derived() const {
-    return static_cast<const Derived&>(*this);
-  }
-
 public:
 
   using GeneType = Gene;
@@ -115,6 +105,16 @@ protected:
     return (unsigned long)(error * (1UL<<24)) / (double)(1UL<<24);
   }
 
+private:
+
+  const Derived& derived() const {
+    return static_cast<const Derived&>(*this);
+  }
+
+  std::vector<Gene> gt{};
+  size_t origin = (size_t)(~0);
+  unsigned long gen = (unsigned long)(~0);
+
 }; // class CandidateBase
 
 
@@ -122,8 +122,6 @@ namespace internal {
 
 template<class CandidateBase>
 class FullPrinter {
-
-  const CandidateBase& ref;
 
 public:
 
@@ -133,7 +131,11 @@ public:
     return p.ref.print_full(os);
   }
 
-};
+private:
+
+  const CandidateBase& ref;
+
+}; // class FullPrinter<Derived>
 
 } // namespace internal
 

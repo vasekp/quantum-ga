@@ -59,10 +59,6 @@ enum class Controls {
 template<Controls cc>
 class controls_distribution {
 
-  const unsigned nBit;
-  const double pTrue;
-  const unsigned iSkip;
-
 public:
 
   controls_distribution(unsigned nBit_, unsigned iSkip_, double pTrue_):
@@ -94,6 +90,12 @@ public:
 
     return bits;
   }
+
+private:
+
+  const unsigned nBit;
+  const double pTrue;
+  const unsigned iSkip;
 
 }; // class controls_distribution<Controls>
 
