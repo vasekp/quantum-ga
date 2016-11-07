@@ -122,6 +122,28 @@ private:
     return Candidate{std::move(gtNew)};
   }
 
+  Candidate mMutateAddPair() {
+    auto &parent = get();
+    auto &gtOrig = parent.genotype();
+    auto sz = gtOrig.size();
+    if(sz == 0)
+      return parent;
+    std::uniform_int_distribution<size_t> dPos{0, sz - 1};
+    size_t pos = dPos(gen::rng);
+    Gene gOrig{gtOrig[pos]};
+    gOrig.mutate();
+    Gene gNew{Gene::getRandom()};
+    std::vector<Gene> gtNew{};
+    gtNew.reserve(sz + 2);
+    gtNew.insert(gtNew.end(), gtOrig.begin(), gtOrig.begin() + pos);
+    gtNew.push_back(gNew);
+    gtNew.push_back(std::move(gOrig));
+    gNew.invert();
+    gtNew.push_back(std::move(gNew));
+    gtNew.insert(gtNew.end(), gtOrig.begin() + pos + 1, gtOrig.end());
+    return Candidate{std::move(gtNew)};
+  }
+
   Candidate mDeleteSlice() {
     auto &parent = get();
     auto &gtOrig = parent.genotype();
@@ -458,9 +480,10 @@ public:
     using CF = CandidateFactory;
     std::vector<typename Selector::GenOp> ops{};
   //ops.push_back({ &CF::mAlterDiscrete,   "MDiscrete" });
-    ops.push_back({ &CF::mAlterContinuous, "MContns" });
+    ops.push_back({ &CF::mAlterContinuous, "MutSingle" });
     ops.push_back({ &CF::mAddSlice,        "AddSlice" });
   //ops.push_back({ &CF::mAddPairs,        "AddPairs" });
+    ops.push_back({ &CF::mMutateAddPair,   "MutAddPair" });
     ops.push_back({ &CF::mDeleteSlice,     "DelShort" });
     ops.push_back({ &CF::mDeleteUniform,   "DelUnif"  });
     ops.push_back({ &CF::mReplaceSlice,    "ReplSlice" });
