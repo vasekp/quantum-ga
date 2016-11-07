@@ -30,10 +30,6 @@ struct Fixed {
 template<class GateBase>
 class FixedTemp : public GateBase {
 
-  size_t op;
-  unsigned tgt;
-  Backend::Controls ixs;
-
   using typename GateBase::Pointer;
   using Ctx = typename GateBase::Context;
 
@@ -131,6 +127,12 @@ public:
       }
     return std::make_shared<FixedTemp>(op, tgt, Backend::Controls{ctrl});
   }
+
+private:
+
+  size_t op;
+  unsigned tgt;
+  Backend::Controls ixs;
 
 }; // class Fixed<Controls, Gates>::FixedTemp<GateBase>
 

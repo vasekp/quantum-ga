@@ -18,7 +18,7 @@ public:
   using Base::Base;
 
   Base::FitnessMain fitness_main() const {
-    if(gt.size() > 1000)
+    if(genotype().size() > 1000)
       return {INFINITY, INFINITY};
     using cxd = std::complex<double>;
     cxd overlapTotal{0};
@@ -61,7 +61,7 @@ private:
 
   State sim(const State& psi) const {
     State ret{psi};
-    for(const auto& g : gt)
+    for(const auto& g : genotype())
       ret = ret.apply(g);
     return ret;
   }

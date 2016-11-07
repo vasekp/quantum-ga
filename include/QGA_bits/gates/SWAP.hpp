@@ -7,10 +7,6 @@ struct SWAP {
 template<class GateBase>
 class SWAPTemp : public GateBase {
 
-  unsigned s1, s2;
-  Backend::Controls ixs;
-  bool odd;  // parity of the power
-
   using typename GateBase::Pointer;
   using Ctx = typename GateBase::Context;
 
@@ -89,6 +85,12 @@ public:
       return {};
     return std::make_shared<SWAPTemp>(s1, s2);
   }
+
+private:
+
+  unsigned s1, s2;
+  Backend::Controls ixs;
+  bool odd;  // parity of the power
 
 }; // class SWAP::SWAPTemp<GateBase>
 

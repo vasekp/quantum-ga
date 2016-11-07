@@ -10,13 +10,6 @@ struct SU2 {
 template<class GateBase>
 class SU2Temp : public GateBase {
 
-  unsigned tgt;
-  double angle1;
-  double angle2;
-  double angle3;
-  Backend::Controls ixs;
-  Backend::Gate mat;
-
   using typename GateBase::Pointer;
   using Ctx = typename GateBase::Context;
 
@@ -147,6 +140,15 @@ public:
         angle1, angle2, angle3,
         Backend::Controls{ctrl});
   }
+
+private:
+
+  unsigned tgt;
+  double angle1;
+  double angle2;
+  double angle3;
+  Backend::Controls ixs;
+  Backend::Gate mat;
 
 }; // class SU2<Controls>::SU2Temp<GateBase>
 

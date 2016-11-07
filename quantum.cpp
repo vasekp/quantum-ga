@@ -21,10 +21,14 @@
   #include "QGA_Problem/Simple.hpp"
 #endif
 
+#ifndef NBIT
+  #define NBIT 4
+#endif
+
 namespace Config {
 
   // Circuit width (constant)
-  const unsigned nBit = 4;
+  const unsigned nBit = NBIT;
 
   // strength parameter of NSGA selection
   const double selectBias = 0.2;

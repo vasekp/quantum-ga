@@ -42,12 +42,6 @@ struct Param {
 template<class GateBase>
 class ParamTemp : public GateBase {
 
-  size_t op;
-  unsigned tgt;
-  double angle;
-  Backend::Controls ixs;
-  Backend::Gate mat;
-
   using typename GateBase::Pointer;
   using Ctx = typename GateBase::Context;
 
@@ -156,6 +150,14 @@ public:
     double angle = std::stod(m[num + 4].str()) * Const::pi;
     return std::make_shared<ParamTemp>(op, tgt, angle, Backend::Controls{ctrl});
   }
+
+private:
+
+  size_t op;
+  unsigned tgt;
+  double angle;
+  Backend::Controls ixs;
+  Backend::Gate mat;
 
 }; // class Param<Controls, Gates>::ParamTemp<GateBase>
 
