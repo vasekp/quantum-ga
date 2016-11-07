@@ -151,7 +151,7 @@ private:
     if(sz == 0)
       return parent;
     std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
-    std::uniform_int_distribution<size_t> dPos{0, sz};
+    std::uniform_int_distribution<size_t> dPos{0, sz - 1};
     size_t pos1 = dPos(gen::rng),
            len = 1 + dGeom(gen::rng),
            pos2 = pos1 + len > sz ? sz : pos1 + len;
@@ -166,8 +166,10 @@ private:
     auto &parent = get();
     auto &gtOrig = parent.genotype();
     auto sz = gtOrig.size();
+    if(sz == 0)
+      return parent;
     std::uniform_real_distribution<> dUni{};
-    std::uniform_int_distribution<size_t> dPos{0, sz};
+    std::uniform_int_distribution<size_t> dPos{0, sz - 1};
     std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
     size_t pos1 = dPos(gen::rng),
            len = 1 + dGeom(gen::rng),
@@ -178,8 +180,6 @@ private:
     do
       ins.push_back(Gene::getRandom());
     while(dUni(gen::rng) > probTerm);
-    /*while(dUni(gen::rng) > probTerm)
-      ins.push_back(Gene::getRandom());*/
     std::vector<Gene> gtNew{};
     gtNew.reserve(sz - (pos2 - pos1) + ins.size());
     gtNew.insert(gtNew.end(), gtOrig.begin(), gtOrig.begin() + pos1);
@@ -267,12 +267,10 @@ private:
     if(sz < 2)
       return parent;
     std::uniform_int_distribution<size_t> dPos{0, sz - 2};
+    std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
     size_t pos1 = dPos(gen::rng),
-           pos2 = dPos(gen::rng);
-    if(pos2 < pos1)
-      std::swap(pos1, pos2);
-    // ensure that pos2-pos1 is at least 2
-    pos2 += 2;
+           len = 2 + dGeom(gen::rng),
+           pos2 = pos1 + len > sz ? sz : pos1 + len;
     std::vector<Gene> gtNew = gtOrig;
     std::shuffle(gtNew.begin() + pos1, gtNew.begin() + pos2, gen::rng);
     return Candidate{std::move(gtNew)};
