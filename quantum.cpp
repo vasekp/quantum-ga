@@ -221,8 +221,7 @@ void dumpResults(Population& pop, CandidateFactory::Selector& sel,
   }
 
   /* Dump the heuristic distribution */
-  std::cout << "\nGenetic operator distribution:\n";
-  sel.dump(std::cout);
+  std::cout << "\nGenetic operator distribution:\n" << sel;
 
   /* Timing information */
   std::chrono::time_point<std::chrono::steady_clock>
