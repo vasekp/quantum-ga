@@ -11,13 +11,12 @@ class CandidateBase {
 
 protected:
 
-  std::vector<Gene> gt{};
-
   using FitnessMain = Fitness<Elements...>;
   using FitnessFull = Fitness<typename Gene::Counter, Elements...>;
 
 private:
 
+  std::vector<Gene> gt{};
   size_t origin = (size_t)(~0);
   unsigned long gen = (unsigned long)(~0);
 
@@ -69,16 +68,13 @@ public:
     return printer;
   }
 
-  static Derived read(std::istream&& is) {
+  static Derived read(const std::string str) {
+    std::istringstream is{str};
     std::vector<Gene> gt{};
     Gene gene{};
     while(is >> gene)
       gt.push_back(std::move(gene));
     return {std::move(gt)};
-  }
-
-  static Derived read(const std::string s) {
-    return read(std::istringstream{s});
   }
 
   const std::vector<Gene>& genotype() const {

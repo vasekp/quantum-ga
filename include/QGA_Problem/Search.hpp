@@ -95,7 +95,7 @@ public:
   using Base::Base;
 
   Base::FitnessMain fitness_main() const {
-    if(gt.size() > 1000)
+    if(genotype().size() > 1000)
       return {INFINITY, INFINITY};
     double errTotal = 0, errMax = 0;
     unsigned dim = 1 << Config::nBit;
@@ -130,7 +130,7 @@ private:
   State sim(const State& psi, unsigned mark) const {
     State ret{psi};
     Context c{mark};
-    for(const auto& g : gt)
+    for(const auto& g : genotype())
       ret = ret.apply(g, &c);
     return ret;
   }

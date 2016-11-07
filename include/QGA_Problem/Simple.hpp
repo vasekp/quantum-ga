@@ -46,7 +46,7 @@ private:
 
   State sim() const {
     State psi{0};
-    for(const auto& g : gt)
+    for(const auto& g : genotype())
       psi = psi.apply(g);
     return psi;
   }
