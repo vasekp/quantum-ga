@@ -27,9 +27,10 @@ struct Fitness<internal::Counter<Gates...>, Main, Others...> {
     return os << '{' << f.tuple << ',' << f.counter << '}';
   }
 
-  // Comparison of the first element of tuple
+  // Lexicographical ordering (first element of fitness most important)
   friend bool operator< (const Fitness& a, const Fitness& b) {
-    return static_cast<Main>(a.tuple) < static_cast<Main>(b.tuple);
+    return a.tuple < b.tuple
+      || (a.tuple == b.tuple && a.counter < b.counter);
   }
 
   friend bool operator<< (const Fitness& a, const Fitness& b) {
@@ -54,8 +55,9 @@ struct Fitness<internal::Counter<Gates...>, Main, Others...> {
 namespace internal {
 
 /* Helper template class for DomTuple and Counter. Holds one element of a
- * specified type and defines operators for dominance comparison and for
- * output. Invoked in a zig-zag pattern: e.g.,
+ * specified type and defines operators for dominance comparison,
+ * lexicoraphical comparison, and for output. Inherited in a zig-zag pattern,
+ * for example:
  * Counter<A, B, C>
  *   DomComparator<unsigned, Counter<B, C>>
  * Counter<B, C>
@@ -81,6 +83,11 @@ public:
 
   friend bool operator== (const DomComparator& c1, const DomComparator& c2) {
     return c1.element == c2.element && c1.next() == c2.next();
+  }
+
+  friend bool operator< (const DomComparator& c1, const DomComparator& c2) {
+    return c1.element < c2.element
+      || (c1.element == c2.element && c1.next() < c2.next());
   }
 
   friend double dist(const DomComparator& c1, const DomComparator& c2) {
@@ -126,6 +133,10 @@ public:
 
   friend bool operator== (const DomComparator& c1, const DomComparator& c2) {
     return c1.element == c2.element;
+  }
+
+  friend bool operator< (const DomComparator& c1, const DomComparator& c2) {
+    return c1.element < c2.element;
   }
 
   friend double dist(const DomComparator& c1, const DomComparator& c2) {
