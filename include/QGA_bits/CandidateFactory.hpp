@@ -19,7 +19,7 @@ public:
   static Candidate genInit() {
     // probability of termination; expLengthIni = expected number of genes
     const double probTerm = 1/Config::expLengthIni;
-    std::uniform_real_distribution<> dUni{0, 1};
+    std::uniform_real_distribution<> dUni{};
     std::vector<Gene> gtOrig{};
     gtOrig.reserve(Config::expLengthIni);
     do
@@ -46,7 +46,7 @@ private:
     if(sz == 0)
       return parent;
     auto gtNew = gtOrig;
-    std::uniform_real_distribution<> dUni{0, 1};
+    std::uniform_real_distribution<> dUni{};
     std::uniform_int_distribution<size_t> dPos{0, sz - 1};
     const double probTerm = 1/Config::expMutationCount;
     do
@@ -62,7 +62,7 @@ private:
     if(sz == 0)
       return parent;
     auto gtNew = gtOrig;
-    std::uniform_real_distribution<> dUni{0, 1};
+    std::uniform_real_distribution<> dUni{};
     std::uniform_int_distribution<size_t> dPos{0, sz - 1};
     const double probTerm = 1/Config::expMutationCount;
     do
@@ -75,7 +75,7 @@ private:
     auto &parent = get();
     auto &gtOrig = parent.genotype();
     auto sz = gtOrig.size();
-    std::uniform_real_distribution<> dUni{0, 1};
+    std::uniform_real_distribution<> dUni{};
     std::uniform_int_distribution<size_t> dPos{0, sz};
     size_t pos = dPos(gen::rng);
     std::vector<Gene> ins{};
@@ -96,7 +96,7 @@ private:
     auto &parent = get();
     auto &gtOrig = parent.genotype();
     auto sz = gtOrig.size();
-    std::uniform_real_distribution<> dUni{0, 1};
+    std::uniform_real_distribution<> dUni{};
     std::uniform_int_distribution<size_t> dPos{0, sz};
     size_t pos1 = dPos(gen::rng),
            pos2 = dPos(gen::rng);
@@ -144,7 +144,7 @@ private:
     auto &parent = get();
     auto &gtOrig = parent.genotype();
     auto sz = gtOrig.size();
-    std::uniform_real_distribution<> dUni{0, 1};
+    std::uniform_real_distribution<> dUni{};
     std::uniform_int_distribution<size_t> dPos{0, sz};
     std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
     size_t pos1 = dPos(gen::rng),
@@ -170,7 +170,7 @@ private:
     auto &parent = get();
     auto &gtOrig = parent.genotype();
     auto sz = gtOrig.size();
-    std::uniform_real_distribution<> dUni{0, 1};
+    std::uniform_real_distribution<> dUni{};
     std::vector<Gene> gtNew{};
     gtNew.reserve(gtOrig.size());
     size_t cnt = 0;
@@ -295,7 +295,7 @@ private:
     // take or skip before making a new decision whether to cross over.
     double expLen1 = (double)sz1 / szShorter,
            expLen2 = (double)sz2 / szShorter;
-    std::uniform_real_distribution<> dUni{0, 1};
+    std::uniform_real_distribution<> dUni{};
     std::geometric_distribution<size_t> dGeom1{1.0 / expLen1};
     std::geometric_distribution<size_t> dGeom2{1.0 / expLen2};
     std::vector<Gene> gtNew{};
