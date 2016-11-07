@@ -62,6 +62,13 @@ public:
     return {derived()};
   }
 
+  internal::CircuitPrinter circuit() const {
+    internal::CircuitPrinter printer{Config::nBit};
+    for(const auto& g : gt)
+      printer.print(g);
+    return printer;
+  }
+
   static Derived read(std::istream&& is) {
     std::vector<Gene> gt{};
     Gene gene{};

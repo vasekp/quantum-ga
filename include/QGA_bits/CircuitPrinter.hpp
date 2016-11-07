@@ -1,8 +1,12 @@
-class Printer {
+namespace QGA {
+
+namespace internal {
+
+class CircuitPrinter {
 
 public:
 
-  Printer(unsigned nBit_): nBit(nBit_), lines(2*nBit - 1) {
+  CircuitPrinter(unsigned nBit_): nBit(nBit_), lines(2*nBit - 1) {
     for(unsigned i = 0; i < nBit; i++)
       lines[2*i] = "-";
   }
@@ -36,11 +40,21 @@ public:
       lines[2*i] += '-';
   }
 
-  friend std::ostream& operator<< (std::ostream& os, Printer& p) {
+  template<class Gate>
+  void print(const Gate& g) {
+    g->printOn(*this);
+  }
+
+  friend std::ostream& operator<< (std::ostream& os, CircuitPrinter& p) {
     p.alignAll();
     for(auto& line : p.lines)
       os << line << '\n';
     return os;
+  }
+
+  friend std::ostream& operator<< (std::ostream& os, CircuitPrinter&& p) {
+    CircuitPrinter p_{p};
+    return os << p_;
   }
 
 private:
@@ -96,4 +110,8 @@ private:
   unsigned nBit;
   std::vector<std::string> lines;
 
-};
+}; // class CircuitPrinter
+
+} // namespace internal
+
+} // namespace QGA

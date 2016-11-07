@@ -102,7 +102,7 @@ public:
   }
 
   // print this gate in circuit representation
-  virtual void print(Printer& p) const = 0;
+  virtual void printOn(internal::CircuitPrinter& p) const = 0;
 
   virtual ~GateBase() { }
 

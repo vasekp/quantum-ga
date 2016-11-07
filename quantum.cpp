@@ -163,17 +163,15 @@ int main() {
             return c1.getGen() > c2.getGen();
           });
 
-      Printer printer{Config::nBit};
-      for(auto& g : pop.best().genotype())
-        g->print(printer);
-
+      // Prepare circuit in advance to not delay the printing operation later
+      auto circuit = pop.best().circuit();
       std::cout
         << Colours::bold("Gen ", gen, ": ")
         << Colours::yellow(pop.size()) << " unique fitnesses, "
         << "lowest error " << brief(pop.best()) << ", "
         << Colours::yellow(nondom.size()) << " nondominated, "
         << "newest: " << brief(newest) << '\n'
-        << printer << std::endl;
+        << circuit << std::endl;
     }
 
     /* Interrupted? */
@@ -210,13 +208,9 @@ void dumpResults(Population& pop, CandidateFactory::Selector& sel,
     << Colours::yellow(nondom.size()) << " nondominated candidates:\n";
   for(auto& c : nondom.reverse()) {
     std::cout << brief(c) << ' ' << c;
-    if(c.fitness() < 0.01) {
-      std::cout << ": " << c.full();
-      Printer printer{Config::nBit};
-      for(auto& g : c.genotype())
-        g->print(printer);
-      std::cout << printer;
-    } else
+    if(c.fitness() < 0.01)
+      std::cout << ": " << c.full() << c.circuit();
+    else
       std::cout << '\n';
   }
 
@@ -266,10 +260,7 @@ void inject(Population& pop, unsigned long gen) {
 
 void prettyprint() {
   Candidate c{input()};
-  Printer p{Config::nBit};
-  for(auto& g : c.genotype())
-    g->print(p);
-  std::cout << p << '\n';
+  std::cout << c.circuit() << '\n';
 }
 
 /* Interrupt handler (Ctrl-C) */

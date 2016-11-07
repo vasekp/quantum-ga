@@ -59,7 +59,7 @@ public:
     return os << (odd ? "Oracle" : "[Id]");
   }
 
-  void print(Printer& p) const override {
+  void printOn(QGA::internal::CircuitPrinter& p) const override {
     p.addBarrierGate("U_f");
   }
 

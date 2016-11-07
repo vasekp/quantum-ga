@@ -97,7 +97,7 @@ public:
     return os;
   }
 
-  void print(Printer& p) const override {
+  void printOn(QGA::internal::CircuitPrinter& p) const override {
     p.addGates({
         {{tgt}, "[Φ]"},
         {ixs.as_vector(), "[Φ]"}
