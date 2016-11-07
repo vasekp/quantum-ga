@@ -58,7 +58,7 @@ namespace Config {
   const double heurFactor = 1.0 / nGen;
 
   // How much each bit is likely to be a control bit at gate creation
-  const double pControl = 0.25;
+  const double pControl = 0.5;
 
   // Size of random subset of candidates to list on demand at interrupt
   const size_t nIntList = 20;
