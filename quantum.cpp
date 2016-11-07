@@ -211,7 +211,7 @@ void dumpResults(Population& pop, CandidateFactory::Selector& sel,
   for(auto& c : nondom.reverse()) {
     std::cout << brief(c) << ' ' << c;
     if(c.fitness() < 0.01) {
-      std::cout << ": " << c.dump(std::cout);
+      std::cout << ": " << c.full();
       Printer printer{Config::nBit};
       for(auto& g : c.genotype())
         g->print(printer);
@@ -255,7 +255,7 @@ void listRandom(Population& pop) {
 void evaluate() {
   Candidate c{input()};
   std::cout << "\nParsed: " << brief(c) << ' ' << c << '\n'
-    << c.dump(std::cout) << '\n';
+    << c.full() << '\n';
 }
 
 void inject(Population& pop, unsigned long gen) {

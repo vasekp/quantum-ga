@@ -1,5 +1,11 @@
 namespace QGA {
 
+namespace internal {
+  // Defined below
+  template<class>
+  class FullPrinter;
+}
+
 template<class Derived, class Gene, typename... Elements>
 class CandidateBase {
 
@@ -50,6 +56,10 @@ public:
     for(const auto& g : c.gt)
       os << g << ' ';
     return os;
+  }
+
+  internal::FullPrinter<Derived> full() const {
+    return {derived()};
   }
 
   static Derived read(std::istream&& is) {
@@ -103,5 +113,25 @@ protected:
   }
 
 }; // class CandidateBase
+
+
+namespace internal {
+
+template<class CandidateBase>
+class FullPrinter {
+
+  const CandidateBase& ref;
+
+public:
+
+  FullPrinter(const CandidateBase& ref_): ref(ref_) { }
+
+  friend std::ostream& operator<< (std::ostream& os, const FullPrinter& p) {
+    return p.ref.print_full(os);
+  }
+
+};
+
+} // namespace internal
 
 } // namespace QGA

@@ -114,18 +114,15 @@ public:
     };
   }
 
-  std::string dump(const std::ostream& ex) const {
-    std::ostringstream os{};
-    os.flags(ex.flags());
-    os.precision(ex.precision());
-    os << '\n';
+  std::ostream& print_full(std::ostream& os) const {
     unsigned dim = 1 << Config::nBit;
     State psi{0};
+    os << '\n';
     for(unsigned mark = 0; mark < dim; mark++) {
       os << mark << ": ";
       os << sim(psi, mark);
     }
-    return os.str();
+    return os;
   }
 
 private:

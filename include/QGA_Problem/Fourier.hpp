@@ -41,13 +41,10 @@ public:
     };
   }
 
-  std::string dump(const std::ostream& ex) const {
-    std::ostringstream os{};
-    os.flags(ex.flags());
-    os.precision(ex.precision());
-    os << '\n';
+  std::ostream& print_full(std::ostream& os) const {
     unsigned dim = 1 << Config::nBit;
     State psi{};
+    os << '\n';
     for(unsigned i = 0; i < dim; i++) {
       psi.reset(i);
       State out = sim(psi);
@@ -57,7 +54,7 @@ public:
           << std::noshowpos;
       os << '\n';
     }
-    return os.str();
+    return os;
   }
 
 private:
