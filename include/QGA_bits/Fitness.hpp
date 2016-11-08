@@ -23,10 +23,6 @@ struct Fitness<internal::Counter<Gates...>, Main, Others...> {
   internal::DomTuple<Main, Others...> tuple;
   internal::Counter<Gates...> counter;
 
-  friend std::ostream& operator<< (std::ostream& os, const Fitness& f) {
-    return os << '{' << f.tuple << ',' << f.counter << '}';
-  }
-
   // Lexicographical ordering (first element of fitness most important)
   friend bool operator< (const Fitness& a, const Fitness& b) {
     return a.tuple < b.tuple
@@ -47,6 +43,14 @@ struct Fitness<internal::Counter<Gates...>, Main, Others...> {
 
   operator Main() const {
     return static_cast<Main>(tuple);
+  }
+
+  friend std::ostream& operator<< (std::ostream& os, const Fitness& f) {
+    return os << '{' << f.tuple << ',' << f.counter << '}';
+  }
+
+  friend std::istream& operator>> (std::istream& is, Fitness& f) {
+    return is >> f.tuple >> f.counter;
   }
 
 }; // struct Fitness<Counter, Elements...>
@@ -73,9 +77,7 @@ public:
   template<typename... Args>
   DomComparator(Element elm_, Args... args): Next(args...), element(elm_) { }
 
-  friend std::ostream& operator<< (std::ostream& os, const DomComparator& c) {
-    return os << c.element << ',' << c.next();
-  }
+  DomComparator() = default;
 
   friend bool operator<<= (const DomComparator& c1, const DomComparator& c2) {
     return c1.element <= c2.element && (c1.next() <<= c2.next());
@@ -98,17 +100,34 @@ public:
     return element;
   }
 
+  friend std::ostream& operator<< (std::ostream& os, const DomComparator& c) {
+    return os << c.element << ',' << c.next();
+  }
+
+  friend std::istream& operator>> (std::istream& is, DomComparator& c) {
+    is >> c.element;
+    if(!is) {
+      is.clear(is.rdstate() & ~std::ios::failbit);
+      std::string str;
+      is >> str;
+      c.element = (Element)INFINITY;
+    }
+    return is >> c.next();
+  }
+
 protected:
 
   operator Element&() {
     return element;
   }
 
-  DomComparator() = default;
-
 private:
 
-  const Next next() const {
+  Next& next() {
+    return static_cast<Next&>(*this);
+  }
+
+  const Next& next() const {
     return static_cast<const Next&>(*this);
   }
 
@@ -123,9 +142,7 @@ public:
 
   DomComparator(Element elm_): element(elm_) { }
 
-  friend std::ostream& operator<< (std::ostream& os, const DomComparator& c) {
-    return os << c.element;
-  }
+  DomComparator() = default;
 
   friend bool operator<<= (const DomComparator& c1, const DomComparator& c2) {
     return c1.element <= c2.element;
@@ -147,13 +164,26 @@ public:
     return element;
   }
 
+  friend std::ostream& operator<< (std::ostream& os, const DomComparator& c) {
+    return os << c.element;
+  }
+
+  friend std::istream& operator>> (std::istream& is, DomComparator& c) {
+    is >> c.element;
+    if(!is) {
+      is.clear(is.rdstate() & ~std::ios::failbit);
+      std::string str;
+      is >> str;
+      c.element = (Element)INFINITY;
+    }
+    return is;
+  }
+
 protected:
 
   operator Element&() {
     return element;
   }
-
-  DomComparator() = default;
 
 private:
 
@@ -174,8 +204,11 @@ class DomTuple<Head, Tail...> : public DomComparator<Head, DomTuple<Tail...>> {
 
 public:
 
-  DomTuple(Head head, Tail... tail) :
-    DomComparator<Head, DomTuple<Tail...>>(head, tail...) { }
+  using DomComparator<Head, DomTuple<Tail...>>::DomComparator;
+
+  friend std::istream& operator>> (std::istream& is, DomTuple& c) {
+    return is >> static_cast<DomComparator<Head, DomTuple<Tail...>>&>(c);
+  }
 
 }; // class DomTuple<Head, Tail...>
 
@@ -184,8 +217,11 @@ class DomTuple<Last> : public DomComparator<Last, void> {
 
 public:
 
-  DomTuple(Last last) :
-    DomComparator<Last, void>(last) { }
+  using DomComparator<Last, void>::DomComparator;
+
+  friend std::istream& operator>> (std::istream& is, DomTuple& c) {
+    return is >> static_cast<DomComparator<Last, void>&>(c);
+  }
 
 }; // class DomTuple<Last> (sequence terminator)
 
@@ -209,6 +245,10 @@ public:
 
   using Counter<Tail...>::hit;
 
+  friend std::istream& operator>> (std::istream& is, Counter& c) {
+    return is >> static_cast<DomComparator<unsigned, Counter<Tail...>>&>(c);
+  }
+
 }; // class Counter<Head, Tail...>
 
 template<class Last>
@@ -218,6 +258,10 @@ public:
 
   void hit(const Last*) {
     ++(unsigned&)(*this);
+  }
+
+  friend std::istream& operator>> (std::istream& is, Counter& c) {
+    return is >> static_cast<DomComparator<unsigned, void>&>(c);
   }
 
 }; // class Counter<Last> (sequence terminator)

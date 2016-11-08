@@ -249,6 +249,26 @@ void listRandom(Population& pop) {
     std::cout << brief(c) << ' ' << c << '\n';
 }
 
+void listFilter(Population& pop) {
+  std::cout << "Enter space-separated maximum elements of fitness "
+    << "(non-number for no filter on a field):\n";
+  std::string line{};
+  std::getline(std::cin, line);
+  std::istringstream is{line};
+  GenCandidate::Traits::FitnessType maxFitness{};
+  is >> maxFitness;
+
+  auto nondom = pop.front();
+  nondom.prune([&](const GenCandidate& c) -> bool {
+      return !(c.fitness() << maxFitness);
+    });
+  nondom.sort();
+  std::cout << '\n'
+    << Colours::yellow(nondom.size()) << " nondominated candidates:\n";
+  for(auto& c : nondom.reverse())
+    std::cout << brief(c) << ' ' << c << '\n';
+}
+
 void evaluate() {
   Candidate c{input()};
   std::cout << "\nParsed: " << brief(c) << ' ' << c << '\n'
@@ -286,7 +306,8 @@ int int_response(Population& pop, unsigned long gen) {
     << Colours::blue("a: ") << "abort,\n"
     << Colours::blue("c: ") << "continue,\n"
     << Colours::blue("d: ") << "diagnose / list current results,\n"
-    << Colours::blue("e: ") << "fully evaluate a candidate,\n"
+    << Colours::blue("e: ") << "evaluate a candidate in full,\n"
+    << Colours::blue("f: ") << "filter the front on fitness,\n"
     << Colours::blue("i: ") << "inject a candidate,\n"
     << Colours::blue("l: ") << "list " << Config::nIntList
         << " random candidates,\n"
@@ -314,6 +335,9 @@ int int_response(Population& pop, unsigned long gen) {
       case 'e':
         evaluate();
         return int_response(pop, gen); // tail recursion
+      case 'f':
+        listFilter(pop);
+        return int_response(pop, gen);
       case 'i':
         inject(pop, gen);
         return int_response(pop, gen);
