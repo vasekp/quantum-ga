@@ -20,7 +20,9 @@ public:
         (gen::rng)),
     ixs(), odd(true)
   {
-    // ensure that the two subsystem indices are different
+    // ensure that the two systems are different and in ascending order
+    if(s2 < s1)
+      std::swap(s1, s2);
     s2 += s2 >= s1;
     ixs = Backend::Controls::swap(s1, s2);
   }
@@ -41,6 +43,10 @@ public:
   bool isTrivial() const override {
     // SWAP^(2k) = SWAP^0 = identity
     return !odd;
+  }
+
+  Pointer mutate(const Pointer&) const override {
+    return std::make_shared<SWAPTemp>();
   }
 
   void hit(typename GateBase::Counter& c) const {

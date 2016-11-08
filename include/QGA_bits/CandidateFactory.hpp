@@ -122,6 +122,28 @@ private:
     return Candidate{std::move(gtNew)};
   }
 
+  Candidate mMutateAddPair() {
+    auto &parent = get();
+    auto &gtOrig = parent.genotype();
+    auto sz = gtOrig.size();
+    if(sz == 0)
+      return parent;
+    std::uniform_int_distribution<size_t> dPos{0, sz - 1};
+    size_t pos = dPos(gen::rng);
+    Gene gOrig{gtOrig[pos]};
+    gOrig.mutate();
+    Gene gNew{Gene::getRandom()};
+    std::vector<Gene> gtNew{};
+    gtNew.reserve(sz + 2);
+    gtNew.insert(gtNew.end(), gtOrig.begin(), gtOrig.begin() + pos);
+    gtNew.push_back(gNew);
+    gtNew.push_back(std::move(gOrig));
+    gNew.invert();
+    gtNew.push_back(std::move(gNew));
+    gtNew.insert(gtNew.end(), gtOrig.begin() + pos + 1, gtOrig.end());
+    return Candidate{std::move(gtNew)};
+  }
+
   Candidate mDeleteSlice() {
     auto &parent = get();
     auto &gtOrig = parent.genotype();
@@ -129,7 +151,7 @@ private:
     if(sz == 0)
       return parent;
     std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
-    std::uniform_int_distribution<size_t> dPos{0, sz};
+    std::uniform_int_distribution<size_t> dPos{0, sz - 1};
     size_t pos1 = dPos(gen::rng),
            len = 1 + dGeom(gen::rng),
            pos2 = pos1 + len > sz ? sz : pos1 + len;
@@ -144,8 +166,10 @@ private:
     auto &parent = get();
     auto &gtOrig = parent.genotype();
     auto sz = gtOrig.size();
+    if(sz == 0)
+      return parent;
     std::uniform_real_distribution<> dUni{};
-    std::uniform_int_distribution<size_t> dPos{0, sz};
+    std::uniform_int_distribution<size_t> dPos{0, sz - 1};
     std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
     size_t pos1 = dPos(gen::rng),
            len = 1 + dGeom(gen::rng),
@@ -156,8 +180,6 @@ private:
     do
       ins.push_back(Gene::getRandom());
     while(dUni(gen::rng) > probTerm);
-    /*while(dUni(gen::rng) > probTerm)
-      ins.push_back(Gene::getRandom());*/
     std::vector<Gene> gtNew{};
     gtNew.reserve(sz - (pos2 - pos1) + ins.size());
     gtNew.insert(gtNew.end(), gtOrig.begin(), gtOrig.begin() + pos1);
@@ -245,14 +267,28 @@ private:
     if(sz < 2)
       return parent;
     std::uniform_int_distribution<size_t> dPos{0, sz - 2};
+    std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
     size_t pos1 = dPos(gen::rng),
-           pos2 = dPos(gen::rng);
-    if(pos2 < pos1)
-      std::swap(pos1, pos2);
-    // ensure that pos2-pos1 is at least 2
-    pos2 += 2;
+           len = 2 + dGeom(gen::rng),
+           pos2 = pos1 + len > sz ? sz : pos1 + len;
     std::vector<Gene> gtNew = gtOrig;
     std::shuffle(gtNew.begin() + pos1, gtNew.begin() + pos2, gen::rng);
+    return Candidate{std::move(gtNew)};
+  }
+
+  Candidate mSwapTwo() {
+    auto &parent = get();
+    auto &gtOrig = parent.genotype();
+    auto sz = gtOrig.size();
+    if(sz < 2)
+      return parent;
+    std::uniform_int_distribution<size_t> dPos{0, sz - 2};
+    std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
+    size_t pos1 = dPos(gen::rng),
+           len = 1 + dGeom(gen::rng),
+           pos2 = pos1 + len > sz - 1 ? sz - 1 : pos1 + len;
+    std::vector<Gene> gtNew = gtOrig;
+    swap(gtNew[pos1], gtNew[pos2]);
     return Candidate{std::move(gtNew)};
   }
 
@@ -457,16 +493,18 @@ public:
   static Selector getInitSelector() {
     using CF = CandidateFactory;
     std::vector<typename Selector::GenOp> ops{};
-    ops.push_back({ &CF::mAlterDiscrete,   "MDiscrete" });
-    ops.push_back({ &CF::mAlterContinuous, "MContns" });
+  //ops.push_back({ &CF::mAlterDiscrete,   "MDiscrete" });
+    ops.push_back({ &CF::mAlterContinuous, "MutSingle" });
     ops.push_back({ &CF::mAddSlice,        "AddSlice" });
   //ops.push_back({ &CF::mAddPairs,        "AddPairs" });
+    ops.push_back({ &CF::mMutateAddPair,   "MutAddPair" });
     ops.push_back({ &CF::mDeleteSlice,     "DelShort" });
     ops.push_back({ &CF::mDeleteUniform,   "DelUnif"  });
     ops.push_back({ &CF::mReplaceSlice,    "ReplSlice" });
     ops.push_back({ &CF::mSplitSwap,       "SpltSwp"  });
     ops.push_back({ &CF::mReverseSlice,    "InvSlice" });
-    ops.push_back({ &CF::mPermuteSlice,    "PermSlice" });
+  //ops.push_back({ &CF::mPermuteSlice,    "PermSlice" });
+    ops.push_back({ &CF::mSwapTwo,         "SwapTwo" });
     ops.push_back({ &CF::mRepeatSlice,     "ReptSlice" });
     ops.push_back({ &CF::crossoverUniform, "C/Over"   });
   //ops.push_back({ &CF::concat3,          "Concat3"  });

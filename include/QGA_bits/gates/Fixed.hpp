@@ -68,6 +68,10 @@ public:
       return self;
   }
 
+  Pointer mutate(const Pointer&) const override {
+    return std::make_shared<FixedTemp>();
+  }
+
   void hit(typename GateBase::Counter& c) const {
     c.hit(this);
   }

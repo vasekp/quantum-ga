@@ -97,6 +97,10 @@ public:
     return pointer() == other.pointer();
   }
 
+  friend void swap(Gene& a, Gene& b) {
+    swap(a.pointer(), b.pointer());
+  }
+
 private:
 
   Pointer& pointer() {
