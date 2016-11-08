@@ -101,8 +101,8 @@ protected:
   }
 
   static double trimError(double error) {
-    // Ignore deviations of roughly 10^-7
-    return (unsigned long)(error * (1UL<<24)) / (double)(1UL<<24);
+    // Ignore deviations of roughly 10^-5
+    return (unsigned long)(error * (1UL<<16)) / (double)(1UL<<16);
   }
 
 private:
