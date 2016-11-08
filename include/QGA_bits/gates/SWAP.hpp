@@ -20,7 +20,9 @@ public:
         (gen::rng)),
     ixs(), odd(true)
   {
-    // ensure that the two subsystem indices are different
+    // ensure that the two systems are different and in ascending order
+    if(s2 < s1)
+      std::swap(s1, s2);
     s2 += s2 >= s1;
     ixs = Backend::Controls::swap(s1, s2);
   }
