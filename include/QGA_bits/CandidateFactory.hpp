@@ -276,6 +276,22 @@ private:
     return Candidate{std::move(gtNew)};
   }
 
+  Candidate mSwapTwo() {
+    auto &parent = get();
+    auto &gtOrig = parent.genotype();
+    auto sz = gtOrig.size();
+    if(sz < 2)
+      return parent;
+    std::uniform_int_distribution<size_t> dPos{0, sz - 2};
+    std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
+    size_t pos1 = dPos(gen::rng),
+           len = 1 + dGeom(gen::rng),
+           pos2 = pos1 + len > sz - 1 ? sz - 1 : pos1 + len;
+    std::vector<Gene> gtNew = gtOrig;
+    swap(gtNew[pos1], gtNew[pos2]);
+    return Candidate{std::move(gtNew)};
+  }
+
   Candidate mRepeatSlice() {
     auto &parent = get();
     auto &gtOrig = parent.genotype();
@@ -487,7 +503,8 @@ public:
     ops.push_back({ &CF::mReplaceSlice,    "ReplSlice" });
     ops.push_back({ &CF::mSplitSwap,       "SpltSwp"  });
     ops.push_back({ &CF::mReverseSlice,    "InvSlice" });
-    ops.push_back({ &CF::mPermuteSlice,    "PermSlice" });
+  //ops.push_back({ &CF::mPermuteSlice,    "PermSlice" });
+    ops.push_back({ &CF::mSwapTwo,         "SwapTwo" });
     ops.push_back({ &CF::mRepeatSlice,     "ReptSlice" });
     ops.push_back({ &CF::crossoverUniform, "C/Over"   });
   //ops.push_back({ &CF::concat3,          "Concat3"  });
