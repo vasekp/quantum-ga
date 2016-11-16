@@ -4,6 +4,10 @@
 # To make a debug version:
 # make DEBUG=1 target
 #
+# To make a benchmark (a perfectly reproducible run with a fixed thread count 
+# and fixed seed of random number generators):
+# make BENCH=1 target
+#
 # To force remake a target (with different defines):
 # make -B target
 
