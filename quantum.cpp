@@ -4,6 +4,10 @@
 #include <chrono>
 #include <unistd.h> // isatty()
 
+#ifdef BENCH
+  #define GENETIC_OPENMP_REPRODUCIBLE
+#endif
+
 #include "genetic.hpp"
 #include "QGA.hpp"
 #include "Colours.hpp"
@@ -99,17 +103,27 @@ BriefPrinter<Candidate> brief(const Candidate& ref) {
  ************/
 
 int main() {
-#ifdef BENCH
-  gen::rng.seed(1);
-  omp_set_num_threads(1);
-#endif
-
   /* Initialize output */
   if(isatty(1)) {
     Colours::use = true;
     std::signal(SIGINT, int_handler);
   }
   std::cout << std::fixed << std::setprecision(4);
+
+#ifdef BENCH
+  /* Set a fixed number of threads */
+  omp_set_num_threads(4);
+  omp_set_dynamic(false);
+
+  /* Initialize the RNG's */
+  {
+    std::mt19937 master{};
+    #pragma omp parallel for ordered
+    for(int j = 0; j < omp_get_num_threads(); j++)
+      #pragma omp ordered
+      gen::rng.seed(master());
+  }
+#endif
 
   /* Initialize state variables */
   std::chrono::time_point<std::chrono::steady_clock>
