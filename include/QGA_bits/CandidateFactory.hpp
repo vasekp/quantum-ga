@@ -499,7 +499,7 @@ public:
   //ops.push_back({ &CF::mAddPairs,        "AddPairs" });
     ops.push_back({ &CF::mMutateAddPair,   "MutAddPair" });
     ops.push_back({ &CF::mDeleteSlice,     "DelShort" });
-    ops.push_back({ &CF::mDeleteUniform,   "DelUnif"  });
+  //ops.push_back({ &CF::mDeleteUniform,   "DelUnif"  });
     ops.push_back({ &CF::mReplaceSlice,    "ReplSlice" });
     ops.push_back({ &CF::mSplitSwap,       "SpltSwp"  });
     ops.push_back({ &CF::mReverseSlice,    "InvSlice" });

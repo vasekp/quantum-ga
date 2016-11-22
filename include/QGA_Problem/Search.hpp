@@ -110,7 +110,7 @@ public:
     }
     return {
       this->trimError(errTotal / dim),
-      this->trimError(errMax)
+      this->trimError(errMax + errTotal / dim)
     };
   }
 
