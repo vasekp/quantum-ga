@@ -35,7 +35,7 @@ namespace Config {
   const unsigned nBit = NBIT;
 
   // strength parameter of NSGA selection
-  const double selectBias = 0.2;
+  const double selectBias = 0.4;
 
   // Archive (external population) size
   const size_t arSize = 100;
@@ -44,19 +44,19 @@ namespace Config {
   const size_t popSize = 1000;
 
   // Number of candidates to keep from parent generation
-  const size_t popKeep = 0;
+  const size_t popKeep = 300;
 
   // Number of generations (constant)
   const unsigned long nGen = std::numeric_limits<unsigned long>::max();
 
   // Expected curcuit depth in 0th generation
-  const double expLengthIni = 30;
+  const double expLengthIni = 20;
 
   // Expected number of gates inserted / modified / removed in mutation
   const double expMutationCount = 4.0;
 
   // Probability of a crossover at any given point
-  const double pCrossUniform = 0.1;
+  const double pCrossUniform = 0.2;
 
   // How much prior success of genetic ops should influence future choices
   const double heurFactor = 1.0 / nGen;
@@ -68,7 +68,7 @@ namespace Config {
   const size_t nIntList = 20;
 
   // Standard deviation of mutation in gate angles
-  const double dAlpha = 0.1;
+  const double dAlpha = 0.2;
 
 } // namespace Config
 
@@ -141,7 +141,7 @@ int main() {
 
     /* Randomize and drop very similar fitnesses (disregarding gate counts) */
     pop2.prune([](const GenCandidate& a, const GenCandidate& b) -> bool {
-        return dist(a.fitness(), b.fitness()) < 0.1;
+        return dist(a.fitness(), b.fitness()) < 0.01;
       }, 0, true);
 
     /* Rank-trim the rest doen to arSize */
