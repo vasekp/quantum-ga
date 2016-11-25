@@ -20,7 +20,7 @@
 #include <vector>
 #include <utility>
 #include <algorithm>
-#include <regex>
+#include "regex.hpp"
 
 using std::size_t;
 

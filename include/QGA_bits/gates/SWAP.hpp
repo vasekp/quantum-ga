@@ -79,14 +79,14 @@ public:
   }
 
   static Pointer read(const std::string& s) {
-    std::regex re{"(\\[Id\\])|SWAP(\\d)(\\d)"};
-    std::smatch m{};
-    if(!std::regex_match(s, m, re))
+    regex::regex re{"(\\[Id\\])|SWAP(\\d)(\\d)"};
+    regex::matches ms{};
+    if(!re.match(s, ms))
       return {};
-    if(m[1].matched)
+    if(ms.matched(1))
       return std::make_shared<SWAPTemp>(false);
-    unsigned s1 = m[2].str()[0] - '1',
-             s2 = m[3].str()[0] - '1';
+    unsigned s1 = ms.match(2)[0] - '1',
+             s2 = ms.match(3)[0] - '1';
     if(s1 >= Config::nBit || s2 >= Config::nBit || s2 == s1)
       return {};
     return std::make_shared<SWAPTemp>(s1, s2);

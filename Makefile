@@ -9,10 +9,11 @@
 # make BENCH=1 target
 #
 # To force remake a target (with different defines):
-# make -B target
+# make touch target
 
 SOURCES = quantum.cpp
 HEADERS = include/*.hpp include/*/*.hpp include/*/*/*.hpp
+LIBS = regex.o
 
 TARGETS := simple fourier search
 default: search
@@ -50,11 +51,16 @@ search:	CXXFLAGS += -DSEARCH
 
 all: $(TARGETS)
 
-$(TARGETS): $(SOURCES) $(HEADERS)
-	$(CXX) $(CXXFLAGS) $(SOURCES) -o $@
+$(TARGETS): $(SOURCES) $(HEADERS) $(LIBS)
+	$(CXX) $(CXXFLAGS) $(SOURCES) $(LIBS) -o $@
+
+touch:
+	touch $(SOURCES)
+
+regex.o: regex.cpp include/regex.hpp
+	$(CXX) -O3 -c regex.cpp
 
 clean:
-	-rm $(TARGETS)
+	-rm $(TARGETS) $(LIBS)
 
-.PHONY: all clean
-
+.PHONY: all clean touch

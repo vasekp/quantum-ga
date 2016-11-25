@@ -124,24 +124,24 @@ public:
 
   static Pointer read(const std::string& s) {
     std::string reS{};
-    std::regex re{"U(\\d)(\\[(\\d+)\\])?"
+    regex::regex re{"U(\\d)(\\[(\\d+)\\])?"
       "\\((-?[0-9.]+)(?:π)?,(-?[0-9.]+)(?:π)?,(-?[0-9.]+)(?:π)?\\)"};
-    std::smatch m{};
-    if(!std::regex_match(s, m, re))
+    regex::matches ms{};
+    if(!re.match(s, ms))
       return {};
-    unsigned tgt = m[1].str()[0] - '1';
+    unsigned tgt = ms.match(1)[0] - '1';
     if(tgt >= Config::nBit)
       return {};
     std::vector<bool> ctrl(Config::nBit, false);
-    if(m[2].matched)
-      for(const char& c : m[3].str()) {
+    if(ms.matched(2))
+      for(const char& c : ms.match(3)) {
         size_t pos = c - '1';
         if(pos >= 0 && pos < Config::nBit && pos != tgt)
           ctrl[pos] = true;
       }
-    double angle1 = std::stod(m[4].str()) * Const::pi,
-           angle2 = std::stod(m[5].str()) * Const::pi,
-           angle3 = std::stod(m[6].str()) * Const::pi;
+    double angle1 = std::stod(ms.match(4)) * Const::pi,
+           angle2 = std::stod(ms.match(5)) * Const::pi,
+           angle3 = std::stod(ms.match(6)) * Const::pi;
     return std::make_shared<SU2Temp>(tgt,
         angle1, angle2, angle3,
         Backend::Controls{ctrl});

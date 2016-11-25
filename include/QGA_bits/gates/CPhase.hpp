@@ -107,13 +107,13 @@ public:
 
   static Pointer read(const std::string& s) {
     std::string reS{};
-    std::regex re{"P(\\d+)\\((-?[0-9.]+)(π)?\\)"};
-    std::smatch m{};
-    if(!std::regex_match(s, m, re))
+    regex::regex re{"P(\\d+)\\((-?[0-9.]+)(π)?\\)"};
+    regex::matches ms{};
+    if(!re.match(s, ms))
       return {};
     std::vector<bool> ctrl(Config::nBit, false);
     unsigned tgt = (unsigned)(~0);
-    for(const char& c : m[1].str()) {
+    for(const char& c : ms.match(1)) {
       size_t pos = c - '1';
       if(pos >= 0 && pos < Config::nBit && pos != tgt) {
         if(tgt == (unsigned)(~0))
@@ -122,7 +122,7 @@ public:
           ctrl[pos] = true;
       }
     }
-    double angle = std::stod(m[2].str()) * Const::pi;
+    double angle = std::stod(ms.match(2)) * Const::pi;
     return std::make_shared<CPhaseTemp>(tgt, angle, Backend::Controls{ctrl});
   }
 
