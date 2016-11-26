@@ -13,7 +13,7 @@
 
 SOURCES = quantum.cpp QGA.cpp
 HEADERS = include/*.hpp include/*/*.hpp include/*/*/*.hpp
-LIBS = regex.o backend_qiclib.o
+LIBS = regex.o backend_qpp.o
 
 TARGETS := simple fourier search
 default: search
@@ -62,6 +62,9 @@ regex.o: regex.cpp include/regex.hpp
 
 backend-qiclib.o: backend_qiclib.cpp $(HEADERS)
 	$(CXX) $(CXXFLAGS) backend_qiclib.cpp -O3 -c -o backend_qiclib.o
+
+backend-qpp.o: backend_qpp.cpp $(HEADERS)
+	$(CXX) $(CXXFLAGS) backend_qpp.cpp -O3 -c -o backend_qpp.o
 
 clean:
 	-rm $(TARGETS) $(LIBS)
