@@ -1,3 +1,6 @@
+#ifndef REGEX_HPP
+#define REGEX_HPP
+
 #include <string>
 #include <memory>
 #include <stddef.h>
@@ -44,3 +47,5 @@ namespace regex {
   }; // class regex
 
 } // namespace regex
+
+#endif // !defined REGEX_HPP

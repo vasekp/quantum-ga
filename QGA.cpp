@@ -1,4 +1,4 @@
-#include "QGA.hpp"
+#include "QGA_full.hpp"
 
 /* Implementation of routines from QGA_bits/Gates.hpp and QGA_bits/Tools.hpp */
 

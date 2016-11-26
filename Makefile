@@ -13,7 +13,10 @@
 
 SOURCES = quantum.cpp QGA.cpp
 HEADERS = include/*.hpp include/*/*.hpp include/*/*/*.hpp
-LIBS = regex.o backend_qpp.o
+HEADERS_LIBS = include/QGA_commons.hpp include/QGA_bits/Backend.hpp include/regex.hpp
+LIBS = regex.o	# see LIBS += below
+LIBS_DIR = libs
+LIBS_FULL = $(foreach LIB, $(LIBS), $(LIBS_DIR)/$(LIB))
 
 TARGETS := simple fourier search
 default: search
@@ -35,9 +38,11 @@ ifdef BENCH
 endif
 
 ifeq ($(BACKEND), QPP)
+	LIBS += backend_qpp.o
 	CXXFLAGS += -isystem /usr/include/eigen3 -Iquantum++/include -DUSE_QPP
 else
 	# QIClib is the default
+	LIBS += backend_qiclib.o
 	CXXFLAGS += -Iqiclib/include -lopenblas -DUSE_QICLIB
 endif
 
@@ -51,22 +56,19 @@ search:	CXXFLAGS += -DSEARCH
 
 all: $(TARGETS)
 
-$(TARGETS): $(SOURCES) $(HEADERS) $(LIBS)
-	$(CXX) $(CXXFLAGS) $(SOURCES) $(LIBS) -o $@
+$(TARGETS): $(SOURCES) $(HEADERS) $(LIBS_FULL)
+	$(CXX) $(CXXFLAGS) $(SOURCES) $(LIBS_FULL) -o $@
+
+$(LIBS_FULL): $(LIBS_DIR)/%.o: %.cpp $(HEADERS_LIBS) | $(LIBS_DIR)
+	$(CXX) $(CXXFLAGS) $< -c -o $@
+
+$(LIBS_DIR):
+	mkdir -p $(LIBS_DIR)
 
 touch:
 	touch $(SOURCES)
 
-regex.o: regex.cpp include/regex.hpp
-	$(CXX) -O3 -c regex.cpp
-
-backend-qiclib.o: backend_qiclib.cpp $(HEADERS)
-	$(CXX) $(CXXFLAGS) backend_qiclib.cpp -O3 -c -o backend_qiclib.o
-
-backend-qpp.o: backend_qpp.cpp $(HEADERS)
-	$(CXX) $(CXXFLAGS) backend_qpp.cpp -O3 -c -o backend_qpp.o
-
 clean:
-	-rm $(TARGETS) $(LIBS)
+	-rm $(TARGETS) -r $(LIBS_DIR)
 
-.PHONY: all clean touch
+.PHONY: all clean touch default

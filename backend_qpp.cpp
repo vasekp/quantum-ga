@@ -1,5 +1,6 @@
-#include "QGA.hpp"
-#include <memory>
+#include "QGA_commons.hpp"
+#include "QGA_bits/Backend.hpp"
+#include "make_unique.hpp"
 
 #include "qpp.h"
 //#include <unsupported/Eigen/FFT>

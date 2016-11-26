@@ -1,4 +1,5 @@
 #include "include/regex.hpp"
+#include "make_unique.hpp"
 #include <regex>
 
 /* See include/regex.hpp */
@@ -14,7 +15,7 @@ namespace regex {
 
 
   regex::regex(std::string expr):
-    pImpl(std::make_unique<regex_impl>(expr))
+    pImpl(make_unique<regex_impl>(expr))
   { }
 
   regex::~regex() { }
@@ -24,7 +25,7 @@ namespace regex {
   }
 
   matches::matches():
-    pImpl(std::make_unique<matches_impl>())
+    pImpl(make_unique<matches_impl>())
   { }
 
   matches::~matches() { }

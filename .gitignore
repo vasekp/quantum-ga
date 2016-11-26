@@ -1,7 +1,7 @@
 hist/
 results/
+libs/
 *.sed
-*.o
 .*
 search
 fourier
