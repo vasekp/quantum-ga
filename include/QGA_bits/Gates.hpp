@@ -7,43 +7,14 @@ using QGA::Const::i;
 
 /* Parametric gates */
 
-Backend::Gate xrot(double a) {
-  return {
-    std::cos(a/2.0),   i*std::sin(a/2.0),
-    i*std::sin(a/2.0), std::cos(a/2.0)
-  };
-}
+Backend::Gate xrot(double);
 
-Backend::Gate yrot(double a) {
-  return {
-    std::cos(a/2.0), -std::sin(a/2.0),
-    std::sin(a/2.0), std::cos(a/2.0)
-  };
-}
+Backend::Gate yrot(double);
 
-Backend::Gate zrot(double a) {
-  return {
-    std::exp(i*a/2.0), 0,
-    0, std::exp(-i*a/2.0)
-  };
-}
-
-// Det -1 version of yrot (covers Hadamard)
-// DO NOT USE in Gates::Param: does not represent a 1-parametric group!
-Backend::Gate rrot(double a) {
-  return {
-    std::cos(a/2.0), std::sin(a/2.0),
-    std::sin(a/2.0), -std::cos(a/2.0)
-  };
-}
+Backend::Gate zrot(double);
 
 // An assymetric version of zrot
-Backend::Gate phase(double a) {
-  return {
-    1, 0,
-    0, std::exp(i*a)
-  };
-}
+Backend::Gate phase(double);
 
 } // namespace internal
 } // namespace Gates

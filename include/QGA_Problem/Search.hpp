@@ -131,7 +131,7 @@ private:
     State ret{psi};
     Context c{mark};
     for(const auto& g : genotype())
-      ret = ret.apply(g, &c);
+      ret = g->applyTo(ret, &c);
     return ret;
   }
 

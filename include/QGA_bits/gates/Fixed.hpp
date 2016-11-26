@@ -3,7 +3,7 @@ namespace QGA {
 namespace Gates {
 
 struct gate_struct_f {
-  Backend::Gate op;
+  const Backend::Gate* op;
   std::string name;
   int inv;
   int sq;
@@ -13,15 +13,15 @@ struct gate_struct_f {
 namespace internal {
 
 static const std::vector<gate_struct_f> gates_fixed {
-  { Backend::I, "I", 0, 0 },
-  { Backend::H, "H", 0, -1 },
-  { Backend::X, "X", 0, -2 },
-  { Backend::Y, "Y", 0, -3 },
-  { Backend::Z, "Z", 0, -4 },
-  { Backend::T, "T", +1, +2 },
-  { Backend::Ti, "Ti", -1, +2 },
-  { Backend::S, "S", +1, -3 },
-  { Backend::Si, "Si", -1, -4 }
+  { &Backend::I, "I", 0, 0 },
+  { &Backend::H, "H", 0, -1 },
+  { &Backend::X, "X", 0, -2 },
+  { &Backend::Y, "Y", 0, -3 },
+  { &Backend::Z, "Z", 0, -4 },
+  { &Backend::T, "T", +1, +2 },
+  { &Backend::Ti, "Ti", -1, +2 },
+  { &Backend::S, "S", +1, -3 },
+  { &Backend::Si, "Si", -1, -4 }
 };
 
 template<Controls cc, const std::vector<gate_struct_f>* gates>
@@ -49,7 +49,7 @@ public:
     op(op_), tgt(tgt_), ixs(ixs_) { }
 
   Backend::State applyTo(const Backend::State& psi, const Ctx*) const override {
-    return psi.apply_ctrl((*gates)[op].op, ixs, tgt);
+    return psi.apply_ctrl(*(*gates)[op].op, ixs, tgt);
   }
 
   bool isTrivial() const override {

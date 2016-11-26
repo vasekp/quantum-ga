@@ -26,8 +26,8 @@ public:
   >;
 
   // apply this gate to a state vector
-  virtual Backend::State applyTo(const Backend::State&, const Context*) const
-    = 0;
+  virtual Backend::State applyTo(const Backend::State&,
+      const Context* = nullptr) const = 0;
 
   // return the number of control qubits of this gate
   virtual unsigned controls() const {

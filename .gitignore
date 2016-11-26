@@ -6,3 +6,4 @@ search
 fourier
 simple
 regex.o
+backend_qiclib.o

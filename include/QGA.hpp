@@ -22,6 +22,8 @@
 #include <algorithm>
 #include "regex.hpp"
 
+#include "genetic.hpp"
+
 using std::size_t;
 
 /* Forward declarations */
@@ -47,13 +49,15 @@ namespace QGA {
   }
 }
 
-#ifdef USE_QPP
-  #include "QGA_Backend/QPP.hpp"
-#elif defined USE_QICLIB
-  #include "QGA_Backend/QIClib.hpp"
-#else
-  #error Either USE_QPP or USE_QICLIB needed.
-#endif
+//#ifdef USE_QPP
+//  #include "QGA_Backend/QPP.hpp"
+//#elif defined USE_QICLIB
+//  #include "QGA_Backend/QIClib.hpp"
+//#else
+//  #error Either USE_QPP or USE_QICLIB needed.
+//#endif
+
+#include "QGA_Backend/Backend.hpp"
 
 #include "QGA_bits/CircuitPrinter.hpp"
 #include "QGA_bits/Fitness.hpp"

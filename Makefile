@@ -11,9 +11,9 @@
 # To force remake a target (with different defines):
 # make touch target
 
-SOURCES = quantum.cpp
+SOURCES = quantum.cpp QGA.cpp
 HEADERS = include/*.hpp include/*/*.hpp include/*/*/*.hpp
-LIBS = regex.o
+LIBS = regex.o backend_qiclib.o
 
 TARGETS := simple fourier search
 default: search
@@ -59,6 +59,9 @@ touch:
 
 regex.o: regex.cpp include/regex.hpp
 	$(CXX) -O3 -c regex.cpp
+
+backend-qiclib.o: backend_qiclib.cpp $(HEADERS)
+	$(CXX) $(CXXFLAGS) backend_qiclib.cpp -O3 -c -o backend_qiclib.o
 
 clean:
 	-rm $(TARGETS) $(LIBS)
