@@ -9,10 +9,14 @@
 # make BENCH=1 target
 #
 # To force remake a target (with different defines):
-# make -B target
+# make touch target
 
-SOURCES = quantum.cpp
+SOURCES = quantum.cpp QGA.cpp
 HEADERS = include/*.hpp include/*/*.hpp include/*/*/*.hpp
+HEADERS_LIBS = include/QGA_commons.hpp include/QGA_bits/Backend.hpp include/regex.hpp
+LIBS = regex.o	# see LIBS += below
+LIBS_DIR = libs
+LIBS_FULL = $(foreach LIB,$(LIBS),$(LIBS_DIR)/$(LIB))
 
 TARGETS := simple fourier search
 default: search
@@ -34,9 +38,11 @@ ifdef BENCH
 endif
 
 ifeq ($(BACKEND), QPP)
+	LIBS += backend_qpp.o
 	CXXFLAGS += -isystem /usr/include/eigen3 -Iquantum++/include -DUSE_QPP
 else
 	# QIClib is the default
+	LIBS += backend_qiclib.o
 	CXXFLAGS += -Iqiclib/include -lopenblas -DUSE_QICLIB
 endif
 
@@ -50,11 +56,19 @@ search:	CXXFLAGS += -DSEARCH
 
 all: $(TARGETS)
 
-$(TARGETS): $(SOURCES) $(HEADERS)
-	$(CXX) $(CXXFLAGS) $(SOURCES) -o $@
+$(TARGETS): $(SOURCES) $(HEADERS) $(LIBS_FULL)
+	$(CXX) $(CXXFLAGS) $(SOURCES) $(LIBS_FULL) -o $@
+
+$(LIBS_FULL): $(LIBS_DIR)/%.o: %.cpp $(HEADERS_LIBS) | $(LIBS_DIR)
+	$(CXX) $(CXXFLAGS) $< -c -o $@
+
+$(LIBS_DIR):
+	mkdir -p $(LIBS_DIR)
+
+touch:
+	touch $(SOURCES)
 
 clean:
-	-rm $(TARGETS)
+	-rm $(TARGETS) -r $(LIBS_DIR)
 
-.PHONY: all clean
-
+.PHONY: all clean touch default

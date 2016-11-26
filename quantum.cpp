@@ -8,8 +8,7 @@
   #define GENETIC_OPENMP_REPRODUCIBLE
 #endif
 
-#include "genetic.hpp"
-#include "QGA.hpp"
+#include "QGA_full.hpp"
 #include "Colours.hpp"
 #include "BriefPrinter.hpp"
 #include "signal.hpp"

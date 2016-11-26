@@ -7,10 +7,10 @@ namespace {
 using QGA::Backend::State;
 
 static const std::vector<QGA::Gates::gate_struct_f> reduced_set {
-  { QGA::Backend::I, "I", 0, 0 },
-  { QGA::Backend::H, "H", 0, -1 },
-  { QGA::Backend::T, "T", +1, 0 },
-  { QGA::Backend::Ti, "Ti", -1, 0 },
+  { &QGA::Backend::I, "I", 0, 0 },
+  { &QGA::Backend::H, "H", 0, -1 },
+  { &QGA::Backend::T, "T", +1, 0 },
+  { &QGA::Backend::Ti, "Ti", -1, 0 },
 };
 
 using Gene = QGA::Gene<
@@ -47,7 +47,7 @@ private:
   State sim() const {
     State psi{0};
     for(const auto& g : genotype())
-      psi = psi.apply(g);
+      psi = g->applyTo(psi);
     return psi;
   }
 

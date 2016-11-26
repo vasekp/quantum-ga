@@ -133,27 +133,27 @@ public:
     std::string reS{};
     for(const gate_struct_p& g : *gates)
       reS = reS + "|(" + g.name + ")";
-    std::regex re{"(?:" + reS.substr(1) + ")" +
+    regex::regex re{"(?:" + reS.substr(1) + ")" +
       "(\\d)(\\[(\\d+)\\])?\\((-?[0-9.]+)(?:π)?\\)"};
-    std::smatch m{};
-    if(!std::regex_match(s, m, re))
+    regex::matches ms{};
+    if(!re.match(s, ms))
       return {};
     size_t num = gates->size();
     size_t op;
     for(op = 0; op < num; op++)
-      if(m[op + 1].matched)
+      if(ms.matched(op + 1))
         break;
-    unsigned tgt = m[num + 1].str()[0] - '1';
+    unsigned tgt = ms.match(num + 1)[0] - '1';
     if(tgt < 0 || tgt >= Config::nBit)
       return {};
     std::vector<bool> ctrl(Config::nBit, false);
-    if(m[num + 2].matched)
-      for(const char& c : m[num + 3].str()) {
+    if(ms.matched(num + 2))
+      for(const char& c : ms.match(num + 3)) {
         size_t pos = c - '1';
         if(pos >= 0 && pos < Config::nBit && pos != tgt)
           ctrl[pos] = true;
       }
-    double angle = std::stod(m[num + 4].str()) * Const::pi;
+    double angle = std::stod(ms.match(num + 4)) * Const::pi;
     return std::make_shared<ParamTemp>(op, tgt, angle, Backend::Controls{ctrl});
   }
 

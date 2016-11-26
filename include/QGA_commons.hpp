@@ -20,7 +20,6 @@
 #include <vector>
 #include <utility>
 #include <algorithm>
-#include <regex>
 
 using std::size_t;
 
@@ -46,23 +45,5 @@ namespace QGA {
     const double v12 = 1/std::sqrt(2);
   }
 }
-
-#ifdef USE_QPP
-  #include "QGA_Backend/QPP.hpp"
-#elif defined USE_QICLIB
-  #include "QGA_Backend/QIClib.hpp"
-#else
-  #error Either USE_QPP or USE_QICLIB needed.
-#endif
-
-#include "QGA_bits/CircuitPrinter.hpp"
-#include "QGA_bits/Fitness.hpp"
-#include "QGA_bits/GateBase.hpp" // uses Fitness.hpp and CircuitPrinter.hpp
-#include "QGA_bits/Gene.hpp"     // uses GateBase.hpp
-#include "QGA_bits/Tools.hpp"
-#include "QGA_bits/Gates.hpp"    // uses Tools.hpp and GateBase.hpp
-#include "QGA_bits/CandidateCounter.hpp"
-#include "QGA_bits/CandidateBase.hpp"
-#include "QGA_bits/CandidateFactory.hpp"
 
 #endif // !defined QGA_COMMONS_HPP

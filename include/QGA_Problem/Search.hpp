@@ -64,11 +64,11 @@ public:
   }
 
   static Pointer read(const std::string& s) {
-    std::regex re{"\\[Id\\]|(Oracle)"};
-    std::smatch m{};
-    if(!std::regex_match(s, m, re))
+    regex::regex re{"\\[Id\\]|(Oracle)"};
+    regex::matches ms{};
+    if(!re.match(s, ms))
       return {};
-    return std::make_shared<OracleTemp>(m[1].matched);
+    return std::make_shared<OracleTemp>(ms.matched(1));
   }
 
 }; // class Oracle::OracleTemp<GateBase>
@@ -131,7 +131,7 @@ private:
     State ret{psi};
     Context c{mark};
     for(const auto& g : genotype())
-      ret = ret.apply(g, &c);
+      ret = g->applyTo(ret, &c);
     return ret;
   }
 

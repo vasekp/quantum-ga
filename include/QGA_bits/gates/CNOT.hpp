@@ -83,18 +83,18 @@ public:
   }
 
   static Pointer read(const std::string& s) {
-    std::regex re{"(\\[Id\\])|NOT(\\d)(\\[(\\d+)\\])?"};
-    std::smatch m{};
-    if(!std::regex_match(s, m, re))
+    regex::regex re{"(\\[Id\\])|NOT(\\d)(\\[(\\d+)\\])?"};
+    regex::matches ms{};
+    if(!re.match(s, ms))
       return {};
-    if(m[1].matched)
+    if(ms.matched(1))
       return std::make_shared<CNOTTemp>(false);
-    unsigned tgt = m[2].str()[0] - '1';
+    unsigned tgt = ms.match(2)[0] - '1';
     if(tgt >= Config::nBit)
       return {};
     std::vector<bool> ctrl(Config::nBit, false);
-    if(m[3].matched)
-      for(const char& c : m[4].str()) {
+    if(ms.matched(3))
+      for(const char& c : ms.match(4)) {
         size_t pos = c - '1';
         if(pos >= 0 && pos < Config::nBit && pos != tgt)
           ctrl[c - '1'] = true;

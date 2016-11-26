@@ -1,5 +1,6 @@
 hist/
 results/
+libs/
 *.sed
 .*
 search
