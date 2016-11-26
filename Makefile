@@ -16,7 +16,7 @@ HEADERS = include/*.hpp include/*/*.hpp include/*/*/*.hpp
 HEADERS_LIBS = include/QGA_commons.hpp include/QGA_bits/Backend.hpp include/regex.hpp
 LIBS = regex.o	# see LIBS += below
 LIBS_DIR = libs
-LIBS_FULL = $(foreach LIB, $(LIBS), $(LIBS_DIR)/$(LIB))
+LIBS_FULL = $(foreach LIB,$(LIBS),$(LIBS_DIR)/$(LIB))
 
 TARGETS := simple fourier search
 default: search

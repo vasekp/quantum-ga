@@ -19,7 +19,11 @@ public:
 
   friend Gate operator*(const Gate& lhs, const Gate& rhs);
 
+private:
+
   const GateImpl& impl() const;
+
+  friend class State;
 
 }; // class Gate
 
@@ -57,7 +61,12 @@ public:
   static Controls swap(unsigned s1, unsigned s2);
 
   std::vector<unsigned> as_vector() const;
+
+private:
+
   const ControlsImpl& impl() const;
+
+  friend class State;
 
 }; // class Controls
 

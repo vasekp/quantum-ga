@@ -6,19 +6,23 @@
 
 namespace regex {
 
+  // class regex
+
   class regex::regex_impl : public std::regex {
   public:
     using std::regex::regex;
   };
-
-  class matches::matches_impl : public std::smatch { };
-
 
   regex::regex(std::string expr):
     pImpl(make_unique<regex_impl>(expr))
   { }
 
   regex::~regex() { }
+
+
+  // class matches
+
+  class matches::matches_impl : public std::smatch { };
 
   bool regex::match(std::string searched, matches& ms) {
     return std::regex_match(searched, ms.impl(), *pImpl);

@@ -14,6 +14,7 @@ namespace regex {
   class matches {
 
     class matches_impl;
+    std::unique_ptr<matches_impl> pImpl;
 
   public:
 
@@ -21,11 +22,12 @@ namespace regex {
     ~matches();
     bool matched(size_t index);
     std::string match(size_t index);
-    matches_impl& impl();
 
   private:
 
-    std::unique_ptr<matches_impl> pImpl;
+    matches_impl& impl();
+
+    friend class regex;
 
   }; // class matches
 
@@ -33,16 +35,13 @@ namespace regex {
   class regex {
 
     class regex_impl;
+    std::unique_ptr<regex_impl> pImpl;
 
   public:
 
     regex(std::string expr);
     ~regex();
     bool match(std::string searched, matches& ms);
-
-  private:
-
-    std::unique_ptr<regex_impl> pImpl;
 
   }; // class regex
 
