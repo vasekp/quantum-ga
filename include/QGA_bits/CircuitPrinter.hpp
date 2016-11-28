@@ -113,7 +113,8 @@ public:
 
 private:
 
-  void addGates(std::vector<unsigned> qubits, std::vector<UTF8String> names) {
+  void addGates(const std::vector<unsigned>& qubits,
+      std::vector<UTF8String> names) {
     /* Find the longest gate name to be printed */
     unsigned maxLen = 0;
     for(auto& name : names)

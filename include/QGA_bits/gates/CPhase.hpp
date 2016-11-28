@@ -75,6 +75,27 @@ public:
     return std::make_shared<CPhaseTemp>(tgt, rationalize_angle(angle), ixs);
   }
 
+  Pointer swapQubits(const Pointer& self, unsigned s1, unsigned s2)
+    const override
+  {
+    std::vector<bool> ctrl(Config::nBit);
+    for(auto v : ixs.as_vector())
+      ctrl[v] = true;
+    ctrl[tgt] = true;
+    if(ctrl[s1] == ctrl[s2]) // swapping has no effect
+      return self;
+    // if they are different then swapping amounts to negation
+    ctrl[s1] = !ctrl[s1];
+    ctrl[s2] = !ctrl[s2];
+    unsigned tgt_;
+    for(tgt_ = 0; tgt_ < Config::nBit; tgt_++)
+      if(ctrl[tgt_])
+        break;
+    ctrl[tgt_] = false;
+    Backend::Controls ixs_{ctrl};
+    return std::make_shared<CPhaseTemp>(tgt_, angle, ixs_);
+  }
+
   void hit(typename GateBase::Counter& c) const {
     c.hit(this);
   }

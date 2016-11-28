@@ -95,6 +95,14 @@ public:
     return std::make_shared<ParamTemp>(op, tgt, rationalize_angle(angle), ixs);
   }
 
+  Pointer swapQubits(const Pointer&, unsigned s1, unsigned s2) const override {
+    return std::make_shared<ParamTemp>(
+        op,
+        tgt == s1 ? s2 : tgt == s2 ? s1 : tgt,
+        angle,
+        Backend::Controls::swapQubits(ixs, s1, s2));
+  }
+
   void hit(typename GateBase::Counter& c) const {
     c.hit(this);
   }

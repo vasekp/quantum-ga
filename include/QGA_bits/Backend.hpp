@@ -58,7 +58,8 @@ public:
 
   size_t size() const;
 
-  static Controls swap(unsigned s1, unsigned s2);
+  static Controls swapGate(unsigned s1, unsigned s2);
+  static Controls swapQubits(const Controls& orig, unsigned s1, unsigned s2);
 
   std::vector<unsigned> as_vector() const;
 
@@ -90,7 +91,7 @@ public:
   void reset(size_t index);
 
   State apply_ctrl(const Gate& mat, const Controls& ixs, unsigned tgt) const;
-  State swap(const Controls& ixs) const;
+  State swapQubits(const Controls& ixs) const;
 
   static State fourier(const State& in);
   static cxd overlap(const State& lhs, const State& rhs);

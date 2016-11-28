@@ -144,6 +144,28 @@ private:
     return Candidate{std::move(gtNew)};
   }
 
+  Candidate mSwapQubits() {
+    auto &parent = get();
+    auto &gtOrig = parent.genotype();
+    auto sz = gtOrig.size();
+    if(sz == 0 || Config::nBit < 2)
+      return parent;
+    std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
+    std::uniform_int_distribution<size_t> dPos{0, sz - 1};
+    size_t pos1 = dPos(gen::rng),
+           len = 1 + dGeom(gen::rng),
+           pos2 = pos1 + len > sz ? sz : pos1 + len;
+    std::uniform_int_distribution<unsigned> dBit{0, Config::nBit - 2};
+    unsigned s1 = dBit(gen::rng),
+             s2 = dBit(gen::rng);
+    // ensure that the two qubit indices are unequal
+    s2 += s2 >= s1;
+    std::vector<Gene> gtNew{gtOrig};
+    for(size_t pos = pos1; pos < pos2; pos++)
+      gtNew[pos].swapQubits(s1, s2);
+    return Candidate{std::move(gtNew)};
+  }
+
   Candidate mDeleteSlice() {
     auto &parent = get();
     auto &gtOrig = parent.genotype();
@@ -498,6 +520,7 @@ public:
     ops.push_back({ &CF::mAddSlice,        "AddSlice" });
   //ops.push_back({ &CF::mAddPairs,        "AddPairs" });
     ops.push_back({ &CF::mMutateAddPair,   "MutAddPair" });
+    ops.push_back({ &CF::mSwapQubits,      "SwapQubits" });
     ops.push_back({ &CF::mDeleteSlice,     "DelShort" });
     ops.push_back({ &CF::mDeleteUniform,   "DelUnif"  });
     ops.push_back({ &CF::mReplaceSlice,    "ReplSlice" });
