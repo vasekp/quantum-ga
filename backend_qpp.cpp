@@ -143,13 +143,21 @@ std::vector<unsigned> Controls::as_vector() const {
   return ret;
 }
 
-Controls Controls::swap(unsigned s1, unsigned s2) {
+Controls Controls::swapGate(unsigned s1, unsigned s2) {
   std::vector<qpp::idx> ret(Config::nBit);
   for(unsigned i = 0; i < Config::nBit; i++)
     ret[i] = i;
   ret[s1] = s2;
   ret[s2] = s1;
   return {std::move(ret)};
+}
+
+Controls Controls::swapQubits(const Controls& orig, unsigned s1, unsigned s2) {
+  std::vector<qpp::idx> vector{orig.impl().rep()};
+  for(auto&& v : vector)
+    v = v == s1 ? s2 : v == s2 ? s1 : v;
+  std::sort(vector.begin(), vector.end());
+  return {std::move(vector)};
 }
 
 
@@ -234,7 +242,7 @@ State State::apply_ctrl(
   return {qpp::applyCTRL(impl(), mat.impl(), ixs.impl(), {tgt})};
 }
 
-State State::swap(const Controls& ixs) const {
+State State::swapQubits(const Controls& ixs) const {
   return {qpp::syspermute(impl(), ixs.impl())};
 }
 

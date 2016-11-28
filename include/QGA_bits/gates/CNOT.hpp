@@ -47,6 +47,16 @@ public:
     return std::make_shared<CNOTTemp>();
   }
 
+  Pointer swapQubits(const Pointer& self, unsigned s1, unsigned s2)
+    const override
+  {
+    return odd
+      ? std::make_shared<CNOTTemp>(
+          tgt == s1 ? s2 : tgt == s2 ? s1 : tgt,
+          Backend::Controls::swapQubits(ixs, s1, s2))
+      : self;
+  }
+
   void hit(typename GateBase::Counter& c) const {
     c.hit(this);
   }

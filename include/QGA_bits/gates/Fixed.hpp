@@ -72,6 +72,13 @@ public:
     return std::make_shared<FixedTemp>();
   }
 
+  Pointer swapQubits(const Pointer&, unsigned s1, unsigned s2) const override {
+    return std::make_shared<FixedTemp>(
+        op,
+        tgt == s1 ? s2 : tgt == s2 ? s1 : tgt,
+        Backend::Controls::swapQubits(ixs, s1, s2));
+  }
+
   void hit(typename GateBase::Counter& c) const {
     c.hit(this);
   }

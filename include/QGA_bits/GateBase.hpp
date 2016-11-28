@@ -53,6 +53,8 @@ public:
     return self;
   }
 
+  virtual Pointer swapQubits(const Pointer&, unsigned, unsigned) const = 0;
+
   /* Merge needs to be implemented using double dispatch, because only
    * gates of the same class can typically be merged (albeit this is not a
    * restriction) but all we know at compile time is a pointer to the base

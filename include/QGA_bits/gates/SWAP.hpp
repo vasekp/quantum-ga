@@ -24,20 +24,21 @@ public:
     if(s2 < s1)
       std::swap(s1, s2);
     s2 += s2 >= s1;
-    ixs = Backend::Controls::swap(s1, s2);
+    ixs = Backend::Controls::swapGate(s1, s2);
   }
 
   // construct using parameters
   SWAPTemp(unsigned s1_, unsigned s2_, const Backend::Controls& ixs_, bool odd_):
       s1(s1_), s2(s2_), ixs(ixs_), odd(odd_) { }
 
-  SWAPTemp(unsigned s1_, unsigned s2_): s1(s1_), s2(s2_),
-    ixs(std::move(Backend::Controls::swap(s1, s2))), odd(true) { }
+  SWAPTemp(unsigned s1_, unsigned s2_):
+    s1(std::min(s1_, s2_)), s2(std::max(s1_, s2_)),
+    ixs(std::move(Backend::Controls::swapGate(s1, s2))), odd(true) { }
 
   SWAPTemp(bool): s1(), s2(), ixs(), odd(false) { }
 
   Backend::State applyTo(const Backend::State& psi, const Ctx*) const override {
-    return odd ? psi.swap(ixs) : psi;
+    return odd ? psi.swapQubits(ixs) : psi;
   }
 
   bool isTrivial() const override {
@@ -47,6 +48,16 @@ public:
 
   Pointer mutate(const Pointer&) const override {
     return std::make_shared<SWAPTemp>();
+  }
+
+  Pointer swapQubits(const Pointer& self, unsigned sw1, unsigned sw2)
+    const override
+  {
+    if((sw1 == s1 && sw2 == s2) || (sw1 == s2 && sw2 == s1) || !odd)
+      return self; // no action
+    return std::make_shared<SWAPTemp>(
+        s1 == sw1 ? sw2 : s1 == sw2 ? sw1 : s1,
+        s2 == sw1 ? sw2 : s2 == sw2 ? sw1 : s2);
   }
 
   void hit(typename GateBase::Counter& c) const {

@@ -4,7 +4,6 @@
 
 #define QICLIB_DONT_USE_NLOPT
 #define ARMA_DONT_USE_WRAPPER
-
 #include "QIClib"
 
 namespace QGA {
@@ -130,13 +129,21 @@ std::vector<unsigned> Controls::as_vector() const {
   return ret;
 }
 
-Controls Controls::swap(unsigned s1, unsigned s2) {
-  std::vector<arma::uword> ret(Config::nBit);
+Controls Controls::swapGate(unsigned s1, unsigned s2) {
+  arma::uvec ret(Config::nBit);
   for(unsigned i = 0; i < Config::nBit; i++)
     ret[i] = i + 1;
   ret[s1] = s2 + 1;
   ret[s2] = s1 + 1;
   return {std::move(ret)};
+}
+
+Controls Controls::swapQubits(const Controls& orig, unsigned s1, unsigned s2) {
+  arma::uvec vector{orig.impl().rep()};
+  for(auto&& v : vector)
+    v = v == s1 + 1 ? s2 + 1 : v == s2 + 1 ? s1 + 1 : v;
+  std::sort(vector.begin(), vector.end());
+  return {std::move(vector)};
 }
 
 
@@ -223,7 +230,7 @@ State State::apply_ctrl(
     )};
 }
 
-State State::swap(const Controls& ixs) const {
+State State::swapQubits(const Controls& ixs) const {
   return {qic::sysperm(impl().rep(), ixs.impl())};
 }
 

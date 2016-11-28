@@ -84,6 +84,13 @@ public:
         ixs);
   }
 
+  Pointer swapQubits(const Pointer&, unsigned s1, unsigned s2) const override {
+    return std::make_shared<SU2Temp>(
+        tgt == s1 ? s2 : tgt == s2 ? s1 : tgt,
+        angle1, angle2, angle3,
+        Backend::Controls::swapQubits(ixs, s1, s2));
+  }
+
   void hit(typename GateBase::Counter& c) const {
     c.hit(this);
   }

@@ -42,6 +42,10 @@ public:
     return !odd;
   }
 
+  Pointer swapQubits(const Pointer& self, unsigned, unsigned) const override {
+    return self;
+  }
+
   void hit(typename GateBase::Counter& c) const {
     c.hit(this);
   }

@@ -81,6 +81,10 @@ public:
     pointer() = pointer()->simplify(pointer());
   }
 
+  void swapQubits(unsigned s1, unsigned s2) {
+    pointer() = pointer()->swapQubits(pointer(), s1, s2);
+  }
+
   bool merge(Gene& other) {
     Pointer result = pointer()->merge(pointer(), other);
     if(result) {
