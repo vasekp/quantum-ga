@@ -99,7 +99,7 @@ public:
     os << (*gates)[op].name << tgt + 1;
     if(ixs.size()) {
       os << '[';
-      for(auto& ctrl : ixs.as_vector())
+      for(auto ctrl : ixs.as_vector())
         os << ctrl + 1;
       os << ']';
     }

@@ -79,7 +79,7 @@ public:
     const override
   {
     std::vector<bool> ctrl(Config::nBit);
-    for(auto& v : ixs.as_vector())
+    for(auto v : ixs.as_vector())
       ctrl[v] = true;
     ctrl[tgt] = true;
     if(ctrl[s1] == ctrl[s2]) // swapping has no effect
