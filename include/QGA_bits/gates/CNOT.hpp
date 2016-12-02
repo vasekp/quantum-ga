@@ -61,17 +61,6 @@ public:
     c.hit(this);
   }
 
-  Pointer invite(const Pointer& first) const override {
-    return first->merge(*this);
-  }
-
-  Pointer merge(const CNOTTemp& g) const override {
-    if(g.tgt == tgt && g.ixs == ixs)
-      return std::make_shared<CNOTTemp>(tgt, ixs, odd ^ g.odd);
-    else
-      return {};
-  }
-
   const CNOTTemp* cast(const CNOTTemp*) const override {
     return this;
   }
@@ -79,6 +68,13 @@ public:
   bool sameType(const GateBase& other) const override {
     const CNOTTemp* c = other.cast(this);
     return c != nullptr && c->tgt == tgt && c->ixs == ixs;
+  }
+
+  Pointer merge(const GateBase& other) const override {
+    if(!sameType(other))
+      return {};
+    const CNOTTemp* c = other.cast(this);
+    return std::make_shared<CNOTTemp>(tgt, ixs, odd ^ c->odd);
   }
 
   std::ostream& write(std::ostream& os) const override {

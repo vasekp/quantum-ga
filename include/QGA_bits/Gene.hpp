@@ -90,11 +90,21 @@ public:
   }
 
   bool merge(const Gene& other) {
-    Pointer result = pointer()->merge(pointer(), other);
+    if(pointer()->isTrivial()) {
+      // op1 = identity: consume and return other
+      pointer() = other.pointer();
+      return true;
+    } else if(other->isTrivial())
+      // op2 = identity: consume and return this
+      return true;
+
+    Pointer result = pointer()->merge(*other);
     if(result) {
+      // success
       pointer() = result;
       return true;
     } else
+      // no merge
       return false;
   }
 

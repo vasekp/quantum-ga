@@ -83,18 +83,6 @@ public:
     c.hit(this);
   }
 
-  Pointer invite(const Pointer& first) const override {
-    return first->merge(*this);
-  }
-
-  Pointer merge(const FixedTemp& g) const override {
-    // G * G = square(G) if also among our operations
-    if(g.op == op && g.tgt == tgt && g.ixs == ixs && (*gates)[op].sq != 0)
-      return std::make_shared<FixedTemp>(op + (*gates)[op].sq, tgt, ixs);
-    else
-      return {};
-  }
-
   const FixedTemp* cast(const FixedTemp*) const override {
     return this;
   }
@@ -102,6 +90,16 @@ public:
   bool sameType(const GateBase& other) const override {
     const FixedTemp* c = other.cast(this);
     return c != nullptr && c->tgt == tgt && c->ixs == ixs && c->op == op;
+  }
+
+  Pointer merge(const GateBase& other) const override {
+    if(!sameType(other))
+      return {};
+    // G * G = square(G) if also among our operations
+    if((*gates)[op].sq != 0)
+      return std::make_shared<FixedTemp>(op + (*gates)[op].sq, tgt, ixs);
+    else
+      return {};
   }
 
   std::ostream& write(std::ostream& os) const override {

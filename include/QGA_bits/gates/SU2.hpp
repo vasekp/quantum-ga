@@ -95,18 +95,6 @@ public:
     c.hit(this);
   }
 
-  Pointer invite(const Pointer& first) const override {
-    return first->merge(*this);
-  }
-
-  Pointer merge(const SU2Temp& g) const override {
-    if(g.tgt == tgt && g.ixs == ixs)
-      return std::make_shared<SU2Temp>(tgt, ixs,
-          static_cast<Backend::Gate>(g.mat * mat));
-    else
-      return {};
-  }
-
   const SU2Temp* cast(const SU2Temp*) const override {
     return this;
   }
@@ -114,6 +102,14 @@ public:
   bool sameType(const GateBase& other) const override {
     const SU2Temp* c = other.cast(this);
     return c != nullptr && c->tgt == tgt && c->ixs == ixs;
+  }
+
+  Pointer merge(const GateBase& other) const override {
+    if(!sameType(other))
+      return {};
+    const SU2Temp* c = other.cast(this);
+    return std::make_shared<SU2Temp>(tgt, ixs,
+        static_cast<Backend::Gate>(c->mat * mat));
   }
 
   std::ostream& write(std::ostream& os) const override {
