@@ -111,6 +111,15 @@ public:
       return {};
   }
 
+  const CPhaseTemp* cast(const CPhaseTemp*) const override {
+    return this;
+  }
+
+  bool sameType(const GateBase& other) const override {
+    const CPhaseTemp* c = other.cast(this);
+    return c != nullptr && c->tgt == tgt && c->ixs == ixs;
+  }
+
   std::ostream& write(std::ostream& os) const override {
     os << "P" << tgt + 1;
     for(auto ctrl : ixs.as_vector())

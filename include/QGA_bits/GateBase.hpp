@@ -11,7 +11,9 @@ namespace internal {
  * implement, and provides default (no-op) definition for some of them. */
 
 template<class ContextParm, class... Gates>
-class GateBase : internal::Visitors<GateBase<ContextParm, Gates...>, Gates...> {
+class GateBase :
+  protected internal::Visitors<GateBase<ContextParm, Gates...>, Gates...>
+{
 
 protected:
 
@@ -86,6 +88,8 @@ public:
   // This needs to be public because it's going to be called through a SP
   using internal::Visitors<GateBase, Gates...>::merge;
 
+  using internal::Visitors<GateBase, Gates...>::cast;
+
   /* This function allows us to count the number of each gate type using
    * QGA::internal::Counter. However each gate must call it itself so that the
    * Counter can recognize the type the hit request came from. Therefore each
@@ -95,6 +99,10 @@ public:
    *     c.hit(this);
    *   }
    */
+
+  virtual bool sameType(const GateBase&) const {
+    return false;
+  }
 
   // Called from CandidateBase
   virtual void hit(Counter& c) const = 0;
@@ -167,10 +175,14 @@ class Visitor {
   using Pointer = std::shared_ptr<const GateBase>;
   using GateResolved = typename Gate::template Template<GateBase>;
 
-protected:
+public:
 
   virtual Pointer merge(const GateResolved&) const {
     return {};
+  }
+
+  virtual const GateResolved* cast(const GateResolved*) const {
+    return nullptr;
   }
 
   virtual ~Visitor() { }
@@ -186,19 +198,22 @@ protected:
 template<class GateBase, class Head, class... Tail>
 class Visitors : Visitor<GateBase, Head>, Visitors<GateBase, Tail...> {
 
-protected:
+public:
 
   using Visitor<GateBase, Head>::merge;
+  using Visitor<GateBase, Head>::cast;
   using Visitors<GateBase, Tail...>::merge;
+  using Visitors<GateBase, Tail...>::cast;
 
 }; // class Visitors
 
 template<class GateBase, class Last>
 class Visitors<GateBase, Last> : Visitor<GateBase, Last> {
 
-protected:
+public:
 
   using Visitor<GateBase, Last>::merge;
+  using Visitor<GateBase, Last>::cast;
 
 }; // class Visitors<GateBase, Last>
 

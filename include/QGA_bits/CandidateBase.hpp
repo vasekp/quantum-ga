@@ -41,6 +41,17 @@ public:
     return {derived().fitness_main(), cc};
   }
 
+  friend bool sameCirc(const CandidateBase& lhs, const CandidateBase& rhs) {
+    auto& gt1 = lhs.gt;
+    auto& gt2 = rhs.gt;
+    if(gt1.size() != gt2.size())
+      return false;
+    for(size_t i = 0; i < gt1.size(); i++)
+      if(!sameType(gt1[i], gt2[i]))
+        return false;
+    return true;
+  }
+
   friend std::ostream& operator<< (std::ostream& os, const CandidateBase& c) {
     for(const auto& g : c.gt)
       os << g << ' ';

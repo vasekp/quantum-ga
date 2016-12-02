@@ -48,6 +48,10 @@ public:
     return Pointer::operator->();
   }
 
+  const GBase& operator*() const {
+    return Pointer::operator*();
+  }
+
   friend std::ostream& operator<<(std::ostream& os, const Gene& g) {
     return os << *g;
   }
@@ -85,13 +89,17 @@ public:
     pointer() = pointer()->swapQubits(pointer(), s1, s2);
   }
 
-  bool merge(Gene& other) {
+  bool merge(const Gene& other) {
     Pointer result = pointer()->merge(pointer(), other);
     if(result) {
       pointer() = result;
       return true;
     } else
       return false;
+  }
+
+  friend bool sameType(const Gene& lhs, const Gene& rhs) {
+    return lhs->sameType(*rhs);
   }
 
   /* Two genes are equal iff they point to the same object. This is used in

@@ -59,6 +59,15 @@ public:
     return std::make_shared<OracleTemp>(odd ^ g.odd);
   }
 
+  const OracleTemp* cast(const OracleTemp*) const override {
+    return this;
+  }
+
+  bool sameType(const GateBase& other) const override {
+    const OracleTemp* c = other.cast(this);
+    return c != nullptr && c->odd == odd;
+  }
+
   std::ostream& write(std::ostream& os) const override {
     return os << (odd ? "Oracle" : "[Id]");
   }

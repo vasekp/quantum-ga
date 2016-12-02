@@ -72,6 +72,15 @@ public:
       return {};
   }
 
+  const CNOTTemp* cast(const CNOTTemp*) const override {
+    return this;
+  }
+
+  bool sameType(const GateBase& other) const override {
+    const CNOTTemp* c = other.cast(this);
+    return c != nullptr && c->tgt == tgt && c->ixs == ixs;
+  }
+
   std::ostream& write(std::ostream& os) const override {
     if(!odd)
       return os << "[Id]";

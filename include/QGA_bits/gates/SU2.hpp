@@ -107,6 +107,15 @@ public:
       return {};
   }
 
+  const SU2Temp* cast(const SU2Temp*) const override {
+    return this;
+  }
+
+  bool sameType(const GateBase& other) const override {
+    const SU2Temp* c = other.cast(this);
+    return c != nullptr && c->tgt == tgt && c->ixs == ixs;
+  }
+
   std::ostream& write(std::ostream& os) const override {
     os << "U" << tgt + 1;
     if(ixs.size()) {

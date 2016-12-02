@@ -118,6 +118,15 @@ public:
       return {};
   }
 
+  const ParamTemp* cast(const ParamTemp*) const override {
+    return this;
+  }
+
+  bool sameType(const GateBase& other) const override {
+    const ParamTemp* c = other.cast(this);
+    return c != nullptr && c->tgt == tgt && c->ixs == ixs && c->op == op;
+  }
+
   std::ostream& write(std::ostream& os) const override {
     os << (*gates)[op].name << tgt + 1;
     if(ixs.size()) {
