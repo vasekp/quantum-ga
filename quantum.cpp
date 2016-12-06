@@ -46,7 +46,7 @@ namespace Config {
   const size_t popKeep = 0;
 
   // Number of generations (constant)
-  const unsigned long nGen = std::numeric_limits<unsigned long>::max();
+  const unsigned long nGen = 2000;//std::numeric_limits<unsigned long>::max();
 
   // Expected curcuit depth in 0th generation
   const double expLengthIni = 30;
@@ -190,6 +190,11 @@ int main() {
         << "newest: " << brief(newest) << '\n'
         << circuit << std::endl;
     }
+
+    /* Display the dialog at the last iteration for easy examination of
+     * results (online sessions only) */
+    if(isatty(1))
+      if(gen == Config::nGen - 1) Signal::state = Signal::INTERRUPTED;
 
     /* Interrupted? */
     while(Signal::state == Signal::INTERRUPTED)
