@@ -11,7 +11,7 @@
 # To force remake a target (with different defines):
 # make touch target
 
-SOURCES = quantum.cpp QGA.cpp
+SOURCES = quantum.cpp
 HEADERS = include/*.hpp include/*/*.hpp include/*/*/*.hpp
 HEADERS_LIBS = include/QGA_commons.hpp include/QGA_bits/Backend.hpp include/regex.hpp
 LIBS = regex.o	# see LIBS += below

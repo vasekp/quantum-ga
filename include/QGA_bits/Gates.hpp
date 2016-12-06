@@ -2,20 +2,51 @@
 namespace QGA {
 namespace Gates {
 namespace func {
+namespace {
 
 using QGA::Const::i;
 
 /* Parametric gates */
 
-Backend::Gate xrot(double);
+Backend::Gate xrot(double a) {
+  return {
+    std::cos(a/2.0),   i*std::sin(a/2.0),
+    i*std::sin(a/2.0), std::cos(a/2.0)
+  };
+}
 
-Backend::Gate yrot(double);
+Backend::Gate yrot(double a) {
+  return {
+    std::cos(a/2.0), -std::sin(a/2.0),
+    std::sin(a/2.0), std::cos(a/2.0)
+  };
+}
 
-Backend::Gate zrot(double);
+Backend::Gate zrot(double a) {
+  return {
+    std::exp(i*a/2.0), 0,
+    0, std::exp(-i*a/2.0)
+  };
+}
+
+// Det -1 version of yrot (covers Hadamard)
+// DO NOT USE in Gates::Param: does not represent a 1-parametric group!
+/*Backend::Gate rrot(double a) {
+  return {
+    std::cos(a/2.0), std::sin(a/2.0),
+    std::sin(a/2.0), -std::cos(a/2.0)
+  };
+}*/
 
 // An assymetric version of zrot
-Backend::Gate phase(double);
+Backend::Gate phase(double a) {
+  return {
+    1, 0,
+    0, std::exp(i*a)
+  };
+}
 
+} // anonymous namespace
 } // namespace internal
 } // namespace Gates
 } // namespace QGA
