@@ -107,7 +107,7 @@ public:
       return {};
     std::vector<bool> ctrl(Config::nBit, false);
     if(ms.matched(3))
-      for(const char& c : ms.match(4)) {
+      for(auto c : ms.match(4)) {
         size_t pos = c - '1';
         if(pos >= 0 && pos < Config::nBit && pos != tgt)
           ctrl[c - '1'] = true;

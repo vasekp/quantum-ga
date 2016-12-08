@@ -136,7 +136,7 @@ public:
       return {};
     std::vector<bool> ctrl(Config::nBit, false);
     unsigned tgt = (unsigned)(~0);
-    for(const char& c : ms.match(1)) {
+    for(auto c : ms.match(1)) {
       size_t pos = c - '1';
       if(pos >= 0 && pos < Config::nBit && pos != tgt) {
         if(tgt == (unsigned)(~0))

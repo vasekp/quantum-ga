@@ -41,7 +41,7 @@ namespace regex {
 
     regex(std::string expr);
     ~regex();
-    bool match(std::string searched, matches& ms);
+    bool match(const std::string& searched, matches& ms);
 
   }; // class regex
 

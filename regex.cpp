@@ -24,7 +24,7 @@ namespace regex {
 
   class matches::matches_impl : public std::smatch { };
 
-  bool regex::match(std::string searched, matches& ms) {
+  bool regex::match(const std::string& searched, matches& ms) {
     return std::regex_match(searched, ms.impl(), *pImpl);
   }
 
