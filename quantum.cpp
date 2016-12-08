@@ -48,16 +48,16 @@ namespace Config {
   const size_t popKeep = 0;
 
   // Number of generations (constant)
-  const unsigned long nGen = 2000;//std::numeric_limits<unsigned long>::max();
+  const unsigned long nGen = std::numeric_limits<unsigned long>::max();
 
   // Expected curcuit depth in 0th generation
-  const double expLengthIni = 30;
+  const double expLengthIni = 20;
 
   // Expected number of gates inserted / modified / removed in mutation
-  const double expMutationCount = 4.0;
+  const double expMutationCount = 2.5;
 
   // Probability of a crossover at any given point
-  const double pCrossUniform = 0.1;
+  const double pCrossUniform = 0.2;
 
   // How much prior success of genetic ops should influence future choices
   const double heurFactor = 1.0 / nGen;
@@ -142,7 +142,7 @@ int main() {
 
     /* Randomize and drop very similar fitnesses (disregarding gate counts) */
     pop2.prune([](const GenCandidate& a, const GenCandidate& b) -> bool {
-        return dist(a.fitness(), b.fitness()) < 0.1;
+        return dist(a.fitness(), b.fitness()) < 0.01;
       }, 0, true);
 
     /* Rank-trim the rest down to arSize */
