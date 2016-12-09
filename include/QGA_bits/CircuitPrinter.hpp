@@ -5,7 +5,7 @@ class CircuitPrinter {
 public:
 
   /* Prints a single gate. */
-  virtual void addGate(unsigned line, std::string name) = 0;
+  virtual void addGate(std::string name, unsigned line) = 0;
 
   /* Prints a single qubit controlled gate. */
   virtual void addControlledGate(std::string name,

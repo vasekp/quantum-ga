@@ -60,7 +60,7 @@ public:
   }
 
   /* Prints a single gate. */
-  void addGate(unsigned line, std::string name) override {
+  void addGate(std::string name, unsigned line) override {
     _addGates({line}, {name});
   }
 
