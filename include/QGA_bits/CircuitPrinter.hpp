@@ -65,7 +65,7 @@ public:
 
   /* Prints a single gate. */
   void addGate(unsigned line, std::string name) {
-    addGates({line}, {name});
+    _addGates({line}, {name});
   }
 
   /* Every item in the vector is a pair of:
@@ -82,17 +82,17 @@ public:
         qubits.push_back(qubit);
         names.push_back(pair.second);
       }
-    addGates(qubits, names);
+    _addGates(qubits, names);
   }
 
   /* Prints a swap gate. */
   void addSwapGate(unsigned line1, unsigned line2) {
-    addGates({line1, line2}, {{'X'}, {'X'}});
+    _addGates({line1, line2}, {{'X'}, {'X'}});
   }
 
   /* Prints a gate spanning all lines of output. */
   void addBarrierGate(std::string name) {
-    addBroadGate(0, nBit - 1, {name});
+    _addBroadGate(0, nBit - 1, {name});
   }
 
   template<class Gate>
@@ -118,7 +118,7 @@ public:
 
 private:
 
-  void addGates(const std::vector<unsigned>& qubits,
+  void _addGates(const std::vector<unsigned>& qubits,
       std::vector<UTF8String> names) {
     /* Find the longest gate name to be printed */
     unsigned maxLen = 0;
@@ -148,7 +148,7 @@ private:
     }
   }
 
-  void addBroadGate(unsigned lineFrom, unsigned lineTo, UTF8String name) {
+  void _addBroadGate(unsigned lineFrom, unsigned lineTo, UTF8String name) {
     alignAll();
     for(unsigned i = 2*lineFrom; i <= 2*lineTo; i++)
       lines[i] += '[';
