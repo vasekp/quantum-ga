@@ -51,10 +51,11 @@ public:
     return {derived()};
   }
 
-  internal::CircuitPrinter circuit() const {
-    internal::CircuitPrinter printer{Config::nBit};
+  template<class CircuitPrinter>
+  CircuitPrinter circuit() const {
+    CircuitPrinter printer{Config::nBit};
     for(const auto& g : gt)
-      printer.print(g);
+      g->printOn(printer);
     return printer;
   }
 

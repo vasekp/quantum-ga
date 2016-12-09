@@ -119,7 +119,7 @@ public:
     return os;
   }
 
-  void printOn(QGA::internal::CircuitPrinter& p) const override {
+  void printOn(QGA::CircuitPrinter& p) const override {
     p.addControlledGate("Φ", tgt, ixs.as_vector());
   }
 

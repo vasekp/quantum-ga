@@ -82,7 +82,7 @@ public:
       return os << "SWAP" << s1 + 1 << s2 + 1;
   }
 
-  void printOn(QGA::internal::CircuitPrinter& p) const override {
+  void printOn(QGA::CircuitPrinter& p) const override {
     p.addSwapGate(s1, s2);
   }
 

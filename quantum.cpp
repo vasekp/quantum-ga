@@ -11,6 +11,7 @@
 #include "QGA_full.hpp"
 #include "Colours.hpp"
 #include "BriefPrinter.hpp"
+#include "CircuitPrinter.hpp"
 #include "signal.hpp"
 
 #ifdef FOURIER
@@ -181,7 +182,7 @@ int main() {
           });
 
       // Prepare circuit in advance to not delay the printing operation later
-      auto circuit = pop.best().circuit();
+      auto circuit = pop.best().circuit<CircuitPrinter>();
       std::cout
         << Colours::bold("Gen ", gen, ": ")
         << Colours::yellow(pop.size()) << " unique fitnesses, "
@@ -231,7 +232,7 @@ void dumpResults(Population& pop, CandidateFactory::Selector& sel,
   for(auto& c : nondom.reverse()) {
     std::cout << brief(c) << ' ' << c;
     if(c.fitness() < 0.01)
-      std::cout << ": " << c.full() << c.circuit();
+      std::cout << ": " << c.full() << c.circuit<CircuitPrinter>();
     else
       std::cout << '\n';
   }
@@ -302,7 +303,7 @@ void inject(Population& pop, unsigned long gen) {
 
 void prettyprint() {
   Candidate c{input()};
-  std::cout << c.circuit() << '\n';
+  std::cout << c.circuit<CircuitPrinter>() << '\n';
 }
 
 /* Interrupt handler (Ctrl-C) */
