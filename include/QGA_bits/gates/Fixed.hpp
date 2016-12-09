@@ -106,11 +106,8 @@ public:
     return os;
   }
 
-  void printOn(QGA::internal::CircuitPrinter& p) const override {
-    p.addGates({
-        {{tgt}, "[" + (*gates)[op].name + "]"},
-        {ixs.as_vector(), "o"}
-    });
+  void printOn(QGA::CircuitPrinter& p) const override {
+    p.addControlledGate((*gates)[op].name, tgt, ixs.as_vector());
   }
 
   static Pointer read(const std::string& s) {

@@ -63,8 +63,9 @@ public:
     return os << (odd ? "Oracle" : "[Id]");
   }
 
-  void printOn(QGA::internal::CircuitPrinter& p) const override {
-    p.addBarrierGate("U_f");
+  void printOn(QGA::CircuitPrinter& p) const override {
+    if(odd)
+      p.addBarrierGate("U_f");
   }
 
   static Pointer read(const std::string& s) {

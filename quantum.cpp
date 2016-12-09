@@ -11,6 +11,8 @@
 #include "QGA_full.hpp"
 #include "Colours.hpp"
 #include "BriefPrinter.hpp"
+#include "CircuitPrinter.hpp"
+#include "TeXPrinter.hpp"
 #include "signal.hpp"
 
 #ifdef FOURIER
@@ -181,7 +183,7 @@ int main() {
           });
 
       // Prepare circuit in advance to not delay the printing operation later
-      auto circuit = pop.best().circuit();
+      auto circuit = pop.best().circuit<CircuitPrinter>();
       std::cout
         << Colours::bold("Gen ", gen, ": ")
         << Colours::yellow(pop.size()) << " unique fitnesses, "
@@ -231,7 +233,7 @@ void dumpResults(Population& pop, CandidateFactory::Selector& sel,
   for(auto& c : nondom.reverse()) {
     std::cout << brief(c) << ' ' << c;
     if(c.fitness() < 0.01)
-      std::cout << ": " << c.full() << c.circuit();
+      std::cout << ": " << c.full() << c.circuit<CircuitPrinter>();
     else
       std::cout << '\n';
   }
@@ -300,9 +302,10 @@ void inject(Population& pop, unsigned long gen) {
   std::cout << "\nParsed: " << brief(c) << ' ' << c << '\n';
 }
 
+template<class Printer>
 void prettyprint() {
   Candidate c{input()};
-  std::cout << c.circuit() << '\n';
+  std::cout << c.circuit<Printer>() << '\n';
 }
 
 /* Interrupt handler (Ctrl-C) */
@@ -331,6 +334,7 @@ int int_response(Population& pop, unsigned long gen) {
         << " random candidates,\n"
     << Colours::blue("p: ") << "pretty-print a candidate as a circuit,\n"
     << Colours::blue("r: ") << "restart,\n"
+    << Colours::blue("t: ") << "format a candidate as a LuaLaTeX Q-circuit,\n"
     << Colours::blue("q: ") << "quit after this generation.\n";
   int ret = -1;
   do {
@@ -363,12 +367,15 @@ int int_response(Population& pop, unsigned long gen) {
         listRandom(pop);
         return int_response(pop, gen);
       case 'p':
-        prettyprint();
+        prettyprint<CircuitPrinter>();
         return int_response(pop, gen);
       case 'r':
         Signal::state = Signal::RUNNING;
         ret = Signal::RESTART;
         break;
+      case 't':
+        prettyprint<TeXPrinter>();
+        return int_response(pop, gen);
       case 'q':
         Signal::state = Signal::STOPPING;
         ret = Signal::STOP;

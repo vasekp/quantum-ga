@@ -104,7 +104,7 @@ public:
   }
 
   // print this gate in circuit representation
-  virtual void printOn(internal::CircuitPrinter& p) const = 0;
+  virtual void printOn(CircuitPrinter& p) const = 0;
 
   virtual ~GateBase() { }
 
