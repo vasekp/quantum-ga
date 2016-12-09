@@ -85,6 +85,11 @@ public:
     addGates(qubits, names);
   }
 
+  /* Prints a swap gate. */
+  void addSwapGate(unsigned line1, unsigned line2) {
+    addGates({line1, line2}, {{'X'}, {'X'}});
+  }
+
   /* Prints a gate spanning all lines of output. */
   void addBarrierGate(std::string name) {
     addBroadGate(0, nBit - 1, {name});

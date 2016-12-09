@@ -83,10 +83,7 @@ public:
   }
 
   void printOn(QGA::internal::CircuitPrinter& p) const override {
-    p.addGates({
-        {{s1}, "X"},
-        {{s2}, "X"},
-    });
+    p.addSwapGate(s1, s2);
   }
 
   static Pointer read(const std::string& s) {
