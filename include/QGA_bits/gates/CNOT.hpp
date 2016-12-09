@@ -86,7 +86,8 @@ public:
   }
 
   void printOn(QGA::CircuitPrinter& p) const override {
-    p.addControlledGate("X", tgt, ixs.as_vector());
+    if(odd)
+      p.addControlledGate("X", tgt, ixs.as_vector());
   }
 
   static Pointer read(const std::string& s) {

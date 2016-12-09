@@ -64,7 +64,8 @@ public:
   }
 
   void printOn(QGA::CircuitPrinter& p) const override {
-    p.addBarrierGate("U_f");
+    if(odd)
+      p.addBarrierGate("U_f");
   }
 
   static Pointer read(const std::string& s) {
