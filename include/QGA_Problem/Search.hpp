@@ -50,13 +50,21 @@ public:
     c.hit(this);
   }
 
-  Pointer invite(const Pointer& first) const override {
-    return first->merge(*this);
+  const OracleTemp* cast(const OracleTemp*) const override {
+    return this;
   }
 
-  Pointer merge(const OracleTemp& g) const override {
+  bool sameType(const GateBase& other) const override {
+    const OracleTemp* c = other.cast(this);
+    return c != nullptr && c->odd == odd;
+  }
+
+  Pointer merge(const GateBase& other) const override {
+    if(!sameType(other))
+      return {};
     // oracle * oracle = oracle^2 → true ^ true = false
-    return std::make_shared<OracleTemp>(odd ^ g.odd);
+    const OracleTemp* c = other.cast(this);
+    return std::make_shared<OracleTemp>(odd ^ c->odd);
   }
 
   std::ostream& write(std::ostream& os) const override {

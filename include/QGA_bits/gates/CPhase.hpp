@@ -100,15 +100,20 @@ public:
     c.hit(this);
   }
 
-  Pointer invite(const Pointer& first) const override {
-    return first->merge(*this);
+  const CPhaseTemp* cast(const CPhaseTemp*) const override {
+    return this;
   }
 
-  Pointer merge(const CPhaseTemp& g) const override {
-    if(g.tgt == tgt && g.ixs == ixs)
-      return std::make_shared<CPhaseTemp>(tgt, angle + g.angle, ixs);
-    else
+  bool sameType(const GateBase& other) const override {
+    const CPhaseTemp* c = other.cast(this);
+    return c != nullptr && c->tgt == tgt && c->ixs == ixs;
+  }
+
+  Pointer merge(const GateBase& other) const override {
+    if(!sameType(other))
       return {};
+    const CPhaseTemp* c = other.cast(this);
+    return std::make_shared<CPhaseTemp>(tgt, angle + c->angle, ixs);
   }
 
   std::ostream& write(std::ostream& os) const override {

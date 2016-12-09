@@ -164,9 +164,12 @@ int main() {
     /* We don't need the original population anymore */
     pop = std::move(pop2);
 
-    /* Leave only one representative of each fitness */
-    pop.prune([](const GenCandidate& a, const GenCandidate& b) -> bool {
-        return a.fitness() == b.fitness();
+    /* Leave only one representative of each fitness and drop dominated
+     * versions of the same circuit */
+    pop.prune([](const GenCandidate& a, const GenCandidate& b) -> int {
+        if(a.fitness() == b.fitness()) return 1;
+        else if(sameCirc(a, b)) return b << a ? -1 : 1;
+        else return 0;
       }, 0, false);
 
     /* Take a record which GenOps were successful in making good candidates */
