@@ -120,10 +120,7 @@ public:
   }
 
   void printOn(QGA::internal::CircuitPrinter& p) const override {
-    p.addGates({
-        {{tgt}, "[Φ]"},
-        {ixs.as_vector(), "[Φ]"}
-    });
+    p.addControlledGate("Φ", tgt, ixs.as_vector());
   }
 
   static Pointer read(const std::string& s) {

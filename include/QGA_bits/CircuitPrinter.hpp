@@ -68,20 +68,17 @@ public:
     _addGates({line}, {name});
   }
 
-  /* Every item in the vector is a pair of:
-   *  1. a list of indices,
-   *  2. a string to put at those indices.
-   * All the gates will be connected by a vertical line. */
-  void addGates(std::vector<
-                  std::pair<std::vector<unsigned>, std::string>
-                > pairs) {
+  /* Prints a single qubit controlled gate. */
+  void addControlledGate(std::string name,
+      unsigned line, std::vector<unsigned> controls) {
     std::vector<unsigned> qubits{};
     std::vector<UTF8String> names{};
-    for(auto& pair : pairs)
-      for(unsigned qubit : pair.first) {
-        qubits.push_back(qubit);
-        names.push_back(pair.second);
-      }
+    qubits.push_back(line);
+    names.push_back("[" + name + "]");
+    for(auto line : controls) {
+      qubits.push_back(line);
+      names.push_back({'o'});
+    }
     _addGates(qubits, names);
   }
 
