@@ -8,13 +8,13 @@ public:
   }
 
   /* Prints a single gate. */
-  void addGate(std::string name, unsigned line) override {
+  void addGate(const std::string& name, unsigned line) override {
     _addControlled(name, line, {});
   }
 
   /* Prints a single qubit controlled gate. */
-  void addControlledGate(std::string name,
-      unsigned line, std::vector<unsigned> controls) override {
+  void addControlledGate(const std::string& name,
+      unsigned line, const std::vector<unsigned>& controls) override {
     _addControlled(name, line, controls);
   }
 
@@ -24,7 +24,7 @@ public:
   }
 
   /* Prints a gate spanning all lines of output. */
-  void addBarrierGate(std::string name) override {
+  void addBarrierGate(const std::string& name) override {
     _addBroadGate(0, nBit - 1, {name});
   }
 
@@ -91,7 +91,8 @@ private:
     align(line1, line2);
   }
 
-  void _addBroadGate(unsigned lineFrom, unsigned lineTo, std::string name) {
+  void _addBroadGate(unsigned lineFrom, unsigned lineTo,
+      const std::string& name) {
     alignAll();
     {
       std::ostringstream os{};

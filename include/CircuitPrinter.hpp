@@ -60,13 +60,13 @@ public:
   }
 
   /* Prints a single gate. */
-  void addGate(std::string name, unsigned line) override {
+  void addGate(const std::string& name, unsigned line) override {
     _addGates({line}, {name});
   }
 
   /* Prints a single qubit controlled gate. */
-  void addControlledGate(std::string name,
-      unsigned line, std::vector<unsigned> controls) override {
+  void addControlledGate(const std::string& name,
+      unsigned line, const std::vector<unsigned>& controls) override {
     std::vector<unsigned> qubits{};
     std::vector<UTF8String> names{};
     qubits.push_back(line);
@@ -84,7 +84,7 @@ public:
   }
 
   /* Prints a gate spanning all lines of output. */
-  void addBarrierGate(std::string name) override {
+  void addBarrierGate(const std::string& name) override {
     _addBroadGate(0, nBit - 1, {name});
   }
 
@@ -98,7 +98,7 @@ public:
 private:
 
   void _addGates(const std::vector<unsigned>& qubits,
-      std::vector<UTF8String> names) {
+      const std::vector<UTF8String>& names) {
     /* Find the longest gate name to be printed */
     unsigned maxLen = 0;
     for(auto& name : names)
@@ -127,7 +127,8 @@ private:
     }
   }
 
-  void _addBroadGate(unsigned lineFrom, unsigned lineTo, UTF8String name) {
+  void _addBroadGate(unsigned lineFrom, unsigned lineTo,
+      const UTF8String& name) {
     alignAll();
     for(unsigned i = 2*lineFrom; i <= 2*lineTo; i++)
       lines[i] += '[';

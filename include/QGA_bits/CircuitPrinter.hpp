@@ -5,17 +5,17 @@ class CircuitPrinter {
 public:
 
   /* Prints a single gate. */
-  virtual void addGate(std::string name, unsigned line) = 0;
+  virtual void addGate(const std::string& name, unsigned line) = 0;
 
   /* Prints a single qubit controlled gate. */
-  virtual void addControlledGate(std::string name,
-      unsigned line, std::vector<unsigned> controls) = 0;
+  virtual void addControlledGate(const std::string& name,
+      unsigned line, const std::vector<unsigned>& controls) = 0;
 
   /* Prints a swap gate. */
   virtual void addSwapGate(unsigned line1, unsigned line2) = 0;
 
   /* Prints a gate spanning all lines of output. */
-  virtual void addBarrierGate(std::string name) = 0;
+  virtual void addBarrierGate(const std::string& name) = 0;
 
   friend std::ostream& operator<< (std::ostream& os, const CircuitPrinter& p) {
     return p.print(os);
