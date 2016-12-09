@@ -25,7 +25,7 @@ class CircuitPrinter : public QGA::CircuitPrinter {
       return os << utf.s;
     }
 
-    /* Symetrically pad a string to a given length using a specified character */
+    /* Symetrically pad a string to a given length using a given character */
     UTF8String pad(size_t target, char padding) const& {
       size_t padLeft = (target - len) / 2,
              padRight = target - len - padLeft;
@@ -100,7 +100,7 @@ private:
   void _addGates(const std::vector<unsigned>& qubits,
       const std::vector<UTF8String>& names) {
     /* Find the longest gate name to be printed */
-    unsigned maxLen = 0;
+    size_t maxLen = 0;
     for(auto& name : names)
       if(name.length() > maxLen)
         maxLen = name.length();
@@ -141,12 +141,11 @@ private:
   }
 
   void align(unsigned lineFrom, unsigned lineTo, char c = '-') const {
-    /* Find the longest line wihnin the span so far */
-    unsigned max = 0;
-    for(unsigned i = 2*lineFrom; i <= 2*lineTo; i++) {
+    /* Find the longest line wihin the span so far */
+    size_t max = 0;
+    for(unsigned i = 2*lineFrom; i <= 2*lineTo; i++)
       if(lines[i].length() > max)
         max = lines[i].length();
-    }
 
     /* Pad the lines with a dash (even: qubit) or a space (odd: padding) */
     for(unsigned i = 2*lineFrom; i <= 2*lineTo; i++)
