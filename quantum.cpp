@@ -145,7 +145,7 @@ int main() {
         return dist(a.fitness(), b.fitness()) < 0.1;
       }, 0, true);
 
-    /* Rank-trim the rest doen to arSize */
+    /* Rank-trim the rest down to arSize */
     pop2.rankTrim(Config::arSize);
 
     /* Unconditionally add the best candidate so far (in case it got pruned) */
