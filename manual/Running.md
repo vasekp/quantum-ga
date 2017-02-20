@@ -6,12 +6,12 @@ After successful installation, run `./search` or `./fourier` without further par
 
 * **A** denotes the current generation number,
 * **B** shows the population size (after culling redundant copies of equal candidates),
-* **C** shows the properties of the best-so-far candidate (nondominated and with minimal error),
+* **C** shows the properties of the best-so-far candidate (nondominated and with minimal error): two error measures, number of oracle calls, of single-qubit rotations, and of controlled phase rotations, along with generation in which it was found,
 * **D** shows the size of the nondominated front (the internal population, or archive),
 * **E** displays the newest addition to the front,
 * **F** is a text-based visualisation of the candidate summarized in **C**.
 
-Due to the nature of the problem and to the nature of the search, there is no quick and guaranteed way of finding the perfect circuit for a given task. A great part of the configuration space needs to be explored before exploiting the discovered features to approach an optimal solution. For this reason a strategy of taking many small steps in a large number of generations has been chosen over a small number of generations employing very elaborate genetic operations. Thus the search may run for a few thousand generations if a perfect solution is required (typically between 1000 and 2000 for the two benchmark problems on 3 qubits, taking 1 to 2 minutes of run time on a modern 4-core processor).
+Due to the nature of the problem and to the nature of the search, there is no quick and guaranteed route towards the perfect circuit for a given task, and many blind alleys. A great part of the configuration space needs to be explored before exploiting the discovered features to approach an optimal solution. For this reason a strategy of taking many small steps in a large number of generations has been chosen over a small number of generations employing very elaborate genetic operations. Thus the search may run for a few thousand generations if a perfect solution is required (typically between 1000 and 2000 for the two benchmark problems on 3 qubits, taking 1 to 2 minutes of run time on a modern 4-core processor).
 
 There is no hard-coded termination condition. Surpassing a given error bound and checking for stalled evolution have been considered and rejected. Instead, the user is given a liberty of interrupting and examining the evolution at any point, and to a very limited extent, direct intervention into the evolution is allowed as well. Also see below for termination of the program.
 
@@ -34,7 +34,7 @@ t: format a candidate as a LuaLaTeX Q-circuit,
 q: quit after this generation.
 ```
 
-User input is then expected in the form of a single lower-case letter followed by `Enter`. If, at this point, you want to exit the program, use **q** (natural stop) or **a** (forced exit) or `Ctrl+C` for a second time (ditto).
+User input is then expected in the form of a single lower-case letter followed by `Enter`. If, at this point, you want to exit the program, use **q** (natural stop, listing all results and ending gracefully) or **a** (forced exit) or `Ctrl+C` for a second time (ditto).
 
 The main go-to option to examine the nondominated front is **d**. This lists all the nondominated candidate circuits sorted by their error from highest to lowest. (A high-error candidate can still be a member of the front when it's nondominated in other fitness aspects, e.g., number of gates. An empty circuit usually appears at the top of the list.) Some summative information follows, like the total number of evaluated candidates and time taken.
 
