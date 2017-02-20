@@ -28,4 +28,8 @@ However, the simulation vitally depends on a quantum simulation backend. Current
 
 * Quantum++ ([arXiv](https://arxiv.org/abs/1412.4704), [GitHub](https://github.com/vsoftco/qpp)), based on [Eigen3](http://eigen.tuxfamily.org/).
 
-Please refer to the relevant project pages for instructions how to ensure their respective dependencies are properly installed and set up on your system. The default configuration uses QIClib and further relies on [OpenBLAS](http://www.openblas.net/) implementation of the Armadillo routines to reach maximum speed. On a RPM-based system, the dependencies can be installed through the packages `armadillo-devel` and `openblas-devel`. In order to compile with the Quantum++ backend, please refer to the [Makefile](https://github.com/vasekp/quantum-ga/blob/master/Makefile). Note that Fourier transform is faulty and unsupported in recent releases of Eigen3 (3.2.9, 3.2.10) and temporarily disabled in the backend's source code.
+Please refer to the relevant project pages for instructions how to ensure their respective dependencies are properly installed and set up on your system. The default configuration uses QIClib and further relies on [OpenBLAS](http://www.openblas.net/) implementation of the Armadillo routines to reach maximum speed. On a RPM-based system, the dependencies can be installed through the packages `armadillo-devel` and `openblas-devel`. In order to compile with the Quantum++ backend, please consult the [Makefile](https://github.com/vasekp/quantum-ga/blob/master/Makefile). Note that Fourier transform is faulty and unsupported in recent releases of Eigen3 (3.2.9, 3.2.10) and temporarily disabled in the backend's source code.
+
+- - -
+
+Back to [the README](https://github.com/vasekp/quantum-ga/blob/readme/README.md)
