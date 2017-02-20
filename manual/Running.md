@@ -53,3 +53,7 @@ A final choice that deserves some attention in this manual is **f**. Like **d**,
 ```
 
 (Parts of fitness which come after the last one we're interested in can be left out.)
+
+- - -
+
+Back to [the README](https://github.com/vasekp/quantum-ga/blob/readme/README.md)
