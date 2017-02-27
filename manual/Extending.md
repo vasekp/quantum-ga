@@ -81,7 +81,27 @@ is a function called when a full listing of a candidate's results is required. T
 
 ## Gate types
 
+The following is a list of the currently implemented quantum gate types intended for generic usage. They are all defined in the [include/QGA_bits/gates/](https://github.com/vasekp/quantum-ga/tree/master/include/QGA_bits/gates/) directory.
+* `QGA::XYZ`, `QGA::X`, `QGA::Y`, `QGA::Z`: parametric Pauli rotations,
+* `QGA::Fixed`: fixed 1-qubit gate set (the identity, Hadamard, X, Y, Z Pauli gates, T and S phase rotations and their inverses),
+* `QGA::SU2`: generic SU(2) matrix (beware: expands the configuration space drastically and tends to converge slowly),
+* `QGA::CNOT`: Controlled-NOT 2-qubit gate,
+* `QGA::SWAP`: 2-qubit swap,
+* `QGA::CPhase`: symmetric *k*-qubit controlled phase gate.
 
+Most of these gates come in a generic setting that can, however, be further adjusted. This is done via an inner class alias mechanism. For example, to allow control qubits for phase rotations, replace `QGA::XYZ` by
+```
+QGA::XYZ::WithControls<QGA::Controls::ANY>
+```
+The `WithControls` specifier can be used with all the above gate types except `QGA::SWAP` and takes the following constants of the `QGA::Controls` enum:
+* `NONE`: no control bits allowed (this is the default for `XYZ` and derivates, `Fixed`, `SU2`),
+* `ONE`: exactly one control bit required (this is the default for `CNOT`),
+* `ANY`: any combination of control bits, including zero control bits, is allowed (this is the default for `CPhase`),
+* `LEAST1`: any combination of control bits but at least one must be present.
+
+Similar to `WithControls` there is `WithGates` which is the mechanisms through which the generic `QGA::XYZ` is internally restricted to `QGA::X` and others. This can be used, for example, when introducing a new parametric rotation gate or when designing a custom gate set for `QGA::Fixed`. For the details, see the source of [Fixed.hpp](https://github.com/vasekp/quantum-ga/blob/master/include/QGA_bits/gates/Fixed.hpp).
+
+The specifiers can also be chained and even repeated, with the last occurrence of each overriding the previous instances of the same.
 
 - - -
 
