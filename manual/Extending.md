@@ -19,7 +19,7 @@ These lines should appear at the top of each problem file.
 ```
 using Gene = QGA::Gene<QGA::Gates::Y, QGA::Gates::CPhase, QGA::Gates::SWAP>;
 ```
-The `QGA::Gene` template represents objects participating in the genotype, i.e., individual circuit gates. This is where the gate types that are allowed in the evolution are specified. The way the `QGA::Gene` class template is designed it needs to be aware of its descendants (for the purposes of static polymorphism).
+The `QGA::Gene` template represents objects participating in the genotype, i.e., individual circuit gates. This is where the [gate types](#gate-types) that are allowed in the evolution are specified. The way the `QGA::Gene` class template is designed it needs to be aware of its descendants (for the purposes of static polymorphism).
 
 ```
 class Candidate : public QGA::CandidateBase<Candidate, Gene, double, double> {
@@ -78,6 +78,10 @@ The fitness function calls a private class member function `sim` which is omitte
   }
 ```
 is a function called when a full listing of a candidate's results is required. This happens at the exit of the program when a perfect or almost perfect solution is found, or when the program is [interrupted](https://github.com/vasekp/quantum-ga/blob/readme/manual/Running.md#interruptions) with the **e** command (evaluate a candidate in full). This is just a callback of the standard `ostream` output operator and shares its signature. The candidate is quite free in implementation. This version outputs the transform of each basis vector using polar representation of each amplitude probability.
+
+## Gate types
+
+
 
 - - -
 
