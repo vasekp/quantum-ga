@@ -29,7 +29,7 @@ This line is interesting. We will see references to the value of `odd` several t
 public:
   OracleTemp(bool odd_ = true): odd(odd_) { }
 ```
-The sole constructor of the `OracleTemp` class template.
+The sole constructor of the `OracleTemp` class template. In general there can be more, but a default constructor (no parameters) must be available. If the gate has some internal parameters the default constructor should initialize them randomly.
 
 ```
   State applyTo(const State& psi, const Context* pMark) const override {
