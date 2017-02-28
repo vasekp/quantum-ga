@@ -91,7 +91,7 @@ The following is a list of the currently implemented quantum gate types intended
 * `QGA::SWAP`: 2-qubit swap,
 * `QGA::CPhase`: symmetric *k*-qubit controlled phase gate.
 
-Most of these gates come in a generic setting that can, however, be further adjusted. This is done via an inner class alias mechanism. For example, to allow control qubits for phase rotations, replace `QGA::XYZ` by
+Most of these gates come in a generic setting that can be further adjusted. This is done via an inner class alias mechanism. For example, to allow control qubits for phase rotations, replace `QGA::XYZ` by
 ```
 QGA::XYZ::WithControls<QGA::Controls::ANY>
 ```
