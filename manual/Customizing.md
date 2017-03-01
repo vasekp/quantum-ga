@@ -118,6 +118,53 @@ using Template = OracleTemp<GateBase>;
 ```
 Note that this would not be needed would `OracleTemp` be directly called `Template`, but the former name sheds more logic onto what's happening in the code. Also, other gates use this space to define the class aliases like `WithControls` etc.
 
+## Customizing genetic operators
+
+All the genetic operator logic is provided by [CandidateFactory.hpp](https://github.com/vasekp/quantum-ga/blob/master/include/QGA_bits/CandidateFactory.hpp). This class provides functionality for selecting candidates from the population and mutating and combining them, as well as a static interface for generating the initial population. Some adaptive heuristics for choosing genetic operators with priority based on their prior success have also been implemented but deprecated since, and may be removed in a future revision.
+
+Wherever a random count of gates is needed, a geometric distribution is used. This is achieved by probing a Bernoulli-distributed boolean random value until first failure. This way a scale-free distribution can be obtained while controlling the expected count remains easy. Depending on the context, the latter is specified by constants `Config::expLengthIni` and `Config::expMutationCount` of [QGA_commons.hpp](https://github.com/vasekp/quantum-ga/blob/master/include/QGA_commons.hpp).
+
+### Enabling and disabling genetic operators
+
+Each genetic operator is represented by one private member function of the `CandidateFactory` class. They are chosen at random in `CandidateFactory::getNew()` by means of the ancillary `Selector` class. The list of enabled operators, along with their display names, appears near the very end of [CandidateFactory.hpp](https://github.com/vasekp/quantum-ga/blob/master/include/QGA_bits/CandidateFactory.hpp).
+
+### Programming a custom genetic operator
+
+Any additional genetic operators should be added to the `CandidateFactory` class's private section and follow the logic of the original set. Let us study, for example, `CandidateFactory::mDeleteSlice`:
+
+```
+  Candidate mDeleteSlice() {
+    auto &parent = get();
+    auto &gtOrig = parent.genotype();
+    auto sz = gtOrig.size();  
+    if(sz == 0)
+      return parent;
+```
+We start with drawing a random candidate from the population using a common mechanism provided by the method `get()`. This and its genotype should be stored by reference for speed. Most genetic operators are conditioned by a minumum size of the genotype (here 1), a fast rejection can be achieved by returning `parent`. (This results in a copy being taken.)
+
+````Ca
+    std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
+    std::uniform_int_distribution<size_t> dPos{0, sz - 1};
+    size_t pos1 = dPos(gen::rng),        
+           len = 1 + dGeom(gen::rng),
+           pos2 = pos1 + len > sz ? sz : pos1 + len;
+```
+Deleting a slice means choosing two nearby points within the genotype and removing what is between them, but at least one gene. We prepare the two markers `pos1` and `pos2` accordingly.
+
+```
+    std::vector<Gene> gtNew{};       
+    gtNew.reserve(sz - (pos2 - pos1));  
+    gtNew.insert(gtNew.end(), gtOrig.begin(), gtOrig.begin() + pos1);
+    gtNew.insert(gtNew.end(), gtOrig.begin() + pos2, gtOrig.end());
+    return Candidate{std::move(gtNew)};
+  }
+```
+Finally, a new genotype is prepared as an empty `std::vector` with a pre-allocated size, and the parts before and after the slice are copied to it. Note that copying genes is a quick operation, as they internally are shared pointers. The candidate to be returned by the operator is prepared using this vector, removing its contents in turn.
+
+### Customizing the selection strategy
+
+The model for population has been chosen to be a NSGA-selection based one. This affects the main program file as well as `CandidateFactory::get()`. If intending to replace this by a different selection mechanism please refer to the underlying genetic framework documentation (available separately [here](https://vasekp.github.io/genetic/doc/index.html)).
+
 - - -
 
 Back to [the README](https://github.com/vasekp/quantum-ga/blob/readme/README.md)
