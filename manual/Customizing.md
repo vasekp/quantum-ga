@@ -1,6 +1,10 @@
 # Customizing
 
-(To be written)
+## Controlling the evolution parameters
+
+The genetic evolution (population size, archive size, selection pressure, etc.) is controlled by a set of parameters declared in [QGA_commons.hpp](https://github.com/vasekp/quantum-ga/blob/master/include/QGA_commons.hpp) and defined near the beginning of [the main program file](https://github.com/vasekp/quantum-ga/blob/master/quantum.cpp). Please refer to the comments in the latter file with regard to customizing their values.
+
+All of these currently need to be specified as compile-time constants. This has been a convenience when designing the framework, but for all save a small number there is no reason preventing their input via command line, or changing them at runtime, in a future version. This should be very straightforward to change if needed in a particular application. The only exception where the code does not except a runtime change of value is `Config::nBit`, the number of qubits in the system. Lifting this restriction will be the immediate focus of near-future development.
 
 ## Defining custom gate types
 
