@@ -8,7 +8,7 @@ The task for which the framework should seek a quantum circuit is specified via 
 
 The two example problems are both found under [include/QGA_Problem](https://github.com/vasekp/quantum-ga/tree/master/include/QGA_Problem), although this is no fixed requirement. Let us walk through the implementation of the Fourier problem to see a particular program in action.
 
-```
+```c++
 #ifndef QGA_PROBLEM_HPP
 #define QGA_PROBLEM_HPP
 
@@ -16,21 +16,22 @@ namespace {
 ```
 These lines should appear at the top of each problem file.
 
-```
-using Gene = QGA::Gene<QGA::Gates::Y, QGA::Gates::CPhase, QGA::Gates::SWAP>;
+```c++
+  using Gene = QGA::Gene<QGA::Gates::Y, QGA::Gates::CPhase, QGA::Gates::SWAP>;
 ```
 The `QGA::Gene` template represents objects participating in the genotype, i.e., individual circuit gates. This is where the [gate types](#gate-types) that are allowed in the evolution are specified. The way the `QGA::Gene` class template is designed it needs to be aware of its descendants (for the purposes of static polymorphism).
 
-```
-class Candidate : public QGA::CandidateBase<Candidate, Gene, double, double> {
+```c++
+  class Candidate : public QGA::CandidateBase<Candidate, Gene, double, double> {
 ```
 The `Candidate` class is the centre of the definition of the Fourier problem. It must derive from `QGA::Candidate`, specifying as template parameters
 * itself (for [CRTP](https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern)),
 * the gene class (containing in it the gate types), as declared above,
 * a flat list of the fitness element types, in this case average error and maximum error, both `double`. Note that this will automatically be augmented by gate counts by type (i.e. count of Y-rotations, count of controlled phases, and swap count, in this order).
 
-```
+```c++
   using Base = QGA::CandidateBase<Candidate, Gene, double, double>;
+
 public:
   Base::FitnessMain fitness_main() const {
     if(genotype().size() > 1000)
@@ -62,7 +63,7 @@ The functions `State::overlap` or `State::reset`, as well as the constructor, ar
 
 The fitness function calls a private class member function `sim` which is omitted for brevity. It can be found in [Fourier.hpp](https://github.com/vasekp/quantum-ga/blob/master/include/QGA_Problem/Fourier.hpp). Finally,
 
-```
+```c++
   std::ostream& print_full(std::ostream& os) const {
     unsigned dim = 1 << Config::nBit;
     State psi{};
@@ -92,7 +93,7 @@ The following is a list of the currently implemented quantum gate types intended
 * `QGA::CPhase`: symmetric *k*-qubit controlled phase gate.
 
 Most of these gates come in a generic setting that can be further adjusted. This is done via an inner class alias mechanism. For example, to allow control qubits for phase rotations, replace `QGA::XYZ` by
-```
+```c++
 QGA::XYZ::WithControls<QGA::Controls::ANY>
 ```
 The `WithControls` specifier can be used with all the above gate types except `QGA::SWAP` and takes the following constants of the `QGA::Controls` enum:
