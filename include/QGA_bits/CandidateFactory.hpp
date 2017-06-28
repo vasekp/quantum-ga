@@ -455,16 +455,6 @@ public:
       for(auto& op : ops)
         denom += op.hits / op.prob;
 
-      if(denom != 0)
-        /* Only if we're counting hits; if we're not, the probabilities will
-         * stay constant */
-        for(auto& op : ops) {
-          op.prob = (1 - Config::heurFactor) * op.prob
-            + Config::heurFactor * op.hits / op.prob / denom;
-          op.thits += op.hits;
-          op.hits = 0;
-        }
-
       std::vector<double> weights(count);
       for(size_t i = 0; i < count; i++)
         weights[i] = ops[i].prob;

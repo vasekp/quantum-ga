@@ -47,9 +47,6 @@ namespace Config {
   // Number of candidates to keep from parent generation
   const size_t popKeep = 0;
 
-  // Number of generations (constant)
-  const unsigned long nGen = 2000;//std::numeric_limits<unsigned long>::max();
-
   // Expected curcuit depth in 0th generation
   const double expLengthIni = 30;
 
@@ -58,9 +55,6 @@ namespace Config {
 
   // Probability of a crossover at any given point
   const double pCrossUniform = 0.1;
-
-  // How much prior success of genetic ops should influence future choices
-  const double heurFactor = 1.0 / nGen;
 
   // How much each bit is likely to be a control bit at gate creation
   const double pControl = 0.5;
@@ -135,7 +129,7 @@ int main() {
   unsigned long gen;
 
   /* Main cycle */
-  for(gen = 0; gen < Config::nGen; gen++) {
+  for(gen = 0; ; gen++) {
 
     /* Find the nondominated subset */
     Population pop2 = pop.front();
@@ -195,11 +189,6 @@ int main() {
         << "newest: " << brief(newest) << '\n'
         << circuit << std::endl;
     }
-
-    /* Display the dialog at the last iteration for easy examination of
-     * results (online sessions only) */
-    if(isatty(1))
-      if(gen == Config::nGen - 1) Signal::state = Signal::INTERRUPTED;
 
     /* Interrupted? */
     while(Signal::state == Signal::INTERRUPTED)

@@ -29,7 +29,6 @@ namespace Config {
   extern const size_t arSize;
   extern const size_t popSize;
   extern const double selectBias;
-  extern const double heurFactor;
   extern const double expLengthIni;
   extern const double expMutationCount;
   extern const double pCrossUniform;
