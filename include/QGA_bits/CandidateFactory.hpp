@@ -10,9 +10,9 @@ class CandidateFactory {
 
 public:
 
-  class Selector;
+  class Tracker;
 
-  CandidateFactory(Population& pop_, Selector& sel_): pop(pop_), sel(sel_) { }
+  CandidateFactory(Population& pop_, Tracker& trk_): pop(pop_), trk(trk_) { }
 
   static Candidate genInit() {
     // probability of termination; expLengthIni = expected number of genes
@@ -27,7 +27,7 @@ public:
   }
 
   Candidate getNew() {
-    auto op = sel.select();
+    auto op = trk.select();
     return (this->*op.first)().setOrigin(op.second);
   }
 
@@ -420,7 +420,7 @@ private:
 
 public:
 
-  class Selector {
+  class Tracker {
 
     using CF = CandidateFactory;
     using FunPtr = Candidate (CF::*)();
@@ -444,9 +444,9 @@ public:
         ops[ix].hits++;
     }
 
-    friend std::ostream& operator<< (std::ostream& os, const Selector& sel) {
+    friend std::ostream& operator<< (std::ostream& os, const Tracker& trk) {
       /* Find the longest GenOp name */
-      auto max = std::max_element(sel.ops.begin(), sel.ops.end(),
+      auto max = std::max_element(trk.ops.begin(), trk.ops.end(),
           [](const GenOp& a, const GenOp& b) {
             return a.name.length() < b.name.length();
           });
@@ -456,7 +456,7 @@ public:
       auto flags_ = os.flags(std::ios_base::left);
 
       /* List all op names and probabilities */
-      for(auto& op : sel.ops)
+      for(auto& op : trk.ops)
         os << std::setw(maxw+3) << op.name + ':' << op.hits << '\n';
 
       os.flags(flags_);
@@ -468,7 +468,7 @@ public:
       return {ops[index].fun, index};
     }
 
-    Selector(std::vector<GenOp>&& ops_):
+    Tracker(std::vector<GenOp>&& ops_):
     ops(std::move(ops_)), count(ops.size()), dUni(0, count - 1) { }
 
   private:
@@ -477,11 +477,11 @@ public:
     size_t count;
     std::uniform_int_distribution<> dUni;
 
-  }; // class Selector
+  }; // class Tracker
 
-  static Selector getInitSelector() {
+  static Tracker getInitTracker() {
     using CF = CandidateFactory;
-    std::vector<typename Selector::GenOp> ops{};
+    std::vector<typename Tracker::GenOp> ops{};
   //ops.push_back({ &CF::mAlterDiscrete,   "MDiscrete" });
     ops.push_back({ &CF::mAlterContinuous, "MutSingle" });
     ops.push_back({ &CF::mAddSlice,        "AddSlice" });
@@ -505,7 +505,7 @@ public:
 private:
 
   Population& pop;
-  Selector& sel;
+  Tracker& trk;
 
 }; // class CandidateFactory
 

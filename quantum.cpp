@@ -84,7 +84,7 @@ using CandidateFactory = QGA::CandidateFactory<Candidate>;
 /* Forward declarations */
 void int_handler(int);
 int int_response(Population&, unsigned long);
-void dumpResults(Population&, CandidateFactory::Selector&,
+void dumpResults(Population&, CandidateFactory::Tracker&,
     std::chrono::time_point<std::chrono::steady_clock>, unsigned long);
 /* End forward declarations */
 
@@ -125,7 +125,7 @@ int main() {
     start{std::chrono::steady_clock::now()};
   Population pop{Config::popSize,
     [] { return CandidateFactory::genInit().setGen(0); }};
-  CandidateFactory::Selector sel = CandidateFactory::getInitSelector();
+  CandidateFactory::Tracker trk = CandidateFactory::getInitTracker();
   unsigned long gen;
 
   /* Main cycle */
@@ -150,7 +150,7 @@ int main() {
     pop2.add(pop.randomSelect(Config::popKeep));
 
     /* Top up to popSize candidates in parallel */
-    CandidateFactory cf{pop, sel};
+    CandidateFactory cf{pop, trk};
     pop.precompute();
     pop2.add(Config::popSize - pop2.size(),
         [&] { return cf.getNew().setGen(gen); });
@@ -170,7 +170,7 @@ int main() {
     auto nondom = pop.front();
     for(auto& c : nondom)
       if(c.getGen() == gen)
-        sel.hit(c.getOrigin());
+        trk.hit(c.getOrigin());
 
     /* Summarize */
     {
@@ -194,12 +194,12 @@ int main() {
     while(Signal::state == Signal::INTERRUPTED)
       switch(int_response(pop, gen)) {
         case Signal::DUMP:
-          dumpResults(pop, sel, start, gen);
+          dumpResults(pop, trk, start, gen);
           break;
         case Signal::RESTART:
           pop = Population{Config::popSize,
             [&] { return CandidateFactory::genInit().setGen(0); }};
-          sel = CandidateFactory::getInitSelector();
+          trk = CandidateFactory::getInitTracker();
           start = std::chrono::steady_clock::now();
           Signal::timeOut = std::chrono::duration<double>(0);
           gen = 0;
@@ -209,11 +209,11 @@ int main() {
       break;
   }
 
-  dumpResults(pop, sel, start, gen);
+  dumpResults(pop, trk, start, gen);
 }
 
 
-void dumpResults(Population& pop, CandidateFactory::Selector& sel,
+void dumpResults(Population& pop, CandidateFactory::Tracker& trk,
     std::chrono::time_point<std::chrono::steady_clock> start,
     unsigned long gen) {
 
@@ -230,8 +230,8 @@ void dumpResults(Population& pop, CandidateFactory::Selector& sel,
       std::cout << '\n';
   }
 
-  /* Dump the heuristic distribution */
-  std::cout << "\nGenetic operator distribution:\n" << sel;
+  /* Dump the operator statistics */
+  std::cout << "\nGenetic operator success rates:\n" << trk;
 
   /* Timing information */
   std::chrono::time_point<std::chrono::steady_clock>
