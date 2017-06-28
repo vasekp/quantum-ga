@@ -12,9 +12,7 @@ public:
 
   class Selector;
 
-  CandidateFactory(Population& pop_, Selector& sel_): pop(pop_), sel(sel_) {
-    sel.update();
-  }
+  CandidateFactory(Population& pop_, Selector& sel_): pop(pop_), sel(sel_) { }
 
   static Candidate genInit() {
     // probability of termination; expLengthIni = expected number of genes
@@ -434,31 +432,16 @@ public:
 
       FunPtr fun;
       std::string name;
-      double prob;
       unsigned long hits;
-      unsigned long thits;
 
       GenOp(FunPtr fun_, std::string name_):
-        fun(fun_), name(name_), prob(1), hits(0), thits(0) { }
+        fun(fun_), name(name_), hits(0) { }
 
     };
 
     void hit(size_t ix) {
       if(ix >= 0 && ix < count)
         ops[ix].hits++;
-    }
-
-    void update() {
-      /* Calculate the probability distribution of GenOps based on prior
-       * success rate */
-      double denom = 0;
-      for(auto& op : ops)
-        denom += op.hits / op.prob;
-
-      std::vector<double> weights(count);
-      for(size_t i = 0; i < count; i++)
-        weights[i] = ops[i].prob;
-      dFun = std::discrete_distribution<size_t>(weights.begin(), weights.end());
     }
 
     friend std::ostream& operator<< (std::ostream& os, const Selector& sel) {
@@ -474,31 +457,25 @@ public:
 
       /* List all op names and probabilities */
       for(auto& op : sel.ops)
-        os << std::setw(maxw+3) << op.name + ':'
-           << op.prob << "  " << op.thits << '\n';
+        os << std::setw(maxw+3) << op.name + ':' << op.hits << '\n';
 
       os.flags(flags_);
       return os;
     }
 
     std::pair<FunPtr, size_t> select() {
-      size_t index = dFun(gen::rng);
+      size_t index = dUni(gen::rng);
       return {ops[index].fun, index};
     }
 
     Selector(std::vector<GenOp>&& ops_):
-    ops(std::move(ops_)), count(ops.size()) {
-      double pUniform = 1.0 / count;
-      for(auto& op : ops)
-        op.prob = pUniform;
-      update();
-    }
+    ops(std::move(ops_)), count(ops.size()), dUni(0, count - 1) { }
 
   private:
 
     std::vector<GenOp> ops;
     size_t count;
-    std::discrete_distribution<size_t> dFun{};
+    std::uniform_int_distribution<> dUni;
 
   }; // class Selector
 
