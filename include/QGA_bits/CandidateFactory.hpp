@@ -343,20 +343,14 @@ private:
     // optimized away
     size_t sz1 = gt1->size(),
            sz2 = gt2->size(),
-           szShorter = std::min(sz1, sz2),
-           szLonger = std::max(sz1, sz2),
            pos1 = 0, pos2 = 0;
-    // expLen will be = 1 for the shorter candidate and > 1 for the longer one
-    // (1 for both if equal length). This is the expected length of a slice we
-    // take or skip before making a new decision whether to cross over.
-    double expLen1 = (double)sz1 / szShorter,
-           expLen2 = (double)sz2 / szShorter;
-    std::uniform_real_distribution<> dUni{};
-    std::geometric_distribution<size_t> dGeom1{1.0 / expLen1};
-    std::geometric_distribution<size_t> dGeom2{1.0 / expLen2};
+    double pCross1 = std::min(Config::expMutationCount / sz1, 1.0),
+           pCross2 = std::min(Config::expMutationCount / sz2, 1.0);
+    std::geometric_distribution<size_t> dGeom1{pCross1};
+    std::geometric_distribution<size_t> dGeom2{pCross2};
     std::vector<Gene> gtNew{};
 
-    gtNew.reserve(szLonger);
+    gtNew.reserve(std::max(sz1, sz2));
     for(;;) {
       // Take roughly expLen1 genes from gt1
       size_t upto = pos1 + dGeom1(gen::rng) + 1;
@@ -368,14 +362,11 @@ private:
         break; // ditto
       gtNew.insert(gtNew.end(), gt1->begin() + pos1, gt1->begin() + upto);
       pos1 = upto;
-      // With probability pCrossUniform we swap the two sources (along with
-      // all associated data), otherwise we repeat.
-      if(dUni(gen::rng) < Config::pCrossUniform) {
-        std::swap(gt1, gt2);
-        std::swap(sz1, sz2);
-        std::swap(pos1, pos2);
-        std::swap(dGeom1, dGeom2);
-      }
+      // Swap the two
+      std::swap(gt1, gt2);
+      std::swap(sz1, sz2);
+      std::swap(pos1, pos2);
+      std::swap(dGeom1, dGeom2);
     }
     // If we get here then either more was requested of gt1 than available or
     // gt2 went empty. In either case, we just take whatever's left and we

@@ -31,7 +31,6 @@ namespace Config {
   extern const double selectBias;
   extern const double expLengthIni;
   extern const double expMutationCount;
-  extern const double pCrossUniform;
   extern const double pControl;
   extern const double dAlpha;
 }

@@ -53,9 +53,6 @@ namespace Config {
   // Expected number of gates inserted / modified / removed in mutation
   const double expMutationCount = 4.0;
 
-  // Probability of a crossover at any given point
-  const double pCrossUniform = 0.1;
-
   // How much each bit is likely to be a control bit at gate creation
   const double pControl = 0.5;
 
