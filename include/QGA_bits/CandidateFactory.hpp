@@ -136,8 +136,9 @@ private:
     gtNew.insert(gtNew.end(), gtOrig.begin(), gtOrig.begin() + pos);
     gtNew.push_back(gNew);
     gtNew.push_back(std::move(gOrig));
-    gNew.invert();
-    gtNew.push_back(std::move(gNew));
+    Gene gNewInv{gNew};
+    gNewInv.invert();
+    gtNew.push_back(std::move(gNewInv));
     gtNew.insert(gtNew.end(), gtOrig.begin() + pos + 1, gtOrig.end());
     return Candidate{std::move(gtNew)};
   }
