@@ -63,6 +63,9 @@ namespace Config {
   // Standard deviation of mutation in gate angles
   const double dAlpha = 0.1;
 
+  // Maximum length of an output line when formatting circuits
+  const size_t circLineLength = 80;
+
 } // namespace Config
 
 
