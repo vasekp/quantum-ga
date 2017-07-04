@@ -50,8 +50,12 @@ namespace Config {
   // Expected curcuit depth in 0th generation
   const double expLengthIni = 30;
 
-  // Expected number of gates inserted / modified / removed in mutation
-  const double expMutationCount = 4.0;
+  // Expected number of single-point mutations (including crossover)
+  const double expMutationCount = 1.0;
+
+  // Expected number of successive gates to be inserted / deleted / replaced
+  // NB: 1 is always added to slice length
+  const double expSliceLength = 3.0;
 
   // How much each bit is likely to be a control bit at gate creation
   const double pControl = 0.5;

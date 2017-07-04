@@ -77,8 +77,8 @@ private:
     std::uniform_int_distribution<size_t> dPos{0, sz};
     size_t pos = dPos(gen::rng);
     std::vector<Gene> ins{};
-    ins.reserve(2*Config::expMutationCount);
-    double probTerm = 1/Config::expMutationCount;
+    ins.reserve(2*Config::expSliceLength);
+    double probTerm = 1/Config::expSliceLength;
     do
       ins.push_back(Gene::getRandom());
     while(dUni(gen::rng) > probTerm);
@@ -101,8 +101,8 @@ private:
     if(pos2 < pos1)
       std::swap(pos1, pos2);
     std::vector<Gene> ins{};
-    ins.reserve(2*Config::expMutationCount);
-    double probTerm = 1/Config::expMutationCount;
+    ins.reserve(2*Config::expSliceLength);
+    double probTerm = 1/Config::expSliceLength;
     do
       ins.push_back(Gene::getRandom());
     while(dUni(gen::rng) > probTerm);
@@ -149,7 +149,7 @@ private:
     auto sz = gtOrig.size();
     if(sz == 0 || Config::nBit < 2)
       return parent;
-    std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
+    std::geometric_distribution<size_t> dGeom{1.0 / Config::expSliceLength};
     std::uniform_int_distribution<size_t> dPos{0, sz - 1};
     size_t pos1 = dPos(gen::rng),
            len = 1 + dGeom(gen::rng),
@@ -171,7 +171,7 @@ private:
     auto sz = gtOrig.size();
     if(sz == 0)
       return parent;
-    std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
+    std::geometric_distribution<size_t> dGeom{1.0 / Config::expSliceLength};
     std::uniform_int_distribution<size_t> dPos{0, sz - 1};
     size_t pos1 = dPos(gen::rng),
            len = 1 + dGeom(gen::rng),
@@ -191,13 +191,13 @@ private:
       return parent;
     std::uniform_real_distribution<> dUni{};
     std::uniform_int_distribution<size_t> dPos{0, sz - 1};
-    std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
+    std::geometric_distribution<size_t> dGeom{1.0 / Config::expSliceLength};
     size_t pos1 = dPos(gen::rng),
            len = 1 + dGeom(gen::rng),
            pos2 = pos1 + len > sz ? sz : pos1 + len;
     std::vector<Gene> ins{};
-    ins.reserve(2*Config::expMutationCount);
-    double probTerm = 1/Config::expMutationCount;
+    ins.reserve(2*Config::expSliceLength);
+    double probTerm = 1/Config::expSliceLength;
     do
       ins.push_back(Gene::getRandom());
     while(dUni(gen::rng) > probTerm);
@@ -288,7 +288,7 @@ private:
     if(sz < 2)
       return parent;
     std::uniform_int_distribution<size_t> dPos{0, sz - 2};
-    std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
+    std::geometric_distribution<size_t> dGeom{1.0 / Config::expSliceLength};
     size_t pos1 = dPos(gen::rng),
            len = 2 + dGeom(gen::rng),
            pos2 = pos1 + len > sz ? sz : pos1 + len;
@@ -304,7 +304,7 @@ private:
     if(sz < 2)
       return parent;
     std::uniform_int_distribution<size_t> dPos{0, sz - 2};
-    std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
+    std::geometric_distribution<size_t> dGeom{1.0 / Config::expSliceLength};
     size_t pos1 = dPos(gen::rng),
            len = 1 + dGeom(gen::rng),
            pos2 = pos1 + len > sz - 1 ? sz - 1 : pos1 + len;
