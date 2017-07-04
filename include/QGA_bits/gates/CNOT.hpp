@@ -43,10 +43,6 @@ public:
     return ixs.size();
   }
 
-  Pointer mutate(const Pointer&) const override {
-    return std::make_shared<CNOTTemp>();
-  }
-
   Pointer swapQubits(const Pointer& self, unsigned s1, unsigned s2)
     const override
   {
