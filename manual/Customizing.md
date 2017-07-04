@@ -77,7 +77,7 @@ The following two functions are used in gate merging mechanisms:
 ```c++
   bool sameType(const GateBase& other) const override {
     const OracleTemp* c = other.cast(this);
-    return c != nullptr && c->odd == odd;
+    return c != nullptr;
   }
 
   Pointer merge(const GateBase& other) const override {
@@ -88,7 +88,7 @@ The following two functions are used in gate merging mechanisms:
     return std::make_shared<OracleTemp>(odd ^ c->odd);
   }
 ```
-Their names are self-documenting but their implementation deserves some attention. Namely, the static up-cast provided by the `GateBase::cast` function. Here we pass `this` to request the target type. If the `other` gate is an `OracleTemp`, the overload defined above is called, returning its pointer. For all other derived classes, the default behaviour is to return a `nullptr`. So, in order to check whether `this` and `other` are of the same type, we check the result against a `nullptr`. Moreover, all trivial gates are considered a separate category (identity), so we (conditioned on the non-`nullptr` check) compare these data members, too.
+Their names are self-documenting but their implementation deserves some attention. Namely, the static up-cast provided by the `GateBase::cast` function. Here we pass `this` to request the target type. If the `other` gate is an `OracleTemp`, the overload defined above is called, returning its pointer. For all other derived classes, the default behaviour is to return a `nullptr`. So, in order to check whether `this` and `other` are of the same type, we check the result against a `nullptr`.
 
 `merge` attempts to merge a gate with another, which is to be applied *after* it. The return type is a `Pointer` but neither the self-pointer nor the `Pointer` to the `other` gate are provided. This is because the cases where trivially one gate or the other can be returned through their `Pointer` are sorted out before control is given to the `merge` overload, thus its function is in most cases to create an entirely new gate or to report a failure. The latter is done by calling the default constructor of `Pointer`, as in the third line. A new gate is created via a call to `std::make_shared`. In this case, we call the only constructor `OracleTemp::OracleTemp(bool = true)`.
 
