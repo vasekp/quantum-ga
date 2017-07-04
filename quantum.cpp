@@ -44,9 +44,6 @@ namespace Config {
   // Internal population size
   const size_t popSize = 1000;
 
-  // Number of candidates to keep from parent generation
-  const size_t popKeep = 0;
-
   // Expected curcuit depth in 0th generation
   const double expLengthIni = 30;
 
@@ -145,10 +142,6 @@ int main() {
 
     /* Unconditionally add the best candidate so far (in case it got pruned) */
     pop2.add(pop.best());
-
-    /* Randomly select popKeep candidates for survival without modification */
-    pop2.reserve(Config::popSize);
-    pop2.add(pop.randomSelect(Config::popKeep));
 
     /* Top up to popSize candidates in parallel */
     CandidateFactory cf{pop, trk};
