@@ -56,7 +56,7 @@ public:
 
   bool sameType(const GateBase& other) const override {
     const OracleTemp* c = other.cast(this);
-    return c != nullptr && c->odd == odd;
+    return c != nullptr;
   }
 
   Pointer merge(const GateBase& other) const override {

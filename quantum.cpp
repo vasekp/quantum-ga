@@ -44,23 +44,15 @@ namespace Config {
   // Internal population size
   const size_t popSize = 1000;
 
-  // Number of candidates to keep from parent generation
-  const size_t popKeep = 0;
-
-  // Number of generations (constant)
-  const unsigned long nGen = 2000;//std::numeric_limits<unsigned long>::max();
-
   // Expected curcuit depth in 0th generation
   const double expLengthIni = 30;
 
-  // Expected number of gates inserted / modified / removed in mutation
-  const double expMutationCount = 4.0;
+  // Expected number of single-point mutations (including crossover)
+  const double expMutationCount = 1.0;
 
-  // Probability of a crossover at any given point
-  const double pCrossUniform = 0.1;
-
-  // How much prior success of genetic ops should influence future choices
-  const double heurFactor = 1.0 / nGen;
+  // Expected number of successive gates to be inserted / deleted / replaced
+  // NB: 1 is always added to slice length
+  const double expSliceLength = 3.0;
 
   // How much each bit is likely to be a control bit at gate creation
   const double pControl = 0.5;
@@ -90,7 +82,7 @@ using CandidateFactory = QGA::CandidateFactory<Candidate>;
 /* Forward declarations */
 void int_handler(int);
 int int_response(Population&, unsigned long);
-void dumpResults(Population&, CandidateFactory::Selector&,
+void dumpResults(Population&, CandidateFactory::Tracker&,
     std::chrono::time_point<std::chrono::steady_clock>, unsigned long);
 /* End forward declarations */
 
@@ -131,11 +123,11 @@ int main() {
     start{std::chrono::steady_clock::now()};
   Population pop{Config::popSize,
     [] { return CandidateFactory::genInit().setGen(0); }};
-  CandidateFactory::Selector sel = CandidateFactory::getInitSelector();
+  CandidateFactory::Tracker trk = CandidateFactory::getInitTracker();
   unsigned long gen;
 
   /* Main cycle */
-  for(gen = 0; gen < Config::nGen; gen++) {
+  for(gen = 0; ; gen++) {
 
     /* Find the nondominated subset */
     Population pop2 = pop.front();
@@ -151,12 +143,8 @@ int main() {
     /* Unconditionally add the best candidate so far (in case it got pruned) */
     pop2.add(pop.best());
 
-    /* Randomly select popKeep candidates for survival without modification */
-    pop2.reserve(Config::popSize);
-    pop2.add(pop.randomSelect(Config::popKeep));
-
     /* Top up to popSize candidates in parallel */
-    CandidateFactory cf{pop, sel};
+    CandidateFactory cf{pop, trk};
     pop.precompute();
     pop2.add(Config::popSize - pop2.size(),
         [&] { return cf.getNew().setGen(gen); });
@@ -176,41 +164,30 @@ int main() {
     auto nondom = pop.front();
     for(auto& c : nondom)
       if(c.getGen() == gen)
-        sel.hit(c.getOrigin());
+        trk.hit(c.getOrigin());
 
     /* Summarize */
     {
-      auto& newest = *std::min_element(nondom.begin(), nondom.end(),
-          [](const GenCandidate& c1, const GenCandidate& c2) {
-            return c1.getGen() > c2.getGen();
-          });
-
       // Prepare circuit in advance to not delay the printing operation later
       auto circuit = pop.best().circuit<CircuitPrinter>();
       std::cout
         << Colours::bold("Gen ", gen, ": ")
         << Colours::yellow(pop.size()) << " unique fitnesses, "
         << "lowest error " << brief(pop.best()) << ", "
-        << Colours::yellow(nondom.size()) << " nondominated, "
-        << "newest: " << brief(newest) << '\n'
+        << Colours::yellow(nondom.size()) << " nondominated\n"
         << circuit << std::endl;
     }
-
-    /* Display the dialog at the last iteration for easy examination of
-     * results (online sessions only) */
-    if(isatty(1))
-      if(gen == Config::nGen - 1) Signal::state = Signal::INTERRUPTED;
 
     /* Interrupted? */
     while(Signal::state == Signal::INTERRUPTED)
       switch(int_response(pop, gen)) {
         case Signal::DUMP:
-          dumpResults(pop, sel, start, gen);
+          dumpResults(pop, trk, start, gen);
           break;
         case Signal::RESTART:
           pop = Population{Config::popSize,
             [&] { return CandidateFactory::genInit().setGen(0); }};
-          sel = CandidateFactory::getInitSelector();
+          trk = CandidateFactory::getInitTracker();
           start = std::chrono::steady_clock::now();
           Signal::timeOut = std::chrono::duration<double>(0);
           gen = 0;
@@ -220,11 +197,11 @@ int main() {
       break;
   }
 
-  dumpResults(pop, sel, start, gen);
+  dumpResults(pop, trk, start, gen);
 }
 
 
-void dumpResults(Population& pop, CandidateFactory::Selector& sel,
+void dumpResults(Population& pop, CandidateFactory::Tracker& trk,
     std::chrono::time_point<std::chrono::steady_clock> start,
     unsigned long gen) {
 
@@ -241,8 +218,8 @@ void dumpResults(Population& pop, CandidateFactory::Selector& sel,
       std::cout << '\n';
   }
 
-  /* Dump the heuristic distribution */
-  std::cout << "\nGenetic operator distribution:\n" << sel;
+  /* Dump the operator statistics */
+  std::cout << "\nGenetic operator success rates:\n" << trk;
 
   /* Timing information */
   std::chrono::time_point<std::chrono::steady_clock>

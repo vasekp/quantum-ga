@@ -10,11 +10,9 @@ class CandidateFactory {
 
 public:
 
-  class Selector;
+  class Tracker;
 
-  CandidateFactory(Population& pop_, Selector& sel_): pop(pop_), sel(sel_) {
-    sel.update();
-  }
+  CandidateFactory(Population& pop_, Tracker& trk_): pop(pop_), trk(trk_) { }
 
   static Candidate genInit() {
     // probability of termination; expLengthIni = expected number of genes
@@ -29,7 +27,7 @@ public:
   }
 
   Candidate getNew() {
-    auto op = sel.select();
+    auto op = trk.select();
     return (this->*op.first)().setOrigin(op.second);
   }
 
@@ -79,8 +77,8 @@ private:
     std::uniform_int_distribution<size_t> dPos{0, sz};
     size_t pos = dPos(gen::rng);
     std::vector<Gene> ins{};
-    ins.reserve(2*Config::expMutationCount);
-    double probTerm = 1/Config::expMutationCount;
+    ins.reserve(2*Config::expSliceLength);
+    double probTerm = 1/Config::expSliceLength;
     do
       ins.push_back(Gene::getRandom());
     while(dUni(gen::rng) > probTerm);
@@ -103,8 +101,8 @@ private:
     if(pos2 < pos1)
       std::swap(pos1, pos2);
     std::vector<Gene> ins{};
-    ins.reserve(2*Config::expMutationCount);
-    double probTerm = 1/Config::expMutationCount;
+    ins.reserve(2*Config::expSliceLength);
+    double probTerm = 1/Config::expSliceLength;
     do
       ins.push_back(Gene::getRandom());
     while(dUni(gen::rng) > probTerm);
@@ -138,8 +136,9 @@ private:
     gtNew.insert(gtNew.end(), gtOrig.begin(), gtOrig.begin() + pos);
     gtNew.push_back(gNew);
     gtNew.push_back(std::move(gOrig));
-    gNew.invert();
-    gtNew.push_back(std::move(gNew));
+    Gene gNewInv{gNew};
+    gNewInv.invert();
+    gtNew.push_back(std::move(gNewInv));
     gtNew.insert(gtNew.end(), gtOrig.begin() + pos + 1, gtOrig.end());
     return Candidate{std::move(gtNew)};
   }
@@ -150,7 +149,7 @@ private:
     auto sz = gtOrig.size();
     if(sz == 0 || Config::nBit < 2)
       return parent;
-    std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
+    std::geometric_distribution<size_t> dGeom{1.0 / Config::expSliceLength};
     std::uniform_int_distribution<size_t> dPos{0, sz - 1};
     size_t pos1 = dPos(gen::rng),
            len = 1 + dGeom(gen::rng),
@@ -172,7 +171,7 @@ private:
     auto sz = gtOrig.size();
     if(sz == 0)
       return parent;
-    std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
+    std::geometric_distribution<size_t> dGeom{1.0 / Config::expSliceLength};
     std::uniform_int_distribution<size_t> dPos{0, sz - 1};
     size_t pos1 = dPos(gen::rng),
            len = 1 + dGeom(gen::rng),
@@ -192,13 +191,13 @@ private:
       return parent;
     std::uniform_real_distribution<> dUni{};
     std::uniform_int_distribution<size_t> dPos{0, sz - 1};
-    std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
+    std::geometric_distribution<size_t> dGeom{1.0 / Config::expSliceLength};
     size_t pos1 = dPos(gen::rng),
            len = 1 + dGeom(gen::rng),
            pos2 = pos1 + len > sz ? sz : pos1 + len;
     std::vector<Gene> ins{};
-    ins.reserve(2*Config::expMutationCount);
-    double probTerm = 1/Config::expMutationCount;
+    ins.reserve(2*Config::expSliceLength);
+    double probTerm = 1/Config::expSliceLength;
     do
       ins.push_back(Gene::getRandom());
     while(dUni(gen::rng) > probTerm);
@@ -289,7 +288,7 @@ private:
     if(sz < 2)
       return parent;
     std::uniform_int_distribution<size_t> dPos{0, sz - 2};
-    std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
+    std::geometric_distribution<size_t> dGeom{1.0 / Config::expSliceLength};
     size_t pos1 = dPos(gen::rng),
            len = 2 + dGeom(gen::rng),
            pos2 = pos1 + len > sz ? sz : pos1 + len;
@@ -305,7 +304,7 @@ private:
     if(sz < 2)
       return parent;
     std::uniform_int_distribution<size_t> dPos{0, sz - 2};
-    std::geometric_distribution<size_t> dGeom{1.0 / Config::expMutationCount};
+    std::geometric_distribution<size_t> dGeom{1.0 / Config::expSliceLength};
     size_t pos1 = dPos(gen::rng),
            len = 1 + dGeom(gen::rng),
            pos2 = pos1 + len > sz - 1 ? sz - 1 : pos1 + len;
@@ -345,20 +344,14 @@ private:
     // optimized away
     size_t sz1 = gt1->size(),
            sz2 = gt2->size(),
-           szShorter = std::min(sz1, sz2),
-           szLonger = std::max(sz1, sz2),
            pos1 = 0, pos2 = 0;
-    // expLen will be = 1 for the shorter candidate and > 1 for the longer one
-    // (1 for both if equal length). This is the expected length of a slice we
-    // take or skip before making a new decision whether to cross over.
-    double expLen1 = (double)sz1 / szShorter,
-           expLen2 = (double)sz2 / szShorter;
-    std::uniform_real_distribution<> dUni{};
-    std::geometric_distribution<size_t> dGeom1{1.0 / expLen1};
-    std::geometric_distribution<size_t> dGeom2{1.0 / expLen2};
+    double pCross1 = std::min(Config::expMutationCount / sz1, 1.0),
+           pCross2 = std::min(Config::expMutationCount / sz2, 1.0);
+    std::geometric_distribution<size_t> dGeom1{pCross1};
+    std::geometric_distribution<size_t> dGeom2{pCross2};
     std::vector<Gene> gtNew{};
 
-    gtNew.reserve(szLonger);
+    gtNew.reserve(std::max(sz1, sz2));
     for(;;) {
       // Take roughly expLen1 genes from gt1
       size_t upto = pos1 + dGeom1(gen::rng) + 1;
@@ -370,14 +363,11 @@ private:
         break; // ditto
       gtNew.insert(gtNew.end(), gt1->begin() + pos1, gt1->begin() + upto);
       pos1 = upto;
-      // With probability pCrossUniform we swap the two sources (along with
-      // all associated data), otherwise we repeat.
-      if(dUni(gen::rng) < Config::pCrossUniform) {
-        std::swap(gt1, gt2);
-        std::swap(sz1, sz2);
-        std::swap(pos1, pos2);
-        std::swap(dGeom1, dGeom2);
-      }
+      // Swap the two
+      std::swap(gt1, gt2);
+      std::swap(sz1, sz2);
+      std::swap(pos1, pos2);
+      std::swap(dGeom1, dGeom2);
     }
     // If we get here then either more was requested of gt1 than available or
     // gt2 went empty. In either case, we just take whatever's left and we
@@ -422,7 +412,7 @@ private:
 
 public:
 
-  class Selector {
+  class Tracker {
 
     using CF = CandidateFactory;
     using FunPtr = Candidate (CF::*)();
@@ -434,12 +424,10 @@ public:
 
       FunPtr fun;
       std::string name;
-      double prob;
       unsigned long hits;
-      unsigned long thits;
 
       GenOp(FunPtr fun_, std::string name_):
-        fun(fun_), name(name_), prob(1), hits(0), thits(0) { }
+        fun(fun_), name(name_), hits(0) { }
 
     };
 
@@ -448,32 +436,9 @@ public:
         ops[ix].hits++;
     }
 
-    void update() {
-      /* Calculate the probability distribution of GenOps based on prior
-       * success rate */
-      double denom = 0;
-      for(auto& op : ops)
-        denom += op.hits / op.prob;
-
-      if(denom != 0)
-        /* Only if we're counting hits; if we're not, the probabilities will
-         * stay constant */
-        for(auto& op : ops) {
-          op.prob = (1 - Config::heurFactor) * op.prob
-            + Config::heurFactor * op.hits / op.prob / denom;
-          op.thits += op.hits;
-          op.hits = 0;
-        }
-
-      std::vector<double> weights(count);
-      for(size_t i = 0; i < count; i++)
-        weights[i] = ops[i].prob;
-      dFun = std::discrete_distribution<size_t>(weights.begin(), weights.end());
-    }
-
-    friend std::ostream& operator<< (std::ostream& os, const Selector& sel) {
+    friend std::ostream& operator<< (std::ostream& os, const Tracker& trk) {
       /* Find the longest GenOp name */
-      auto max = std::max_element(sel.ops.begin(), sel.ops.end(),
+      auto max = std::max_element(trk.ops.begin(), trk.ops.end(),
           [](const GenOp& a, const GenOp& b) {
             return a.name.length() < b.name.length();
           });
@@ -483,38 +448,32 @@ public:
       auto flags_ = os.flags(std::ios_base::left);
 
       /* List all op names and probabilities */
-      for(auto& op : sel.ops)
-        os << std::setw(maxw+3) << op.name + ':'
-           << op.prob << "  " << op.thits << '\n';
+      for(auto& op : trk.ops)
+        os << std::setw(maxw+3) << op.name + ':' << op.hits << '\n';
 
       os.flags(flags_);
       return os;
     }
 
     std::pair<FunPtr, size_t> select() {
-      size_t index = dFun(gen::rng);
+      size_t index = dUni(gen::rng);
       return {ops[index].fun, index};
     }
 
-    Selector(std::vector<GenOp>&& ops_):
-    ops(std::move(ops_)), count(ops.size()) {
-      double pUniform = 1.0 / count;
-      for(auto& op : ops)
-        op.prob = pUniform;
-      update();
-    }
+    Tracker(std::vector<GenOp>&& ops_):
+    ops(std::move(ops_)), count(ops.size()), dUni(0, count - 1) { }
 
   private:
 
     std::vector<GenOp> ops;
     size_t count;
-    std::discrete_distribution<size_t> dFun{};
+    std::uniform_int_distribution<> dUni;
 
-  }; // class Selector
+  }; // class Tracker
 
-  static Selector getInitSelector() {
+  static Tracker getInitTracker() {
     using CF = CandidateFactory;
-    std::vector<typename Selector::GenOp> ops{};
+    std::vector<typename Tracker::GenOp> ops{};
   //ops.push_back({ &CF::mAlterDiscrete,   "MDiscrete" });
     ops.push_back({ &CF::mAlterContinuous, "MutSingle" });
     ops.push_back({ &CF::mAddSlice,        "AddSlice" });
@@ -538,7 +497,7 @@ public:
 private:
 
   Population& pop;
-  Selector& sel;
+  Tracker& trk;
 
 }; // class CandidateFactory
 

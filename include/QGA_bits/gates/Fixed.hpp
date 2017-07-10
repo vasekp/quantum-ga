@@ -68,10 +68,6 @@ public:
       return self;
   }
 
-  Pointer mutate(const Pointer&) const override {
-    return std::make_shared<FixedTemp>();
-  }
-
   Pointer swapQubits(const Pointer&, unsigned s1, unsigned s2) const override {
     return std::make_shared<FixedTemp>(
         op,

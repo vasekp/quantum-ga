@@ -46,10 +46,6 @@ public:
     return !odd;
   }
 
-  Pointer mutate(const Pointer&) const override {
-    return std::make_shared<SWAPTemp>();
-  }
-
   Pointer swapQubits(const Pointer& self, unsigned sw1, unsigned sw2)
     const override
   {
