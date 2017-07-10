@@ -312,6 +312,34 @@ private:
     swap(gtNew[pos1], gtNew[pos2]);
     return Candidate{std::move(gtNew)};
   }
+  
+  Candidate mMoveGate() {
+    auto &parent = get();
+    auto &gtOrig = parent.genotype();
+    auto sz = gtOrig.size();
+    if(sz < 2)
+      return parent;
+    std::uniform_int_distribution<size_t> dPos{0, sz - 2};
+    size_t pos1 = dPos(gen::rng),
+           pos2 = dPos(gen::rng);
+    if(pos2 < pos1)
+      std::swap(pos1, pos2);
+    // ensure that pos2-pos1 is at least 1
+    pos2 += 1;
+    std::bernoulli_distribution dir{};
+    std::vector<Gene> gtNew{};
+    gtNew.reserve(sz);
+    gtNew.insert(gtNew.end(), gtOrig.begin(), gtOrig.begin() + pos1);
+    if(dir(gen::rng)) { // move first to end
+      gtNew.insert(gtNew.end(), gtOrig.begin() + pos1 + 1, gtOrig.begin() + pos2);
+      gtNew.insert(gtNew.end(), gtOrig.begin() + pos1, gtOrig.begin() + pos1 + 1);
+    } else { // move last to beginning
+      gtNew.insert(gtNew.end(), gtOrig.begin() + pos2 - 1, gtOrig.begin() + pos2);
+      gtNew.insert(gtNew.end(), gtOrig.begin() + pos1, gtOrig.begin() + pos2 - 1);
+    }
+    gtNew.insert(gtNew.end(), gtOrig.begin() + pos2, gtOrig.end());
+    return Candidate{std::move(gtNew)};
+  }
 
   Candidate mRepeatSlice() {
     auto &parent = get();
@@ -486,7 +514,8 @@ public:
     ops.push_back({ &CF::mSplitSwap,       "SpltSwp"  });
     ops.push_back({ &CF::mReverseSlice,    "InvSlice" });
   //ops.push_back({ &CF::mPermuteSlice,    "PermSlice" });
-    ops.push_back({ &CF::mSwapTwo,         "SwapTwo" });
+  //ops.push_back({ &CF::mSwapTwo,         "SwapTwo" });
+    ops.push_back({ &CF::mMoveGate,        "MoveGate" });
     ops.push_back({ &CF::mRepeatSlice,     "ReptSlice" });
     ops.push_back({ &CF::crossoverUniform, "C/Over"   });
   //ops.push_back({ &CF::concat3,          "Concat3"  });
