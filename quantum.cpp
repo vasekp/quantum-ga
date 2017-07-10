@@ -168,19 +168,13 @@ int main() {
 
     /* Summarize */
     {
-      auto& newest = *std::min_element(nondom.begin(), nondom.end(),
-          [](const GenCandidate& c1, const GenCandidate& c2) {
-            return c1.getGen() > c2.getGen();
-          });
-
       // Prepare circuit in advance to not delay the printing operation later
       auto circuit = pop.best().circuit<CircuitPrinter>();
       std::cout
         << Colours::bold("Gen ", gen, ": ")
         << Colours::yellow(pop.size()) << " unique fitnesses, "
         << "lowest error " << brief(pop.best()) << ", "
-        << Colours::yellow(nondom.size()) << " nondominated, "
-        << "newest: " << brief(newest) << '\n'
+        << Colours::yellow(nondom.size()) << " nondominated\n"
         << circuit << std::endl;
     }
 
