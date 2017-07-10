@@ -60,6 +60,10 @@ public:
     return ixs.size();
   }
 
+  Pointer getAnother() const override {
+    return std::make_shared<FixedTemp>();
+  }
+
   Pointer invert(const Pointer& self) const override {
     int dIx = (*gates)[op].inv;
     if(dIx != 0)

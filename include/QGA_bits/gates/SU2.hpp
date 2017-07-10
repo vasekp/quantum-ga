@@ -57,6 +57,10 @@ public:
     return ixs.size();
   }
 
+  Pointer getAnother() const override {
+    return std::make_shared<SU2Temp>();
+  }
+
   Pointer invert(const Pointer&) const override {
     return std::make_shared<SU2Temp>(tgt, -angle3, -angle2, -angle1, ixs);
   }

@@ -73,6 +73,10 @@ public:
 
   /* These helper functions simplify the call pattern of the pointer-passing
    * virtual functions of GateBase. */
+  void getAnother() {
+    pointer() = pointer()->getAnother();
+  }
+
   void invert() {
     pointer() = pointer()->invert(pointer());
   }

@@ -48,7 +48,7 @@ private:
     std::uniform_int_distribution<size_t> dPos{0, sz - 1};
     const double probTerm = 1/Config::expMutationCount;
     do
-      gtNew[dPos(gen::rng)] = Gene::getRandom();
+      gtNew[dPos(gen::rng)].getAnother();
     while(dUni(gen::rng) > probTerm);
     return Candidate{std::move(gtNew)};
   }
@@ -129,7 +129,7 @@ private:
     std::uniform_int_distribution<size_t> dPos{0, sz - 1};
     size_t pos = dPos(gen::rng);
     Gene gOrig{gtOrig[pos]};
-    gOrig.mutate();
+    gOrig.getAnother();
     Gene gNew{Gene::getRandom()};
     std::vector<Gene> gtNew{};
     gtNew.reserve(sz + 2);
@@ -502,8 +502,8 @@ public:
   static Tracker getInitTracker() {
     using CF = CandidateFactory;
     std::vector<typename Tracker::GenOp> ops{};
-  //ops.push_back({ &CF::mAlterDiscrete,   "MDiscrete" });
-    ops.push_back({ &CF::mAlterContinuous, "MutSingle" });
+    ops.push_back({ &CF::mAlterDiscrete,   "MDiscrete" });
+    ops.push_back({ &CF::mAlterContinuous, "MContns" });
     ops.push_back({ &CF::mAddSlice,        "AddSlice" });
   //ops.push_back({ &CF::mAddPairs,        "AddPairs" });
     ops.push_back({ &CF::mMutateAddPair,   "MutAddPair" });

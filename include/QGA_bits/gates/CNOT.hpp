@@ -66,6 +66,10 @@ public:
     return c != nullptr && c->tgt == tgt && c->ixs == ixs;
   }
 
+  Pointer getAnother() const override {
+    return std::make_shared<CNOTTemp>();
+  }
+
   Pointer merge(const GateBase& other) const override {
     if(!sameType(other))
       return {};

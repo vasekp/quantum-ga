@@ -59,6 +59,10 @@ public:
     return c != nullptr;
   }
 
+  Pointer getAnother() const override {
+    return std::make_shared<OracleTemp>();
+  }
+
   Pointer merge(const GateBase& other) const override {
     if(!sameType(other))
       return {};
