@@ -5,7 +5,6 @@
 #include <complex>
 #include <string>
 #include <cstddef>
-#include <cstring>
 
 #include <cmath>
 #include <limits>

@@ -439,12 +439,40 @@ private:
     return gtNew != gtOrig ? Candidate{std::move(gtNew)} : parent;
   }
 
+  /* For hit counting */
+
+  class ConstExprString {
+
+  public:
+
+      constexpr ConstExprString(const char * const str) :
+        ntstr(str), len(ntlen(str)) { }
+
+      operator const char *() const {
+        return ntstr;
+      }
+
+      constexpr int length() const {
+        return len;
+      }
+
+  private:
+
+    constexpr int ntlen(const char * const ntstr) {
+      return *ntstr == 0 ? 0 : 1 + ntlen(ntstr + 1);
+    }
+
+    const char * ntstr;
+    int len;
+
+  };
+
   using FunPtr = Candidate (CandidateFactory::*)();
 
   struct GenOp {
 
     FunPtr fun;
-    const char* name;
+    ConstExprString name;
 
   };
 
@@ -491,16 +519,18 @@ public:
       /* Find the longest GenOp name */
       auto max = std::max_element(ops.begin(), ops.end(),
           [](const GenOp& a, const GenOp& b) {
-            return std::strlen(a.name) < std::strlen(b.name);
+            return a.name.length() < b.name.length();
           });
-      auto maxw = std::strlen(max->name);
+      auto maxw = max->name.length();
 
       /* Preserve settings of os */
       auto flags_ = os.flags(std::ios_base::left);
 
       /* List all op names and probabilities */
       for(size_t ix = 0; ix < ops.size(); ix++)
-        os << std::setw(maxw+3) << ops[ix].name << ':' << trk.hits[ix] << '\n';
+        os << ops[ix].name
+           << std::setw(maxw + 3 - ops[ix].name.length()) << ':'
+           << trk.hits[ix] << '\n';
 
       os.flags(flags_);
       return os;
