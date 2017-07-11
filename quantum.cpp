@@ -80,6 +80,7 @@ namespace Signal {
 using Population = gen::NSGAPopulation<Candidate>;
 using GenCandidate = gen::Candidate<Candidate>;
 using CandidateFactory = QGA::CandidateFactory<Candidate>;
+using GenOpCounter = QGA::GenOpCounter<CandidateFactory>;
 
 template<>
 constexpr decltype(CandidateFactory::ops) CandidateFactory::ops;
@@ -87,7 +88,7 @@ constexpr decltype(CandidateFactory::ops) CandidateFactory::ops;
 /* Forward declarations */
 void int_handler(int);
 int int_response(Population&, unsigned long);
-void dumpResults(Population&, CandidateFactory::Tracker&,
+void dumpResults(Population&, GenOpCounter&,
     std::chrono::time_point<std::chrono::steady_clock>, unsigned long);
 /* End forward declarations */
 
@@ -128,7 +129,7 @@ int main() {
     start{std::chrono::steady_clock::now()};
   Population pop{Config::popSize,
     [] { return CandidateFactory::genInit().setGen(0); }};
-  CandidateFactory::Tracker trk{};
+  GenOpCounter trk{};
   unsigned long gen;
 
   /* Main cycle */
@@ -149,7 +150,7 @@ int main() {
     pop2.add(pop.best());
 
     /* Top up to popSize candidates in parallel */
-    CandidateFactory cf{pop, trk};
+    CandidateFactory cf{pop};
     pop.precompute();
     pop2.add(Config::popSize - pop2.size(),
         [&] { return cf.getNew().setGen(gen); });
@@ -206,7 +207,7 @@ int main() {
 }
 
 
-void dumpResults(Population& pop, CandidateFactory::Tracker& trk,
+void dumpResults(Population& pop, GenOpCounter& trk,
     std::chrono::time_point<std::chrono::steady_clock> start,
     unsigned long gen) {
 

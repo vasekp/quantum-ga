@@ -15,5 +15,6 @@
 #include "QGA_bits/CandidateCounter.hpp"
 #include "QGA_bits/CandidateBase.hpp"
 #include "QGA_bits/CandidateFactory.hpp"
+#include "QGA_bits/GenOpCounter.hpp"
 
 #endif // !defined QGA_HPP
