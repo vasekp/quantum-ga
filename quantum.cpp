@@ -81,6 +81,8 @@ using Population = gen::NSGAPopulation<Candidate>;
 using GenCandidate = gen::Candidate<Candidate>;
 using CandidateFactory = QGA::CandidateFactory<Candidate>;
 
+template<>
+constexpr decltype(CandidateFactory::ops) CandidateFactory::ops;
 
 /* Forward declarations */
 void int_handler(int);
@@ -126,7 +128,7 @@ int main() {
     start{std::chrono::steady_clock::now()};
   Population pop{Config::popSize,
     [] { return CandidateFactory::genInit().setGen(0); }};
-  CandidateFactory::Tracker trk = CandidateFactory::getInitTracker();
+  CandidateFactory::Tracker trk{};
   unsigned long gen;
 
   /* Main cycle */
@@ -190,7 +192,7 @@ int main() {
         case Signal::RESTART:
           pop = Population{Config::popSize,
             [&] { return CandidateFactory::genInit().setGen(0); }};
-          trk = CandidateFactory::getInitTracker();
+          trk.reset();
           start = std::chrono::steady_clock::now();
           Signal::timeOut = std::chrono::duration<double>(0);
           gen = 0;

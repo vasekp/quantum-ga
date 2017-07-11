@@ -27,8 +27,9 @@ public:
   }
 
   Candidate getNew() {
-    auto op = trk.select();
-    return (this->*op.first)().setOrigin(op.second);
+    std::uniform_int_distribution<size_t> dUni{0, ops.size() - 1};
+    size_t index = dUni(gen::rng);
+    return (this->*ops[index].fun)().setOrigin(index);
   }
 
 private:
@@ -438,90 +439,78 @@ private:
     return gtNew != gtOrig ? Candidate{std::move(gtNew)} : parent;
   }
 
+  using FunPtr = Candidate (CandidateFactory::*)();
+
+  struct GenOp {
+
+    FunPtr fun;
+    const char* name;
+
+  };
+
+  static constexpr std::array<GenOp, 14> ops{{
+    { &CandidateFactory::mAlterDiscrete,   "MDiscrete" },
+    { &CandidateFactory::mAlterContinuous, "MContns" },
+    { &CandidateFactory::mAddSlice,        "AddSlice" },
+  //{ &CandidateFactory::mAddPairs,        "AddPairs" },
+    { &CandidateFactory::mMutateAddPair,   "MutAddPair" },
+    { &CandidateFactory::mSwapQubits,      "SwapQubits" },
+    { &CandidateFactory::mDeleteSlice,     "DelShort" },
+    { &CandidateFactory::mDeleteUniform,   "DelUnif"  },
+    { &CandidateFactory::mReplaceSlice,    "ReplSlice" },
+    { &CandidateFactory::mSplitSwap,       "SpltSwp"  },
+    { &CandidateFactory::mReverseSlice,    "InvSlice" },
+  //{ &CandidateFactory::mPermuteSlice,    "PermSlice" },
+  //{ &CandidateFactory::mSwapTwo,         "SwapTwo" },
+    { &CandidateFactory::mMoveGate,        "MoveGate" },
+    { &CandidateFactory::mRepeatSlice,     "ReptSlice" },
+    { &CandidateFactory::crossoverUniform, "C/Over"   },
+  //{ &CandidateFactory::concat3,          "Concat3"  },
+    { &CandidateFactory::simplify,         "Simplify" }
+  }};
+
+
 public:
 
   class Tracker {
 
-    using CF = CandidateFactory;
-    using FunPtr = Candidate (CF::*)();
     // private members declared at bottom
 
   public:
 
-    struct GenOp {
-
-      FunPtr fun;
-      std::string name;
-      unsigned long hits;
-
-      GenOp(FunPtr fun_, std::string name_):
-        fun(fun_), name(name_), hits(0) { }
-
-    };
-
     void hit(size_t ix) {
-      if(ix >= 0 && ix < count)
-        ops[ix].hits++;
+      if(ix >= 0 && ix < hits.size())
+        hits[ix]++;
+    }
+
+    void reset() {
+      std::fill(hits.begin(), hits.end(), 0);
     }
 
     friend std::ostream& operator<< (std::ostream& os, const Tracker& trk) {
       /* Find the longest GenOp name */
-      auto max = std::max_element(trk.ops.begin(), trk.ops.end(),
+      auto max = std::max_element(ops.begin(), ops.end(),
           [](const GenOp& a, const GenOp& b) {
-            return a.name.length() < b.name.length();
+            return std::strlen(a.name) < std::strlen(b.name);
           });
-      auto maxw = max->name.length();
+      auto maxw = std::strlen(max->name);
 
       /* Preserve settings of os */
       auto flags_ = os.flags(std::ios_base::left);
 
       /* List all op names and probabilities */
-      for(auto& op : trk.ops)
-        os << std::setw(maxw+3) << op.name + ':' << op.hits << '\n';
+      for(size_t ix = 0; ix < ops.size(); ix++)
+        os << std::setw(maxw+3) << ops[ix].name << ':' << trk.hits[ix] << '\n';
 
       os.flags(flags_);
       return os;
     }
 
-    std::pair<FunPtr, size_t> select() {
-      size_t index = dUni(gen::rng);
-      return {ops[index].fun, index};
-    }
-
-    Tracker(std::vector<GenOp>&& ops_):
-    ops(std::move(ops_)), count(ops.size()), dUni(0, count - 1) { }
-
   private:
 
-    std::vector<GenOp> ops;
-    size_t count;
-    std::uniform_int_distribution<> dUni;
+    std::array<size_t, ops.size()> hits{};
 
   }; // class Tracker
-
-  static Tracker getInitTracker() {
-    using CF = CandidateFactory;
-    std::vector<typename Tracker::GenOp> ops{};
-    ops.push_back({ &CF::mAlterDiscrete,   "MDiscrete" });
-    ops.push_back({ &CF::mAlterContinuous, "MContns" });
-    ops.push_back({ &CF::mAddSlice,        "AddSlice" });
-  //ops.push_back({ &CF::mAddPairs,        "AddPairs" });
-    ops.push_back({ &CF::mMutateAddPair,   "MutAddPair" });
-    ops.push_back({ &CF::mSwapQubits,      "SwapQubits" });
-    ops.push_back({ &CF::mDeleteSlice,     "DelShort" });
-    ops.push_back({ &CF::mDeleteUniform,   "DelUnif"  });
-    ops.push_back({ &CF::mReplaceSlice,    "ReplSlice" });
-    ops.push_back({ &CF::mSplitSwap,       "SpltSwp"  });
-    ops.push_back({ &CF::mReverseSlice,    "InvSlice" });
-  //ops.push_back({ &CF::mPermuteSlice,    "PermSlice" });
-  //ops.push_back({ &CF::mSwapTwo,         "SwapTwo" });
-    ops.push_back({ &CF::mMoveGate,        "MoveGate" });
-    ops.push_back({ &CF::mRepeatSlice,     "ReptSlice" });
-    ops.push_back({ &CF::crossoverUniform, "C/Over"   });
-  //ops.push_back({ &CF::concat3,          "Concat3"  });
-    ops.push_back({ &CF::simplify,         "Simplify" });
-    return {std::move(ops)};
-  }
 
 private:
 
