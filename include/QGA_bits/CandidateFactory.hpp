@@ -3,6 +3,36 @@ namespace QGA {
 // Forward, full declaration in GenOpCounter.hpp
 template<class> class GenOpCounter;
 
+namespace internal {
+
+  class ConstExprString {
+
+  public:
+
+      constexpr ConstExprString(const char * const str) :
+        ntstr(str), len(ntlen(str)) { }
+
+      constexpr operator const char* () const {
+        return ntstr;
+      }
+
+      constexpr int length() const {
+        return len;
+      }
+
+  private:
+
+    constexpr int ntlen(const char * const ntstr) {
+      return *ntstr == 0 ? 0 : 1 + ntlen(ntstr + 1);
+    }
+
+    const char * ntstr;
+    int len;
+
+  };
+
+} // namespace internal
+
 template<
   class Candidate,
   class Population = gen::NSGAPopulation<Candidate>>
@@ -443,40 +473,11 @@ private:
     return gtNew != gtOrig ? Candidate{std::move(gtNew)} : parent;
   }
 
-  /* For hit counting */
-
-  class ConstExprString {
-
-  public:
-
-      constexpr ConstExprString(const char * const str) :
-        ntstr(str), len(ntlen(str)) { }
-
-      operator const char *() const {
-        return ntstr;
-      }
-
-      constexpr int length() const {
-        return len;
-      }
-
-  private:
-
-    constexpr int ntlen(const char * const ntstr) {
-      return *ntstr == 0 ? 0 : 1 + ntlen(ntstr + 1);
-    }
-
-    const char * ntstr;
-    int len;
-
-  };
-
-  using FunPtr = Candidate (CandidateFactory::*)();
-
   struct GenOp {
 
+    using FunPtr = Candidate (CandidateFactory::*)();
     FunPtr fun;
-    ConstExprString name;
+    internal::ConstExprString name;
 
   };
 
