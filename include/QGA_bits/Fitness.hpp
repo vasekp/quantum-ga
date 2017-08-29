@@ -63,11 +63,11 @@ namespace internal {
  * lexicoraphical comparison, and for output. Inherited in a zig-zag pattern,
  * for example:
  * Counter<A, B, C>
- *   DomComparator<unsigned, Counter<B, C>>
+ *   DomComparator<int, Counter<B, C>>
  * Counter<B, C>
- *   DomCompataror<unsigned, Counter<C>>
+ *   DomCompataror<int, Counter<C>>
  * Counter<C> (specialization)
- *   DomComparator<unsigned, void) (specialization)
+ *   DomComparator<int, void) (specialization)
  */
 
 template<typename Element, class Next>
@@ -229,39 +229,38 @@ public:
 /* Specialized as Counter<A, B, C, ...>, this template holds one counter per
  * each type given in the parameter pack. The types must be unique. It defines
  * member functions hit(const A*), hit(const B*), ...  which each bump their
- * respective counter.  Otherwise it behaves like a DomTuple<unsigned,
- * unsigned, ...>. */
+ * respective counter.  Otherwise it behaves like a DomTuple<int, int, ...>. */
 
 template<class Head, class... Tail>
 class Counter<Head, Tail...> :
-  public DomComparator<unsigned, Counter<Tail...>>
+  public DomComparator<int, Counter<Tail...>>
 {
 
 public:
 
   void hit(const Head*) {
-    ++(unsigned&)(*this);
+    ++(int&)(*this);
   }
 
   using Counter<Tail...>::hit;
 
   friend std::istream& operator>> (std::istream& is, Counter& c) {
-    return is >> static_cast<DomComparator<unsigned, Counter<Tail...>>&>(c);
+    return is >> static_cast<DomComparator<int, Counter<Tail...>>&>(c);
   }
 
 }; // class Counter<Head, Tail...>
 
 template<class Last>
-class Counter<Last> : public DomComparator<unsigned, void> {
+class Counter<Last> : public DomComparator<int, void> {
 
 public:
 
   void hit(const Last*) {
-    ++(unsigned&)(*this);
+    ++(int&)(*this);
   }
 
   friend std::istream& operator>> (std::istream& is, Counter& c) {
-    return is >> static_cast<DomComparator<unsigned, void>&>(c);
+    return is >> static_cast<DomComparator<int, void>&>(c);
   }
 
 }; // class Counter<Last> (sequence terminator)

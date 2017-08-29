@@ -41,6 +41,10 @@ Gate operator*(const Gate& lhs, const Gate& rhs) {
   return {lhs.impl() * rhs.impl()};
 }
 
+std::complex<double> Gate::operator() (size_t rix, size_t cix) {
+  return impl()(rix, cix);
+}
+
 
 // Gate constants
 
