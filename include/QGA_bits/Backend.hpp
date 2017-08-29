@@ -19,6 +19,8 @@ public:
 
   friend Gate operator*(const Gate& lhs, const Gate& rhs);
 
+  cxd operator() (size_t rx, size_t cx);
+
 private:
 
   const GateImpl& impl() const;
