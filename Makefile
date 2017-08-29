@@ -69,6 +69,6 @@ touch:
 	touch $(SOURCES)
 
 clean:
-	-rm $(TARGETS) -r $(LIBS_DIR)
+	-rm -rf $(TARGETS) $(LIBS_DIR)
 
 .PHONY: all clean touch default
