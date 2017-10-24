@@ -69,7 +69,7 @@ public:
 private:
 
   const Candidate& get() {
-    return pop.NSGASelect(Config::selectBias);
+    return pop.NSGASelect(Config::selectBias / pop.getNSGARanks());
   }
 
   Candidate mAlterDiscrete() {
@@ -102,6 +102,20 @@ private:
       gtNew[dPos(gen::rng)].mutate();
     while(dUni(gen::rng) > probTerm);
     return gtNew != gtOrig ? Candidate{std::move(gtNew)} : parent;
+  }
+
+  Candidate mAddSingle() {
+    auto &parent = get();
+    auto &gtOrig = parent.genotype();
+    auto sz = gtOrig.size();
+    std::uniform_int_distribution<size_t> dPos{0, sz};
+    size_t pos = dPos(gen::rng);
+    std::vector<Gene> gtNew{};
+    gtNew.reserve(sz + 1);
+    gtNew.insert(gtNew.end(), gtOrig.begin(), gtOrig.begin() + pos);
+    gtNew.insert(gtNew.end(), Gene::getRandom());
+    gtNew.insert(gtNew.end(), gtOrig.begin() + pos, gtOrig.end());
+    return Candidate{std::move(gtNew)};
   }
 
   Candidate mAddSlice() {
@@ -418,11 +432,11 @@ private:
     for(;;) {
       // Take roughly expLen1 genes from gt1
       size_t upto = pos1 + dGeom1(gen::rng) + 1;
-      if(upto >= sz1)
+      if(upto > sz1)
         break; // just use the rest of gt1
       // Skip roughly expLen2 genes from gt2
       pos2 += dGeom2(gen::rng) + 1;
-      if(pos2 >= sz2)
+      if(pos2 > sz2)
         break; // ditto
       gtNew.insert(gtNew.end(), gt1->begin() + pos1, gt1->begin() + upto);
       pos1 = upto;
@@ -468,8 +482,16 @@ private:
     if(sz == 0)
       return parent;
     std::vector<Gene> gtNew = gtOrig;
-    for(auto& g : gtNew)
-      g.simplify();
+    /*for(auto& g : gtNew)
+      g.simplify();*/
+
+    std::uniform_real_distribution<> dUni{};
+    std::uniform_int_distribution<size_t> dPos{0, sz - 1};
+    const double probTerm = 1/Config::expMutationCount;
+    do
+      gtNew[dPos(gen::rng)].simplify();
+    while(dUni(gen::rng) > probTerm);
+
     return gtNew != gtOrig ? Candidate{std::move(gtNew)} : parent;
   }
 
@@ -481,25 +503,26 @@ private:
 
   };
 
-  static constexpr std::array<GenOp, 14> ops{{
+  static constexpr std::array<GenOp, 11> ops{{
     { &CandidateFactory::mAlterDiscrete,   "MDiscrete" },
     { &CandidateFactory::mAlterContinuous, "MContns" },
+  //{ &CandidateFactory::mAddSingle,       "AddSingle" },
     { &CandidateFactory::mAddSlice,        "AddSlice" },
-  //{ &CandidateFactory::mAddPairs,        "AddPairs" },
-    { &CandidateFactory::mMutateAddPair,   "MutAddPair" },
+    { &CandidateFactory::mAddPairs,        "AddPairs" },
+  //{ &CandidateFactory::mMutateAddPair,   "MutAddPair" },
     { &CandidateFactory::mSwapQubits,      "SwapQubits" },
     { &CandidateFactory::mDeleteSlice,     "DelShort" },
-    { &CandidateFactory::mDeleteUniform,   "DelUnif"  },
+  //{ &CandidateFactory::mDeleteUniform,   "DelUnif"  },
     { &CandidateFactory::mReplaceSlice,    "ReplSlice" },
     { &CandidateFactory::mSplitSwap,       "SpltSwp"  },
-    { &CandidateFactory::mReverseSlice,    "InvSlice" },
-  //{ &CandidateFactory::mPermuteSlice,    "PermSlice" },
+  //{ &CandidateFactory::mReverseSlice,    "InvSlice" },
+    { &CandidateFactory::mPermuteSlice,    "PermSlice" },
   //{ &CandidateFactory::mSwapTwo,         "SwapTwo" },
     { &CandidateFactory::mMoveGate,        "MoveGate" },
-    { &CandidateFactory::mRepeatSlice,     "ReptSlice" },
+  //{ &CandidateFactory::mRepeatSlice,     "ReptSlice" },
     { &CandidateFactory::crossoverUniform, "C/Over"   },
   //{ &CandidateFactory::concat3,          "Concat3"  },
-    { &CandidateFactory::simplify,         "Simplify" }
+  //{ &CandidateFactory::simplify,         "Simplify" }
   }};
 
   Population& pop;

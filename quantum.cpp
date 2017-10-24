@@ -36,7 +36,7 @@ namespace Config {
   const unsigned nBit = NBIT;
 
   // strength parameter of NSGA selection
-  const double selectBias = 0.2;
+  const double selectBias = 15.0;
 
   // Archive (external population) size
   const size_t arSize = 100;
@@ -48,11 +48,11 @@ namespace Config {
   const double expLengthIni = 30;
 
   // Expected number of single-point mutations (including crossover)
-  const double expMutationCount = 1.0;
+  const double expMutationCount = 2.0;
 
   // Expected number of successive gates to be inserted / deleted / replaced
   // NB: 1 is always added to slice length
-  const double expSliceLength = 3.0;
+  const double expSliceLength = 2.0;
 
   // How much each bit is likely to be a control bit at gate creation
   const double pControl = 0.5;
@@ -61,10 +61,10 @@ namespace Config {
   const size_t nIntList = 20;
 
   // Standard deviation of mutation in gate angles
-  const double dAlpha = 0.1;
+  const double dAlpha = 0.2;
 
   // Maximum length of an output line when formatting circuits
-  const size_t circLineLength = 80;
+  const size_t circLineLength = 220;
 
 } // namespace Config
 
@@ -127,6 +127,7 @@ int main() {
   /* Initialize state variables */
   std::chrono::time_point<std::chrono::steady_clock>
     start{std::chrono::steady_clock::now()};
+  std::chrono::time_point<std::chrono::steady_clock> tp_last{start};
   Population pop{Config::popSize,
     [] { return CandidateFactory::genInit().setGen(0); }};
   GenOpCounter trk{};
@@ -176,11 +177,16 @@ int main() {
     {
       // Prepare circuit in advance to not delay the printing operation later
       auto circuit = pop.best().circuit<CircuitPrinter>();
+      std::chrono::time_point<std::chrono::steady_clock>
+        tp_now{std::chrono::steady_clock::now()};
+      std::chrono::duration<double> dur = tp_now - tp_last;
+      tp_last = tp_now;
       std::cout
         << Colours::bold("Gen ", gen, ": ")
         << Colours::yellow(pop.size()) << " unique fitnesses, "
         << "lowest error " << brief(pop.best()) << ", "
-        << Colours::yellow(nondom.size()) << " nondominated\n"
+        << Colours::yellow(nondom.size()) << " nondominated, "
+        << Colours::blue(dur.count(), " s") << "\n"
         << circuit << std::endl;
     }
 
