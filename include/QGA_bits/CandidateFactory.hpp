@@ -503,13 +503,13 @@ private:
 
   };
 
-  static constexpr std::array<GenOp, 11> ops{{
+  static constexpr std::array<GenOp, 12> ops{{
     { &CandidateFactory::mAlterDiscrete,   "MDiscrete" },
     { &CandidateFactory::mAlterContinuous, "MContns" },
   //{ &CandidateFactory::mAddSingle,       "AddSingle" },
     { &CandidateFactory::mAddSlice,        "AddSlice" },
     { &CandidateFactory::mAddPairs,        "AddPairs" },
-  //{ &CandidateFactory::mMutateAddPair,   "MutAddPair" },
+    { &CandidateFactory::mMutateAddPair,   "MutAddPair" },
     { &CandidateFactory::mSwapQubits,      "SwapQubits" },
     { &CandidateFactory::mDeleteSlice,     "DelShort" },
   //{ &CandidateFactory::mDeleteUniform,   "DelUnif"  },

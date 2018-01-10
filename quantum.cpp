@@ -162,9 +162,12 @@ int main() {
     /* Leave only one representative of each fitness and drop dominated
      * versions of the same circuit */
     pop.prune([](const GenCandidate& a, const GenCandidate& b) -> int {
-        if(a.fitness() == b.fitness()) return 1;
-        else if(sameCirc(a, b)) return b << a ? -1 : 1;
-        else return 0;
+        if(a.fitness() == b.fitness())
+          return 1;//a.getGen() < b.getGen() ? 1 : -1;
+        else if(sameCirc(a, b))
+          return b << a ? -1 : 1;
+        else
+          return 0;
       }, 0, false);
 
     /* Take a record which GenOps were successful in making good candidates */
