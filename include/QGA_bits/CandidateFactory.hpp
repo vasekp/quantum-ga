@@ -69,7 +69,7 @@ public:
 private:
 
   const Candidate& get() {
-    return pop.NSGASelect(Config::selectBias / pop.getNSGARanks());
+    return pop.NSGASelect(Config::selectBias);// / pop.getNSGARanks());
   }
 
   Candidate mAlterDiscrete() {

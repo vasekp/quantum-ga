@@ -27,7 +27,7 @@
 #endif
 
 #ifndef NBIT
-  #define NBIT 4
+  #define NBIT 3
 #endif
 
 namespace Config {
@@ -36,7 +36,7 @@ namespace Config {
   const unsigned nBit = NBIT;
 
   // strength parameter of NSGA selection
-  const double selectBias = 15.0;
+  const double selectBias = 1.0;
 
   // Archive (external population) size
   const size_t arSize = 100;
