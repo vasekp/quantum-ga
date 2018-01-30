@@ -104,6 +104,20 @@ private:
     return gtNew != gtOrig ? Candidate{std::move(gtNew)} : parent;
   }
 
+  Candidate mAddSingle() {
+    auto &parent = get();
+    auto &gtOrig = parent.genotype();
+    auto sz = gtOrig.size();
+    std::uniform_int_distribution<size_t> dPos{0, sz};
+    size_t pos = dPos(gen::rng);
+    std::vector<Gene> gtNew{};
+    gtNew.reserve(sz + 1);
+    gtNew.insert(gtNew.end(), gtOrig.begin(), gtOrig.begin() + pos);
+    gtNew.insert(gtNew.end(), Gene::getRandom());
+    gtNew.insert(gtNew.end(), gtOrig.begin() + pos, gtOrig.end());
+    return Candidate{std::move(gtNew)};
+  }
+
   Candidate mAddSlice() {
     auto &parent = get();
     auto &gtOrig = parent.genotype();
@@ -481,9 +495,10 @@ private:
 
   };
 
-  static constexpr std::array<GenOp, 14> ops{{
+  static constexpr std::array<GenOp, 15> ops{{
     { &CandidateFactory::mAlterDiscrete,   "MDiscrete" },
     { &CandidateFactory::mAlterContinuous, "MContns" },
+    { &CandidateFactory::mAddSingle,       "AddSingle" },
     { &CandidateFactory::mAddSlice,        "AddSlice" },
   //{ &CandidateFactory::mAddPairs,        "AddPairs" },
     { &CandidateFactory::mMutateAddPair,   "MutAddPair" },
