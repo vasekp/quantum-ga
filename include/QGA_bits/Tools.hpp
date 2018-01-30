@@ -11,17 +11,16 @@ namespace {
 
 double rationalize(double x) {
   double a = std::abs(x);
-  constexpr unsigned N = 8;
+  constexpr unsigned N = 10;
   double coeffs[N];
   unsigned t;
-  for(t = 0; t < N; t++) {
+  for(t = 0; t < N - 1; t++) {
     coeffs[t] = std::floor(a);
-    if(coeffs[t] > 100) {
-      coeffs[t++] = 100;
+    if(coeffs[t] >= 100)
       break;
-    }
     a = 1/(a - coeffs[t]);
   }
+  coeffs[t++] = 100;
   std::discrete_distribution<unsigned> dStop(&coeffs[1], &coeffs[t]);
   unsigned cut = dStop(gen::rng) + 1;
   if(cut == t)

@@ -35,6 +35,7 @@ namespace Config {
   extern const double expSliceLength;
   extern const double pControl;
   extern const double dAlpha;
+  extern const size_t circLineLength;
 }
 
 /* Useful constants and typedefs */

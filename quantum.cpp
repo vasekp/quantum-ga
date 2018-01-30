@@ -63,6 +63,9 @@ namespace Config {
   // Standard deviation of mutation in gate angles
   const double dAlpha = 0.1;
 
+  // Maximum length of an output line when formatting circuits
+  const size_t circLineLength = 80;
+
 } // namespace Config
 
 
@@ -77,12 +80,15 @@ namespace Signal {
 using Population = gen::NSGAPopulation<Candidate>;
 using GenCandidate = gen::Candidate<Candidate>;
 using CandidateFactory = QGA::CandidateFactory<Candidate>;
+using GenOpCounter = QGA::GenOpCounter<CandidateFactory>;
 
+template<>
+constexpr decltype(CandidateFactory::ops) CandidateFactory::ops;
 
 /* Forward declarations */
 void int_handler(int);
 int int_response(Population&, unsigned long);
-void dumpResults(Population&, CandidateFactory::Tracker&,
+void dumpResults(Population&, GenOpCounter&,
     std::chrono::time_point<std::chrono::steady_clock>, unsigned long);
 /* End forward declarations */
 
@@ -123,7 +129,7 @@ int main() {
     start{std::chrono::steady_clock::now()};
   Population pop{Config::popSize,
     [] { return CandidateFactory::genInit().setGen(0); }};
-  CandidateFactory::Tracker trk = CandidateFactory::getInitTracker();
+  GenOpCounter trk{};
   unsigned long gen;
 
   /* Main cycle */
@@ -144,7 +150,7 @@ int main() {
     pop2.add(pop.best());
 
     /* Top up to popSize candidates in parallel */
-    CandidateFactory cf{pop, trk};
+    CandidateFactory cf{pop};
     pop.precompute();
     pop2.add(Config::popSize - pop2.size(),
         [&] { return cf.getNew().setGen(gen); });
@@ -155,9 +161,12 @@ int main() {
     /* Leave only one representative of each fitness and drop dominated
      * versions of the same circuit */
     pop.prune([](const GenCandidate& a, const GenCandidate& b) -> int {
-        if(a.fitness() == b.fitness()) return 1;
-        else if(sameCirc(a, b)) return b << a ? -1 : 1;
-        else return 0;
+        if(a.fitness() == b.fitness())
+          return 1;//a.getGen() < b.getGen() ? 1 : -1;
+        else if(sameCirc(a, b))
+          return b << a ? -1 : 1;
+        else
+          return 0;
       }, 0, false);
 
     /* Take a record which GenOps were successful in making good candidates */
@@ -187,7 +196,7 @@ int main() {
         case Signal::RESTART:
           pop = Population{Config::popSize,
             [&] { return CandidateFactory::genInit().setGen(0); }};
-          trk = CandidateFactory::getInitTracker();
+          trk.reset();
           start = std::chrono::steady_clock::now();
           Signal::timeOut = std::chrono::duration<double>(0);
           gen = 0;
@@ -201,7 +210,7 @@ int main() {
 }
 
 
-void dumpResults(Population& pop, CandidateFactory::Tracker& trk,
+void dumpResults(Population& pop, GenOpCounter& trk,
     std::chrono::time_point<std::chrono::steady_clock> start,
     unsigned long gen) {
 

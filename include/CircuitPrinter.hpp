@@ -52,7 +52,7 @@ class CircuitPrinter : public QGA::CircuitPrinter {
 
 public:
 
-  CircuitPrinter(unsigned nBit_): nBit(nBit_), lines(2*nBit - 1) {
+  CircuitPrinter(unsigned nBit_): nBit(nBit_), lines(2*nBit - 1), over(false) {
     // lines[0], lines[2], ..., lines[2*(nBit - 1)]: qubits
     // lines[1], lines[3], ..., lines[2*nBit - 3]: padding space
     for(unsigned i = 0; i < nBit; i++)
@@ -90,8 +90,12 @@ public:
 
   std::ostream& print(std::ostream& os) const override {
     alignAll();
-    for(auto& line : lines)
-      os << line << '\n';
+    for(unsigned i = 0; i < 2*nBit - 1; i++) {
+      os << lines[i];
+      if(over && i == nBit - 1)
+        os << " ...";
+      os << '\n';
+    }
     return os;
   }
 
@@ -99,6 +103,9 @@ private:
 
   void _addGates(const std::vector<unsigned>& qubits,
       const std::vector<UTF8String>& names) {
+    if(over)
+      return;
+
     /* Find the longest gate name to be printed */
     size_t maxLen = 0;
     for(auto& name : names)
@@ -108,6 +115,12 @@ private:
     /* Find the total span of the gates being printed */
     auto minmax = std::minmax_element(qubits.begin(), qubits.end());
     align(*minmax.first, *minmax.second);
+
+    if(lines[2*(*minmax.first)].length() + maxLen + 1
+        > Config::circLineLength - 5) {
+      over = true;
+      return;
+    }
 
     /* Print the gate names or connecting | on even (qubit) lines */
     for(unsigned i = *minmax.first; i <= *minmax.second; i++) {
@@ -129,7 +142,14 @@ private:
 
   void _addBroadGate(unsigned lineFrom, unsigned lineTo,
       const UTF8String& name) {
+    if(over)
+      return;
     alignAll();
+    if(lines[0].length() + name.length() + 3
+        > Config::circLineLength - 5) {
+      over = true;
+      return;
+    }
     for(unsigned i = 2*lineFrom; i <= 2*lineTo; i++)
       lines[i] += '[';
     lines[lineFrom + lineTo] += name; // arithmetic average of 2*lineX
@@ -161,5 +181,6 @@ private:
   // alignment may be needed from print which takes a const reference
   // NB that aligning does not technically change the contents
   mutable std::vector<UTF8String> lines;
+  bool over;
 
 }; // class CircuitPrinter

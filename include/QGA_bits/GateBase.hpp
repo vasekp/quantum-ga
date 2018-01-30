@@ -43,6 +43,8 @@ public:
    * reference count upped instead of creating a new copy. The default
    * implementation does precisely that. */
 
+  virtual Pointer getAnother() const = 0;
+
   virtual Pointer invert(const Pointer& self) const {
     return self;
   }

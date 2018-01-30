@@ -56,6 +56,10 @@ public:
     return ixs.size();
   }
 
+  Pointer getAnother() const override {
+    return std::make_shared<CPhaseTemp>();
+  }
+
   Pointer invert(const Pointer&) const override {
     return std::make_shared<CPhaseTemp>(tgt, -angle, ixs);
   }
