@@ -432,11 +432,11 @@ private:
     for(;;) {
       // Take roughly expLen1 genes from gt1
       size_t upto = pos1 + dGeom1(gen::rng) + 1;
-      if(upto >= sz1)
+      if(upto > sz1)
         break; // just use the rest of gt1
       // Skip roughly expLen2 genes from gt2
       pos2 += dGeom2(gen::rng) + 1;
-      if(pos2 >= sz2)
+      if(pos2 > sz2)
         break; // ditto
       gtNew.insert(gtNew.end(), gt1->begin() + pos1, gt1->begin() + upto);
       pos1 = upto;
@@ -481,9 +481,13 @@ private:
     size_t sz = gtOrig.size();
     if(sz == 0)
       return parent;
+    std::uniform_real_distribution<> dUni{};
+    std::uniform_int_distribution<size_t> dPos{0, sz - 1};
+    const double probTerm = 1/Config::expMutationCount;
     std::vector<Gene> gtNew = gtOrig;
-    for(auto& g : gtNew)
-      g.simplify();
+    do
+      gtNew[dPos(gen::rng)].simplify();
+    while(dUni(gen::rng) > probTerm);
     return gtNew != gtOrig ? Candidate{std::move(gtNew)} : parent;
   }
 
@@ -495,26 +499,26 @@ private:
 
   };
 
-  static constexpr std::array<GenOp, 15> ops{{
+  static constexpr std::array<GenOp, 12> ops{{
     { &CandidateFactory::mAlterDiscrete,   "MDiscrete" },
     { &CandidateFactory::mAlterContinuous, "MContns" },
-    { &CandidateFactory::mAddSingle,       "AddSingle" },
+  //{ &CandidateFactory::mAddSingle,       "AddSingle" },
     { &CandidateFactory::mAddSlice,        "AddSlice" },
-  //{ &CandidateFactory::mAddPairs,        "AddPairs" },
+    { &CandidateFactory::mAddPairs,        "AddPairs" },
     { &CandidateFactory::mMutateAddPair,   "MutAddPair" },
     { &CandidateFactory::mSwapQubits,      "SwapQubits" },
     { &CandidateFactory::mDeleteSlice,     "DelShort" },
-    { &CandidateFactory::mDeleteUniform,   "DelUnif"  },
+  //{ &CandidateFactory::mDeleteUniform,   "DelUnif"  },
     { &CandidateFactory::mReplaceSlice,    "ReplSlice" },
     { &CandidateFactory::mSplitSwap,       "SpltSwp"  },
-    { &CandidateFactory::mReverseSlice,    "InvSlice" },
-  //{ &CandidateFactory::mPermuteSlice,    "PermSlice" },
+  //{ &CandidateFactory::mReverseSlice,    "InvSlice" },
+    { &CandidateFactory::mPermuteSlice,    "PermSlice" },
   //{ &CandidateFactory::mSwapTwo,         "SwapTwo" },
     { &CandidateFactory::mMoveGate,        "MoveGate" },
-    { &CandidateFactory::mRepeatSlice,     "ReptSlice" },
+  //{ &CandidateFactory::mRepeatSlice,     "ReptSlice" },
     { &CandidateFactory::crossoverUniform, "C/Over"   },
   //{ &CandidateFactory::concat3,          "Concat3"  },
-    { &CandidateFactory::simplify,         "Simplify" }
+  //{ &CandidateFactory::simplify,         "Simplify" }
   }};
 
   Population& pop;
