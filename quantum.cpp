@@ -127,6 +127,7 @@ int main() {
   /* Initialize state variables */
   std::chrono::time_point<std::chrono::steady_clock>
     start{std::chrono::steady_clock::now()};
+  std::chrono::time_point<std::chrono::steady_clock> tp_last{start};
   Population pop{Config::popSize,
     [] { return CandidateFactory::genInit().setGen(0); }};
   GenOpCounter trk{};
@@ -179,11 +180,16 @@ int main() {
     {
       // Prepare circuit in advance to not delay the printing operation later
       auto circuit = pop.best().circuit<CircuitPrinter>();
+      std::chrono::time_point<std::chrono::steady_clock>
+        tp_now{std::chrono::steady_clock::now()};
+      std::chrono::duration<double> dur = tp_now - tp_last;
+      tp_last = tp_now;
       std::cout
         << Colours::bold("Gen ", gen, ": ")
         << Colours::yellow(pop.size()) << " unique fitnesses, "
         << "lowest error " << brief(pop.best()) << ", "
-        << Colours::yellow(nondom.size()) << " nondominated\n"
+        << Colours::yellow(nondom.size()) << " nondominated, "
+        << Colours::blue(dur.count(), " s") << "\n"
         << circuit << std::endl;
     }
 
