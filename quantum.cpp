@@ -27,7 +27,7 @@
 #endif
 
 #ifndef NBIT
-  #define NBIT 4
+  #define NBIT 3
 #endif
 
 namespace Config {
@@ -36,7 +36,7 @@ namespace Config {
   const unsigned nBit = NBIT;
 
   // strength parameter of NSGA selection
-  const double selectBias = 0.2;
+  const double selectBias = 1.0;
 
   // Archive (external population) size
   const size_t arSize = 100;
@@ -48,11 +48,11 @@ namespace Config {
   const double expLengthIni = 30;
 
   // Expected number of single-point mutations (including crossover)
-  const double expMutationCount = 1.0;
+  const double expMutationCount = 2.0;
 
   // Expected number of successive gates to be inserted / deleted / replaced
   // NB: 1 is always added to slice length
-  const double expSliceLength = 3.0;
+  const double expSliceLength = 2.0;
 
   // How much each bit is likely to be a control bit at gate creation
   const double pControl = 0.5;
@@ -61,10 +61,10 @@ namespace Config {
   const size_t nIntList = 20;
 
   // Standard deviation of mutation in gate angles
-  const double dAlpha = 0.1;
+  const double dAlpha = 0.2;
 
   // Maximum length of an output line when formatting circuits
-  const size_t circLineLength = 80;
+  const size_t circLineLength = 220;
 
 } // namespace Config
 

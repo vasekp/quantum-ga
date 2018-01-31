@@ -1,0 +1,6 @@
+echo "*** SEARCH 2.0/1.0 ***"
+for i in `seq 100`; do echo $i; ./search | grep Gen | cut -d, -f1-6,8 | perl a.pl ; echo; done
+echo "*** FOURIER 2.0/1.0 ***"
+for i in `seq 100`; do echo $i; ./fourier | grep Gen | cut -d, -f1-6,8 | perl b.pl ; echo; done
+echo "*** SEARCH 4.0/1.0 ***"
+for i in `seq 50`; do echo $i; ./searchb | grep Gen | cut -d, -f1-6,8 | perl a.pl ; echo; done
