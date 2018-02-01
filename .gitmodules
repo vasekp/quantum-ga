@@ -7,3 +7,6 @@
 [submodule "qiclib"]
 	path = qiclib
 	url = https://github.com/titaschanda/QIClib.git
+[submodule "popl"]
+	path = popl
+	url = https://github.com/badaix/popl
