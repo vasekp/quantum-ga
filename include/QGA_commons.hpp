@@ -29,6 +29,7 @@ namespace Config {
   extern unsigned nBit;
   extern size_t arSize;
   extern size_t popSize;
+  extern size_t maxGen;
   extern double selectBias;
   extern double expLengthIni;
   extern double expMutationCount;

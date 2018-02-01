@@ -35,11 +35,14 @@ namespace Config {
   // strength parameter of NSGA selection
   double selectBias = 1.0;
 
+  // Internal population size
+  size_t popSize = 1000;
+
   // Archive (external population) size
   size_t arSize = 100;
 
-  // Internal population size
-  size_t popSize = 1000;
+  // Generation limit
+  size_t maxGen = 0;
 
   // Expected curcuit depth in 0th generation
   double expLengthIni = 30;
@@ -115,6 +118,8 @@ int main(int argc, char* argv[]) {
         Config::popSize, &Config::popSize);
     op.add<popl::Value<size_t>>("a", "archive", "archive size",
         Config::arSize, &Config::arSize);
+    op.add<popl::Value<size_t>>("g", "gen", "generation limit",
+        Config::maxGen, &Config::maxGen);
     op.add<popl::Value<double>>("i", "ini", "expected length of gen=0 circuits",
         Config::expLengthIni, &Config::expLengthIni);
     op.add<popl::Value<double>>("s", "press", "selection pressure",
@@ -159,8 +164,8 @@ int main(int argc, char* argv[]) {
   GenOpCounter trk{};
   unsigned long gen;
 
-  /* Main cycle */
-  for(gen = 0; ; gen++) {
+  /* Main loop */
+  for(gen = 0; Config::maxGen == 0 || gen <= Config::maxGen; gen++) {
 
     /* Find the nondominated subset */
     Population pop2 = pop.front();
