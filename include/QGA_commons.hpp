@@ -26,13 +26,14 @@ using std::size_t;
 
 /* Forward declarations */
 namespace Config {
-  extern const unsigned nBit;
-  extern const size_t arSize;
-  extern const size_t popSize;
-  extern const double selectBias;
-  extern const double expLengthIni;
-  extern const double expMutationCount;
-  extern const double expSliceLength;
+  extern unsigned nBit;
+  extern size_t arSize;
+  extern size_t popSize;
+  extern size_t maxGen;
+  extern double selectBias;
+  extern double expLengthIni;
+  extern double expMutationCount;
+  extern double expSliceLength;
   extern const double pControl;
   extern const double dAlpha;
   extern const size_t circLineLength;

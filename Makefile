@@ -22,9 +22,9 @@ TARGETS := simple fourier search
 default: search
 
 CXXFLAGS += -std=c++11 -march=native
-CXXFLAGS += -pedantic -Wall -Wextra -Weffc++
+CXXFLAGS += -pedantic -Wall -Wextra
 CXXFLAGS += -fopenmp
-CXXFLAGS += -Iframework/include -Iinclude
+CXXFLAGS += -Iframework/include -Iinclude -Ipopl/include
 CXXFLAGS += -fno-diagnostics-show-caret -fmax-errors=3
 
 ifdef DEBUG
@@ -44,10 +44,6 @@ else
 	# QIClib is the default
 	LIBS += backend_qiclib.o
 	CXXFLAGS += -Iqiclib/include -lopenblas -DUSE_QICLIB
-endif
-
-ifdef NBIT
-	CXXFLAGS += -DNBIT=${NBIT}
 endif
 
 fourier: CXXFLAGS += -DFOURIER

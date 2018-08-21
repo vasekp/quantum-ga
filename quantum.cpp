@@ -14,6 +14,7 @@
 #include "CircuitPrinter.hpp"
 #include "TeXPrinter.hpp"
 #include "signal.hpp"
+#include "popl.hpp"
 
 #ifdef FOURIER
   #include "QGA_Problem/Fourier.hpp"
@@ -26,33 +27,32 @@
   #include "QGA_Problem/Simple.hpp"
 #endif
 
-#ifndef NBIT
-  #define NBIT 4
-#endif
-
 namespace Config {
 
-  // Circuit width (constant)
-  const unsigned nBit = NBIT;
+  // Circuit width (pre-set)
+  unsigned nBit = 3;
 
   // strength parameter of NSGA selection
-  const double selectBias = 0.2;
-
-  // Archive (external population) size
-  const size_t arSize = 100;
+  double selectBias = 1.0;
 
   // Internal population size
-  const size_t popSize = 1000;
+  size_t popSize = 1000;
+
+  // Archive (external population) size
+  size_t arSize = 100;
+
+  // Generation limit
+  size_t maxGen = 0;
 
   // Expected curcuit depth in 0th generation
-  const double expLengthIni = 30;
+  double expLengthIni = 30;
 
   // Expected number of single-point mutations (including crossover)
-  const double expMutationCount = 1.0;
+  double expMutationCount = 2.0;
 
   // Expected number of successive gates to be inserted / deleted / replaced
   // NB: 1 is always added to slice length
-  const double expSliceLength = 3.0;
+  double expSliceLength = 2.0;
 
   // How much each bit is likely to be a control bit at gate creation
   const double pControl = 0.5;
@@ -61,10 +61,10 @@ namespace Config {
   const size_t nIntList = 20;
 
   // Standard deviation of mutation in gate angles
-  const double dAlpha = 0.1;
+  const double dAlpha = 0.2;
 
   // Maximum length of an output line when formatting circuits
-  const size_t circLineLength = 80;
+  const size_t circLineLength = 220;
 
 } // namespace Config
 
@@ -101,13 +101,45 @@ BriefPrinter<Candidate> brief(const Candidate& ref) {
  *** Main ***
  ************/
 
-int main() {
+int main(int argc, char* argv[]) {
   /* Initialize output */
   if(isatty(1)) {
     Colours::use = true;
     std::signal(SIGINT, int_handler);
   }
   std::cout << std::fixed << std::setprecision(4);
+
+  /* Parse command line */
+  {
+    popl::OptionParser op("Usage");
+    op.add<popl::Value<unsigned>>("b", "bits", "number of qubits",
+        Config::nBit, &Config::nBit);
+    op.add<popl::Value<size_t>>("p", "pop", "population size",
+        Config::popSize, &Config::popSize);
+    op.add<popl::Value<size_t>>("a", "archive", "archive size",
+        Config::arSize, &Config::arSize);
+    op.add<popl::Value<size_t>>("g", "gen", "generation limit",
+        Config::maxGen, &Config::maxGen);
+    op.add<popl::Value<double>>("i", "ini", "expected length of gen=0 circuits",
+        Config::expLengthIni, &Config::expLengthIni);
+    op.add<popl::Value<double>>("s", "press", "selection pressure",
+        Config::selectBias, &Config::selectBias);
+    op.add<popl::Value<double>>("m", "emc", "expected mutation count",
+        Config::expMutationCount, &Config::expMutationCount);
+    op.add<popl::Value<double>>("l", "slice", "expected slice length (minus 1)",
+        Config::expSliceLength, &Config::expSliceLength);
+
+    bool help;
+    op.add<popl::Switch>("h", "help", "show this help message", &help);
+
+    op.parse(argc, argv);
+    bool bad = (op.non_option_args().size() > 0
+        || op.unknown_options().size() > 0);
+    if(help || bad) {
+      std::cout << op;
+      return bad ? 1 : 0;
+    }
+  }
 
 #ifdef BENCH
   /* Set a fixed number of threads */
@@ -132,8 +164,8 @@ int main() {
   GenOpCounter trk{};
   unsigned long gen;
 
-  /* Main cycle */
-  for(gen = 0; ; gen++) {
+  /* Main loop */
+  for(gen = 0; Config::maxGen == 0 || gen <= Config::maxGen; gen++) {
 
     /* Find the nondominated subset */
     Population pop2 = pop.front();
