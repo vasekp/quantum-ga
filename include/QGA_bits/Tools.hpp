@@ -1,7 +1,5 @@
 namespace QGA {
 
-namespace {
-
 /* Convert a floating-point number to a rational approximation. This is done
  * by finding a continued fraction expression, trimming it at a random point
  * with probability proportional to the magnitude of the corresponding term,
@@ -9,7 +7,7 @@ namespace {
  * rational, almost-infinite terms are capped so it can still be trimmed
  * earlier to an even shorter rational (just with a small probability). */
 
-double rationalize(double x) {
+inline double rationalize(double x) {
   double a = std::abs(x);
   constexpr unsigned N = 10;
   double coeffs[N];
@@ -35,7 +33,7 @@ double rationalize(double x) {
  * and is replaced by a rational approximant multiple of π between -π and +π
  * (inclusive on right). */
 
-double rationalize_angle(double a) {
+inline double rationalize_angle(double a) {
   double b = a / QGA::Const::pi / 2.0 + 0.5;
   b = rationalize(b - std::floor(b));
   if(b == 0)
@@ -120,7 +118,5 @@ struct angle_distribution<true> : std::normal_distribution<> {
     std::normal_distribution<>(0.0, Config::dAlpha) { }
 
 }; // class angle_distribution<true>
-
-} // anonymous namespace
 
 } // namespace QGA
