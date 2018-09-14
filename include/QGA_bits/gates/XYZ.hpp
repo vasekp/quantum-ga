@@ -10,31 +10,34 @@ struct gate_struct_p {
 
 namespace internal {
 
-static const std::vector<gate_struct_p> gates_param_xyz {
-  {func::xrot, "X"},
-  {func::yrot, "Y"},
-  {func::zrot, "Z"}
-};
+namespace {
 
-static const std::vector<gate_struct_p> gates_param_x {
-  {func::xrot, "X"},
-};
+  const std::vector<gate_struct_p> gates_param_xyz {
+    {func::xrot, "X"},
+    {func::yrot, "Y"},
+    {func::zrot, "Z"}
+  };
 
-static const std::vector<gate_struct_p> gates_param_y {
-  {func::yrot, "Y"},
-};
+  const std::vector<gate_struct_p> gates_param_x {
+    {func::xrot, "X"},
+  };
 
-static const std::vector<gate_struct_p> gates_param_z {
-  {func::zrot, "Z"},
-};
+  const std::vector<gate_struct_p> gates_param_y {
+    {func::yrot, "Y"},
+  };
 
-/* Do not use: does not represent a 1-parametric group!
- * This interferes with the isTrivial and merge mechanisms of Param.
- * An equivalent of R(φ) is P(π) Y(φ). */
-/*static const std::vector<gate_struct_p> gates_param_r {
-  {func::rrot, "R"},
-};*/
+  const std::vector<gate_struct_p> gates_param_z {
+    {func::zrot, "Z"},
+  };
 
+  /* Do not use: does not represent a 1-parametric group!
+   * This interferes with the isTrivial and merge mechanisms of Param.
+   * An equivalent of R(φ) is P(π) Y(φ). */
+  /*const std::vector<gate_struct_p> gates_param_r {
+    {func::rrot, "R"},
+  };*/
+
+} // anonymous inner namespace
 
 template<Controls cc, const std::vector<gate_struct_p>* gates>
 struct Param {

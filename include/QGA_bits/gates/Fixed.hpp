@@ -12,17 +12,21 @@ struct gate_struct_f {
 
 namespace internal {
 
-static const std::vector<gate_struct_f> gates_fixed {
-  { &Backend::I, "I", 0, 0 },
-  { &Backend::H, "H", 0, -1 },
-  { &Backend::X, "X", 0, -2 },
-  { &Backend::Y, "Y", 0, -3 },
-  { &Backend::Z, "Z", 0, -4 },
-  { &Backend::T, "T", +1, +2 },
-  { &Backend::Ti, "Ti", -1, +2 },
-  { &Backend::S, "S", +1, -3 },
-  { &Backend::Si, "Si", -1, -4 }
-};
+namespace {
+
+  const std::vector<gate_struct_f> gates_fixed {
+    { &Backend::I, "I", 0, 0 },
+    { &Backend::H, "H", 0, -1 },
+    { &Backend::X, "X", 0, -2 },
+    { &Backend::Y, "Y", 0, -3 },
+    { &Backend::Z, "Z", 0, -4 },
+    { &Backend::T, "T", +1, +2 },
+    { &Backend::Ti, "Ti", -1, +2 },
+    { &Backend::S, "S", +1, -3 },
+    { &Backend::Si, "Si", -1, -4 }
+  };
+
+} // anonymous inner namespace
 
 template<Controls cc, const std::vector<gate_struct_f>* gates>
 struct Fixed {
