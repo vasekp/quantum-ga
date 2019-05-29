@@ -113,7 +113,7 @@ public:
 
   Base::Fitness fitness() const {
     if(genotype().size() > 1000)
-      return {INFINITY, INFINITY, std::numeric_limits<unsigned>::max()};
+      return {};
     double errMax = 0;
     unsigned dim = 1 << Config::nBit;
     State psi{0};

@@ -19,7 +19,7 @@ public:
 
   Base::Fitness fitness() const {
     if(genotype().size() > 1000)
-      return {INFINITY, INFINITY};
+      return {};
     using cxd = std::complex<double>;
     cxd overlapTotal{0};
     unsigned dim = 1 << Config::nBit;

@@ -22,7 +22,8 @@ public:
   template<typename... Args>
   Fitness(Element elm_, Args... args): Next(args...), element(elm_) { }
 
-  Fitness() = default;
+  // Default constructor returns maximum values, dominated by anything finite
+  Fitness() : Next(), element(std::numeric_limits<Element>::max()) { }
 
   friend bool operator<<= (const Fitness& c1, const Fitness& c2) {
     return c1.element <= c2.element && (c1.next() <<= c2.next());
@@ -63,7 +64,7 @@ public:
       is.clear(is.rdstate() & ~std::ios::failbit);
       std::string str;
       is >> str;
-      c.element = (Element)INFINITY;
+      c.element = std::numeric_limits<Element>::max();
     }
     return is >> c.next();
   }
