@@ -1,7 +1,6 @@
 #ifndef QGA_COMMONS_HPP
 #define QGA_COMMONS_HPP
 
-#include <atomic>
 #include <complex>
 #include <string>
 #include <cstddef>

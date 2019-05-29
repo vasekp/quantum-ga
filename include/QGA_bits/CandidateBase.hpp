@@ -32,11 +32,6 @@ public:
     gt.erase(++last, gt.end());
   }
 
-  Fitness fitness() const {
-    counter.hit();
-    return derived().fitness();
-  }
-
   friend bool sameCirc(const CandidateBase& lhs, const CandidateBase& rhs) {
     auto& gt1 = lhs.gt;
     auto& gt2 = rhs.gt;

@@ -12,7 +12,6 @@
 #include "QGA_bits/Gene.hpp"     // uses GateBase.hpp
 #include "QGA_bits/Tools.hpp"
 #include "QGA_bits/Gates.hpp"    // uses Tools.hpp and GateBase.hpp
-#include "QGA_bits/CandidateCounter.hpp"
 #include "QGA_bits/CandidateBase.hpp"
 #include "QGA_bits/CandidateFactory.hpp"
 #include "QGA_bits/GenOpCounter.hpp"
