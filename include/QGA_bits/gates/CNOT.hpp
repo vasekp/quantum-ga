@@ -53,8 +53,8 @@ public:
       : self;
   }
 
-  void hit(typename GateBase::Counter& c) const {
-    c.hit(this);
+  unsigned type() const override {
+    return GateBase::Indexer::index(this);
   }
 
   const CNOTTemp* cast(const CNOTTemp*) const override {

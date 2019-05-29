@@ -42,7 +42,7 @@ namespace Config {
   size_t arSize = 100;
 
   // Generation limit
-  size_t maxGen = 0;
+  unsigned long maxGen = 0;
 
   // Expected curcuit depth in 0th generation
   double expLengthIni = 30;
@@ -89,7 +89,7 @@ constexpr decltype(CandidateFactory::ops) CandidateFactory::ops;
 void int_handler(int);
 int int_response(Population&, unsigned long);
 void dumpResults(Population&, GenOpCounter&,
-    std::chrono::time_point<std::chrono::steady_clock>, unsigned long);
+    std::chrono::time_point<std::chrono::steady_clock>, unsigned long, unsigned long);
 /* End forward declarations */
 
 BriefPrinter<Candidate> brief(const Candidate& ref) {
@@ -118,7 +118,7 @@ int main(int argc, char* argv[]) {
         Config::popSize, &Config::popSize);
     op.add<popl::Value<size_t>>("a", "archive", "archive size",
         Config::arSize, &Config::arSize);
-    op.add<popl::Value<size_t>>("g", "gen", "generation limit",
+    op.add<popl::Value<unsigned long>>("g", "gen", "generation limit",
         Config::maxGen, &Config::maxGen);
     op.add<popl::Value<double>>("i", "ini", "expected length of gen=0 circuits",
         Config::expLengthIni, &Config::expLengthIni);
@@ -162,6 +162,7 @@ int main(int argc, char* argv[]) {
   Population pop{Config::popSize,
     [] { return CandidateFactory::genInit().setGen(0); }};
   GenOpCounter trk{};
+  unsigned long total_count = 0;
   unsigned long gen;
 
   /* Main loop */
@@ -184,8 +185,9 @@ int main(int argc, char* argv[]) {
     /* Top up to popSize candidates in parallel */
     CandidateFactory cf{pop};
     pop.precompute();
-    pop2.add(Config::popSize - pop2.size(),
-        [&] { return cf.getNew().setGen(gen); });
+    size_t topup_count = Config::popSize - pop2.size();
+    pop2.add(topup_count, [&] { return cf.getNew().setGen(gen); });
+    total_count += topup_count;
 
     /* We don't need the original population anymore */
     pop = std::move(pop2);
@@ -223,12 +225,13 @@ int main(int argc, char* argv[]) {
     while(Signal::state == Signal::INTERRUPTED)
       switch(int_response(pop, gen)) {
         case Signal::DUMP:
-          dumpResults(pop, trk, start, gen);
+          dumpResults(pop, trk, start, total_count, gen);
           break;
         case Signal::RESTART:
           pop = Population{Config::popSize,
             [&] { return CandidateFactory::genInit().setGen(0); }};
           trk.reset();
+          total_count = 0;
           start = std::chrono::steady_clock::now();
           Signal::timeOut = std::chrono::duration<double>(0);
           gen = 0;
@@ -238,13 +241,13 @@ int main(int argc, char* argv[]) {
       break;
   }
 
-  dumpResults(pop, trk, start, gen);
+  dumpResults(pop, trk, start, total_count, gen);
 }
 
 
 void dumpResults(Population& pop, GenOpCounter& trk,
     std::chrono::time_point<std::chrono::steady_clock> start,
-    unsigned long gen) {
+    unsigned long total_count, unsigned long gen) {
 
   /* List results */
   auto nondom = pop.front();
@@ -253,7 +256,7 @@ void dumpResults(Population& pop, GenOpCounter& trk,
     << Colours::yellow(nondom.size()) << " nondominated candidates:\n";
   for(auto& c : nondom.reverse()) {
     std::cout << brief(c) << ' ' << c;
-    if(c.fitness() < 0.01)
+    if(c.fitness().head() < 0.01)
       std::cout << ": " << c.full() << c.circuit<CircuitPrinter>();
     else
       std::cout << '\n';
@@ -268,7 +271,7 @@ void dumpResults(Population& pop, GenOpCounter& trk,
   std::chrono::duration<double> dur = now - start - Signal::timeOut;
   std::cout
     << "\nRun took " << dur.count() << " s, "
-    << Colours::blue(QGA::counter.total()) << " candidates tested in "
+    << Colours::blue(total_count) << " candidates tested in "
     << Colours::blue(gen) << " generations "
     << '(' << Colours::blue(dur.count()/gen, " s/gen") << " avg)\n";
 }

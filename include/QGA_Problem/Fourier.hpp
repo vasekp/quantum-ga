@@ -9,20 +9,19 @@ using QGA::Backend::State;
 using Gene = QGA::Gene<QGA::Gates::Y, QGA::Gates::CPhase, QGA::Gates::SWAP>;
 
 
-class Candidate : public QGA::CandidateBase<Candidate, Gene, double, double> {
+class Candidate : public QGA::CandidateBase<Candidate, Gene, double, size_t> {
 
-  using Base = QGA::CandidateBase<Candidate, Gene, double, double>;
+  using Base = QGA::CandidateBase<Candidate, Gene, double, size_t>;
 
 public:
 
   using Base::Base;
 
-  Base::FitnessMain fitness_main() const {
+  Base::Fitness fitness() const {
     if(genotype().size() > 1000)
-      return {INFINITY, INFINITY};
+      return {};
     using cxd = std::complex<double>;
     cxd overlapTotal{0};
-    double errorMax = 0;
     unsigned dim = 1 << Config::nBit;
     State psi{};
     for(unsigned i = 0; i < dim; i++) {
@@ -30,14 +29,11 @@ public:
       State out = State::fourier(psi);
       cxd overlap = State::overlap(out, sim(psi));
       overlapTotal += overlap;
-      double error = 1.0 - std::abs(overlap);
-      if(error > errorMax)
-        errorMax = error;
     }
     double errorAvg = std::max(1.0 - std::abs(overlapTotal / cxd(dim)), 0.0);
     return {
-      this->trimError(errorAvg),
-      this->trimError(errorMax)
+      trimError(errorAvg),
+      genotype().size()
     };
   }
 

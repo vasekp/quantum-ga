@@ -17,17 +17,16 @@ class Reader;
  *
  * Implements a static getRandom() function which randomly picks from the given
  * Gates, along with several shortcuts to functions of the GateBase.  Other
- * functions like applyTo() or hit() are redirected using a ->. */
+ * functions like applyTo() or type() are redirected using a ->. */
 
 template<class Context, class... Gates>
 class Gene : GateBase<Context, Gates...>::Pointer {
 
   using GBase = GateBase<Context, Gates...>;
   using Pointer = typename GBase::Pointer;
+  using Indexer = typename GBase::Indexer;
 
 public:
-
-  using Counter = typename GBase::Counter;
 
   template<class Context_>
   using WithContext = Gene<Context_, Gates...>;
@@ -125,6 +124,11 @@ public:
 
   friend void swap(Gene& a, Gene& b) {
     swap(a.pointer(), b.pointer());
+  }
+
+  template<class Gate>
+  static unsigned gateType() {
+    return GBase::template gateType<Gate>();
   }
 
 private:

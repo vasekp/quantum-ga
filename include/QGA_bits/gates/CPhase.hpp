@@ -94,8 +94,8 @@ public:
     return std::make_shared<CPhaseTemp>(tgt_, angle, ixs_);
   }
 
-  void hit(typename GateBase::Counter& c) const {
-    c.hit(this);
+  unsigned type() const override {
+    return GateBase::Indexer::index(this);
   }
 
   const CPhaseTemp* cast(const CPhaseTemp*) const override {

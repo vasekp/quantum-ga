@@ -89,8 +89,8 @@ public:
         Backend::Controls::swapQubits(ixs, s1, s2));
   }
 
-  void hit(typename GateBase::Counter& c) const {
-    c.hit(this);
+  unsigned type() const override {
+    return GateBase::Indexer::index(this);
   }
 
   const SU2Temp* cast(const SU2Temp*) const override {
