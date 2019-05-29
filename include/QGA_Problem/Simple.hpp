@@ -22,10 +22,10 @@ using Gene = QGA::Gene<
 const State out{3};
 
 
-class Candidate : public QGA::CandidateBase<Candidate, Gene, double, unsigned>
+class Candidate : public QGA::CandidateBase<Candidate, Gene, double, unsigned, unsigned>
 {
 
-  using Base = QGA::CandidateBase<Candidate, Gene, double, unsigned>;
+  using Base = QGA::CandidateBase<Candidate, Gene, double, unsigned, unsigned>;
 
 public:
 
@@ -33,8 +33,9 @@ public:
 
   Base::Fitness fitness() const {
     return {
-      this->trimError(1 - std::abs(State::overlap(out, sim()))), // error
-      this->controls() // total number of control qubits
+      trimError(1 - std::abs(State::overlap(out, sim()))), // error
+      genotype().size(), // total gate count
+      controls() // total number of control qubits
     };
   }
 

@@ -103,31 +103,35 @@ using Gene = typename QGA::Gene<
               >::WithContext<Context>;
 
 
-class Candidate : public QGA::CandidateBase<Candidate, Gene, double, double> {
+class Candidate : public QGA::CandidateBase<Candidate, Gene, double, unsigned, unsigned> {
 
-  using Base = QGA::CandidateBase<Candidate, Gene, double, double>;
+  using Base = QGA::CandidateBase<Candidate, Gene, double, unsigned, unsigned>;
 
 public:
 
   using Base::Base;
 
-  Base::FitnessMain fitness_main() const {
+  Base::Fitness fitness() const {
     if(genotype().size() > 1000)
-      return {INFINITY, INFINITY};
-    double errTotal = 0, errMax = 0;
+      return {INFINITY, INFINITY, std::numeric_limits<unsigned>::max()};
+    double errMax = 0;
     unsigned dim = 1 << Config::nBit;
     State psi{0};
     for(unsigned mark = 0; mark < dim; mark++) {
       State out{mark};
       double error = std::max(1 -
           std::pow(std::abs(State::overlap(out, sim(psi, mark))), 2), 0.0);
-      errTotal += error;
       if(error > errMax)
         errMax = error;
     }
+    unsigned oracles = 0;
+    for(const auto& g : genotype())
+      if(g->type() == Gene::gateType<Oracle>())
+        oracles++;
     return {
-      this->trimError(errTotal / dim),
-      this->trimError(errMax)
+      trimError(errMax),
+      genotype().size(),
+      oracles
     };
   }
 
