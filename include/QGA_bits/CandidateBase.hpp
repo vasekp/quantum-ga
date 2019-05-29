@@ -11,8 +11,7 @@ class CandidateBase {
 
 protected:
 
-  using FitnessMain = Fitness<Elements...>;
-  using FitnessFull = Fitness<typename Gene::Counter, Elements...>;
+  using Fitness = QGA::Fitness<Elements...>;
 
 public:
 
@@ -33,12 +32,9 @@ public:
     gt.erase(++last, gt.end());
   }
 
-  FitnessFull fitness() const {
-    typename Gene::Counter cc{};
-    for(const auto& g : gt)
-      g->hit(cc);
+  Fitness fitness() const {
     counter.hit();
-    return {derived().fitness_main(), cc};
+    return derived().fitness();
   }
 
   friend bool sameCirc(const CandidateBase& lhs, const CandidateBase& rhs) {

@@ -253,7 +253,7 @@ void dumpResults(Population& pop, GenOpCounter& trk,
     << Colours::yellow(nondom.size()) << " nondominated candidates:\n";
   for(auto& c : nondom.reverse()) {
     std::cout << brief(c) << ' ' << c;
-    if(c.fitness() < 0.01)
+    if(c.fitness().head() < 0.01)
       std::cout << ": " << c.full() << c.circuit<CircuitPrinter>();
     else
       std::cout << '\n';

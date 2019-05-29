@@ -17,7 +17,7 @@ public:
 
   using Base::Base;
 
-  Base::FitnessMain fitness_main() const {
+  Base::Fitness fitness() const {
     if(genotype().size() > 1000)
       return {INFINITY, INFINITY};
     using cxd = std::complex<double>;

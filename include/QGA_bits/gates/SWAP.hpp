@@ -64,8 +64,8 @@ public:
         s2 == sw1 ? sw2 : s2 == sw2 ? sw1 : s2);
   }
 
-  void hit(typename GateBase::Counter& c) const {
-    c.hit(this);
+  unsigned type() const override {
+    return GateBase::Indexer::index(this);
   }
 
   const SWAPTemp* cast(const SWAPTemp*) const override {

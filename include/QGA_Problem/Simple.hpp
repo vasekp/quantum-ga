@@ -31,7 +31,7 @@ public:
 
   using Base::Base;
 
-  Base::FitnessMain fitness_main() const {
+  Base::Fitness fitness() const {
     return {
       this->trimError(1 - std::abs(State::overlap(out, sim()))), // error
       this->controls() // total number of control qubits

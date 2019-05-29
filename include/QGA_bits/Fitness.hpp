@@ -11,12 +11,44 @@ namespace internal {
 
 
 template<class... Elements>
+using Fitness = internal::DomTuple<Elements...>;
+
+
+/*template<class... Elements>
 struct Fitness : public internal::DomTuple<Elements...> {
 
-  using internal::DomTuple<Elements...>::DomTuple;
+  using Tuple = internal::DomTuple<Elements...>::DomTuple;
+  using Tuple::Tuple;
+
+  // Lexicographical ordering (first element of fitness most important)
+  friend bool operator< (const Fitness& a, const Fitness& b) {
+    return a.tuple < b.tuple;
+  }
+
+  friend bool operator<< (const Fitness& a, const Fitness& b) {
+    return (a.tuple <<= b.tuple) && !(a == b);
+  }
+
+  friend bool operator== (const Fitness& a, const Fitness& b) {
+    return a.tuple == b.tuple;
+  }
+
+  friend double dist(const Fitness& a, const Fitness& b) {
+    return dist(a.tuple, b.tuple);
+  }
+
+  friend std::ostream& operator<< (std::ostream& os, const Fitness& f) {
+    return os << '{' << f.tuple << '}';
+  }
+
+  friend std::istream& operator>> (std::istream& is, Fitness& f) {
+    return is >> f.tuple;
+  }
 
 }; // struct Fitness<Elements...>
+*/
 
+/*
 template<typename... Gates, typename Main, typename... Others>
 struct Fitness<internal::Counter<Gates...>, Main, Others...> {
 
@@ -54,6 +86,7 @@ struct Fitness<internal::Counter<Gates...>, Main, Others...> {
   }
 
 }; // struct Fitness<Counter, Elements...>
+*/
 
 
 namespace internal {
@@ -83,6 +116,10 @@ public:
     return c1.element <= c2.element && (c1.next() <<= c2.next());
   }
 
+  friend bool operator<< (const DomComparator& c1, const DomComparator& c2) {
+    return (c1 <<= c2) && !(c1 == c2);
+  }
+
   friend bool operator== (const DomComparator& c1, const DomComparator& c2) {
     return c1.element == c2.element && c1.next() == c2.next();
   }
@@ -98,7 +135,7 @@ public:
       : c2.element - c1.element) + dist(c1.next(), c2.next());
   }
 
-  operator const Element&() const {
+  const Element& head() const {
     return element;
   }
 
@@ -119,7 +156,7 @@ public:
 
 protected:
 
-  operator Element&() {
+  explicit operator Element&() {
     return element;
   }
 
@@ -150,6 +187,10 @@ public:
     return c1.element <= c2.element;
   }
 
+  friend bool operator<< (const DomComparator& c1, const DomComparator& c2) {
+    return (c1 <<= c2) && !(c1 == c2);
+  }
+
   friend bool operator== (const DomComparator& c1, const DomComparator& c2) {
     return c1.element == c2.element;
   }
@@ -164,7 +205,7 @@ public:
       : c2.element - c1.element;
   }
 
-  operator const Element&() const {
+  const Element& head() const {
     return element;
   }
 

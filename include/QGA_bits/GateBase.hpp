@@ -1,9 +1,12 @@
 namespace QGA {
 
 namespace internal {
-  // Defined below
+  // Both defined below
   template<class, class, class...>
   class CastInject;
+
+  template<class, class...>
+  struct Indexer;
 }
 
 
@@ -23,7 +26,7 @@ public:
 
   // Both required in QGA::Gene
   using Pointer = std::shared_ptr<const GateBase>;
-  using Counter = internal::Counter<
+  using Indexer = internal::Indexer<
     typename Gates::template Template<GateBase>...
   >;
 
@@ -86,7 +89,13 @@ public:
   }
 
   // Called from CandidateBase
-  virtual void hit(Counter& c) const = 0;
+  virtual unsigned type() const = 0;
+
+  // Gives the values to compare to
+  template<class Gate>
+  static unsigned gateType() {
+    return Indexer::template index<typename Gate::template Template<GateBase>>();
+  }
 
   friend std::ostream& operator<< (std::ostream& os, const GateBase& g) {
     return g.write(os);
@@ -162,6 +171,30 @@ public:
   using SingleCastInject<GateBase, Last>::cast;
 
 }; // class CastInject<GateBase, Last>
+
+/* Defines a static index() function such that
+ *   Indexer<A, B, C>::index(A*) == 0
+ *   Indexer<A, B, C>::index(B*) == 1
+ *   Indexer<A, B, C>::index(C*) == 2
+ * Indexer<>::index() never accesses the supplied pointer. */
+template<typename Head, typename... Tail>
+struct Indexer {
+
+  template<typename T>
+  static unsigned index(const T* ptr) {
+    return 1 + Indexer<Tail...>::index(ptr);
+  }
+
+  static unsigned index(const Head*) {
+    return 0;
+  }
+
+  template<typename T>
+  static unsigned index() {
+    return index(static_cast<const T*>(nullptr));
+  }
+
+}; // struct Index<Head, Tail...>
 
 } // namespace internal
 
