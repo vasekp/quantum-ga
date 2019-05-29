@@ -93,7 +93,9 @@ public:
   }
 
   friend double dist(const DomComparator& c1, const DomComparator& c2) {
-    return std::abs(c1.element - c2.element) + dist(c1.next(), c2.next());
+    return (c1.element > c2.element
+      ? c1.element - c2.element
+      : c2.element - c1.element) + dist(c1.next(), c2.next());
   }
 
   operator const Element&() const {
@@ -157,7 +159,9 @@ public:
   }
 
   friend double dist(const DomComparator& c1, const DomComparator& c2) {
-    return std::abs(c1.element - c2.element);
+    return c1.element > c2.element
+      ? c1.element - c2.element
+      : c2.element - c1.element;
   }
 
   operator const Element&() const {
